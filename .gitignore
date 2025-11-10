@@ -1,0 +1,15 @@
+# Ignoramos archivos generados automaticamente
+__pycache__/
+*.py[cod]
+*.sqlite3
+.venv/
+
+# Configuraciones sensibles
+*.env
+
+# Dependencias del front
+frontend/node_modules/
+
+# Archivos de Docker y otros caches
+*.log
+dist/

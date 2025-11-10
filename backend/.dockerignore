@@ -1,0 +1,6 @@
+# Evitamos copiar archivos temporales dentro de la imagen
+__pycache__/
+*.pyc
+.venv/
+.env
+staticfiles/

@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  db:
+    # Servicio de base de datos PostgreSQL 17 con volumen persistente
+    image: postgres:17
+    container_name: voltia_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voltia}
+      POSTGRES_USER: ${POSTGRES_USER:-voltia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voltia}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  backend:
+    # API en Django conectada a la base de datos anterior
+    build:
+      context: ./backend
+    container_name: voltia_backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    command: ["/bin/sh", "/app/entrypoint.sh"]
+
+  frontend:
+    # Aplicacion de React (Vite) que consume la API expuesta por Django
+    build:
+      context: ./frontend
+    container_name: voltia_frontend
+    env_file:
+      - ./frontend/.env
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://backend:8000/api}
+      - VITE_PORT=${VITE_PORT:-5173}
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    depends_on:
+      - backend
+    command: >
+      sh -c "npm install &&
+             npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}"
+
+volumes:
+  db_data:
