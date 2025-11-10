@@ -6,7 +6,16 @@ from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import path, reverse
 
-from core.models import Cliente, Obra, Proyecto, ServiciosProyecto, UrlsExternasProyecto
+from core.models import (
+    CatalogoDispositivo,
+    Categoria,
+    Cliente,
+    Marca,
+    Obra,
+    Proyecto,
+    ServiciosProyecto,
+    UrlsExternasProyecto,
+)
 
 
 @admin.register(Proyecto)
@@ -121,3 +130,8 @@ class UrlsExternasProyectoAdmin(admin.ModelAdmin):
     list_display = ("id", "proyecto", "tipo_enlace", "url")
     list_filter = ("tipo_enlace", "proyecto")
     search_fields = ("tipo_enlace", "proyecto__nombre_proyecto", "url")
+
+
+admin.site.register(Marca)
+admin.site.register(Categoria)
+admin.site.register(CatalogoDispositivo)

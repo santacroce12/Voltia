@@ -30,6 +30,83 @@ class Cliente(models.Model):
         return self.nombre
 
 
+class Marca(models.Model):
+    """
+    Catalogo de marcas asociadas a los dispositivos.
+    """
+
+    nombre = models.CharField(max_length=150, unique=True, verbose_name="Nombre de la Marca")
+
+    class Meta:
+        verbose_name = "Marca"
+        verbose_name_plural = "Marcas"
+
+    def __str__(self) -> str:
+        """Muestra el nombre de la marca en listados y selects."""
+        return self.nombre
+
+
+class Categoria(models.Model):
+    """
+    Catalogo jerarquico (categoria y subcategoria) para organizar dispositivos.
+    """
+
+    categoria_principal = models.CharField(max_length=100, verbose_name="Categoria Principal")
+    subcategoria = models.CharField(max_length=100, verbose_name="Subcategoria")
+    descripcion = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Categoria"
+        verbose_name_plural = "Categorias"
+
+    def __str__(self) -> str:
+        """Representacion legible usando la jerarquia categoria > subcategoria."""
+        return f"{self.categoria_principal} > {self.subcategoria}"
+
+
+class CatalogoDispositivo(models.Model):
+    """
+    Biblioteca de dispositivos estandarizados que podremos asociar a proyectos.
+    """
+
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.SET_NULL,  # Si se borra la categoria, el dispositivo no se borra
+        null=True,
+        blank=True,
+        verbose_name="Categoria",
+    )
+    marca = models.ForeignKey(
+        Marca,
+        on_delete=models.SET_NULL,  # Si se borra la marca, el dispositivo no se borra
+        null=True,
+        blank=True,
+        verbose_name="Marca",
+    )
+    modelo = models.CharField(max_length=200, verbose_name="Modelo o N° de Parte")
+    nombre_completo_producto = models.CharField(max_length=300, verbose_name="Nombre Completo")
+    descripcion_funcional = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Descripcion Funcional",
+    )
+    url_ficha_tecnica = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Ficha Tecnica (URL)",
+    )
+
+    class Meta:
+        verbose_name = "Dispositivo de Catalogo"
+        verbose_name_plural = "Dispositivos de Catalogo"
+
+    def __str__(self) -> str:
+        """Muestra la marca y el modelo para identificar el dispositivo."""
+        marca_nombre = self.marca.nombre if self.marca else "Sin Marca"
+        return f"{marca_nombre} - {self.modelo}"
+
+
 class EstadoObra(models.TextChoices):
     """Estados posibles de una obra para poder filtrar reportes."""
 
