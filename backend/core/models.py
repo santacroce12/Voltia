@@ -112,6 +112,11 @@ class InstanciaDispositivo(models.Model):
     Representa un dispositivo concreto usado dentro de un proyecto.
     """
 
+    proyecto = models.ForeignKey(
+        "Proyecto",  # El modelo Proyecto que ya definimos
+        on_delete=models.CASCADE,  # Si se borra el proyecto, se borran sus instancias
+        verbose_name="Proyecto",
+    )
     catalogo = models.ForeignKey(
         CatalogoDispositivo,
         on_delete=models.PROTECT,  # ¡MUY IMPORTANTE! Impide borrar un dispositivo del catalogo si esta en uso
@@ -132,12 +137,6 @@ class InstanciaDispositivo(models.Model):
         verbose_name="TAG (Ej: REL-TAB-01)",  # Puede cargarse antes de tener un TAG fisico
     )
     cantidad = models.PositiveIntegerField(default=1, verbose_name="Cantidad")
-    ubicacion_fisica = models.CharField(
-        max_length=200,
-        blank=True,
-        null=True,
-        verbose_name="Ubicacion Fisica (Ej: 'Sala de Control', 'Patio')",
-    )
     atributos = models.JSONField(
         default=dict,  # Asegura que siempre sea un JSON aunque este vacio
         blank=True,  # Campo "magico" jsonb para IPs, firmware, etc.
@@ -247,6 +246,12 @@ class Proyecto(models.Model):
         choices=EstadoProyecto.choices,
         default=EstadoProyecto.PROCESO,
         verbose_name="Estado",
+    )
+    ubicacion_fisica = models.CharField(
+        max_length=300,
+        blank=True,
+        null=True,
+        verbose_name="Ubicacion Fisica",
     )
 
     class Meta:
