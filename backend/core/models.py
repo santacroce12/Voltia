@@ -107,6 +107,52 @@ class CatalogoDispositivo(models.Model):
         return f"{marca_nombre} - {self.modelo}"
 
 
+class InstanciaDispositivo(models.Model):
+    """
+    Representa un dispositivo concreto usado dentro de un proyecto.
+    """
+
+    catalogo = models.ForeignKey(
+        CatalogoDispositivo,
+        on_delete=models.PROTECT,  # ¡MUY IMPORTANTE! Impide borrar un dispositivo del catalogo si esta en uso
+        verbose_name="Dispositivo del Catalogo",
+        related_name="instancias",
+    )
+    usuario_creador = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,  # Para trazabilidad: quien agrego el dispositivo
+        null=True,
+        blank=True,
+        verbose_name="Agregado por",
+    )
+    tag_dispositivo = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="TAG (Ej: REL-TAB-01)",  # Puede cargarse antes de tener un TAG fisico
+    )
+    cantidad = models.PositiveIntegerField(default=1, verbose_name="Cantidad")
+    ubicacion_fisica = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Ubicacion Fisica (Ej: 'Sala de Control', 'Patio')",
+    )
+    atributos = models.JSONField(
+        default=dict,  # Asegura que siempre sea un JSON aunque este vacio
+        blank=True,  # Campo "magico" jsonb para IPs, firmware, etc.
+        verbose_name="Atributos (IP, Rango, etc.)",
+    )
+
+    class Meta:
+        verbose_name = "Instancia de Dispositivo"
+        verbose_name_plural = "Instancias de Dispositivos"
+
+    def __str__(self) -> str:
+        """Muestra el proyecto y el dispositivo para ubicarlo rapido."""
+        return f"{self.proyecto.nombre_proyecto} - {self.catalogo.modelo}"
+
+
 class EstadoObra(models.TextChoices):
     """Estados posibles de una obra para poder filtrar reportes."""
 

@@ -10,6 +10,7 @@ from core.models import (
     CatalogoDispositivo,
     Categoria,
     Cliente,
+    InstanciaDispositivo,
     Marca,
     Obra,
     Proyecto,
@@ -135,3 +136,4 @@ class UrlsExternasProyectoAdmin(admin.ModelAdmin):
 admin.site.register(Marca)
 admin.site.register(Categoria)
 admin.site.register(CatalogoDispositivo)
+admin.site.register(InstanciaDispositivo)
