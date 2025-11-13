@@ -96,6 +96,11 @@ class CatalogoDispositivo(models.Model):
         null=True,
         verbose_name="Ficha Tecnica (URL)",
     )
+    funciones_soportadas = models.ManyToManyField(
+        "FuncionDispositivo",
+        blank=True,
+        verbose_name="Funciones Soportadas (de fabrica)",
+    )
 
     class Meta:
         verbose_name = "Dispositivo de Catalogo"
@@ -105,6 +110,32 @@ class CatalogoDispositivo(models.Model):
         """Muestra la marca y el modelo para identificar el dispositivo."""
         marca_nombre = self.marca.nombre if self.marca else "Sin Marca"
         return f"{marca_nombre} - {self.modelo}"
+
+
+class FuncionDispositivo(models.Model):
+    """
+    Biblioteca maestra de todas las funciones posibles que un dispositivo puede tener.
+    """
+
+    codigo_funcion = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Codigo de Funcion (Ej: 50/51, 87)",
+    )
+    nombre = models.CharField(max_length=255, verbose_name="Nombre de la Funcion")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripcion")
+
+    class Meta:
+        verbose_name = "Funcion de Dispositivo"
+        verbose_name_plural = "Funciones de Dispositivos"
+        ordering = ["codigo_funcion", "nombre"]
+
+    def __str__(self) -> str:
+        """Muestra el codigo (si existe) y el nombre."""
+        if self.codigo_funcion:
+            return f"[{self.codigo_funcion}] {self.nombre}"
+        return self.nombre
 
 
 class InstanciaDispositivo(models.Model):
@@ -136,11 +167,15 @@ class InstanciaDispositivo(models.Model):
         null=True,
         verbose_name="TAG (Ej: REL-TAB-01)",  # Puede cargarse antes de tener un TAG fisico
     )
-    cantidad = models.PositiveIntegerField(default=1, verbose_name="Cantidad")
     atributos = models.JSONField(
         default=dict,  # Asegura que siempre sea un JSON aunque este vacio
         blank=True,  # Campo "magico" jsonb para IPs, firmware, etc.
         verbose_name="Atributos (IP, Rango, etc.)",
+    )
+    funciones_usadas = models.ManyToManyField(
+        "FuncionDispositivo",
+        blank=True,
+        verbose_name="Funciones Usadas (en este proyecto)",
     )
 
     class Meta:

@@ -10,6 +10,7 @@ from core.models import (
     CatalogoDispositivo,
     Categoria,
     Cliente,
+    FuncionDispositivo,
     InstanciaDispositivo,
     Marca,
     Obra,
@@ -133,7 +134,48 @@ class UrlsExternasProyectoAdmin(admin.ModelAdmin):
     search_fields = ("tipo_enlace", "proyecto__nombre_proyecto", "url")
 
 
+class CatalogoDispositivoFuncionInline(admin.TabularInline):
+    """
+    Permite vincular rapidamente funciones con dispositivos desde el admin de funciones.
+    """
+
+    model = CatalogoDispositivo.funciones_soportadas.through
+    extra = 1
+    fk_name = "funciondispositivo"
+
+
+@admin.register(FuncionDispositivo)
+class FuncionDispositivoAdmin(admin.ModelAdmin):
+    """Admin sencillo para gestionar el catalogo de funciones."""
+
+    list_display = ("codigo_funcion", "nombre")
+    search_fields = ("codigo_funcion", "nombre")
+    inlines = [CatalogoDispositivoFuncionInline]
+
+
+@admin.register(CatalogoDispositivo)
+class CatalogoDispositivoAdmin(admin.ModelAdmin):
+    """
+    Mejora el admin del catalogo para seleccionar funciones soportadas.
+    """
+
+    list_display = ("__str__", "marca", "categoria")
+    search_fields = ("modelo", "nombre_completo_producto", "marca__nombre", "categoria__subcategoria")
+    list_filter = ("marca", "categoria")
+    filter_horizontal = ("funciones_soportadas",)
+
+
+@admin.register(InstanciaDispositivo)
+class InstanciaDispositivoAdmin(admin.ModelAdmin):
+    """
+    Admin de instancias que permite seleccionar funciones usadas en cada proyecto.
+    """
+
+    list_display = ("id", "tag_dispositivo", "proyecto", "catalogo", "usuario_creador")
+    search_fields = ("tag_dispositivo", "proyecto__nombre_proyecto", "catalogo__modelo")
+    list_filter = ("proyecto__obra", "proyecto")
+    filter_horizontal = ("funciones_usadas",)
+
+
 admin.site.register(Marca)
 admin.site.register(Categoria)
-admin.site.register(CatalogoDispositivo)
-admin.site.register(InstanciaDispositivo)
