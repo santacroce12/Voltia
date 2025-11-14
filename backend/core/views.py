@@ -7,12 +7,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import InstanciaDispositivo, Obra, Proyecto
+from core.models import CatalogoDispositivo, InstanciaDispositivo, Obra, Proyecto, Cliente
 from core.serializers import (
+    CatalogoDispositivoSerializer,
     InstanciaDispositivoSerializer,
     ObraSerializer,
     ProyectoSerializer,
     RegistroUsuarioSerializer,
+    ClienteSerializer,
 )
 
 
@@ -90,3 +92,24 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         """Asigna automaticamente al usuario logueado como creador de la Instancia."""
         serializer.save(usuario_creador=self.request.user)
+
+
+class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Dispositivos del Catalogo.
+    """
+
+    queryset = CatalogoDispositivo.objects.all()
+    serializer_class = CatalogoDispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ClienteListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Clientes.
+    Solo usuarios autenticados pueden acceder.
+    """
+
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]

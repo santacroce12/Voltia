@@ -4,7 +4,7 @@ Serializadores para transformar los modelos en JSON listo para el front.
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from core.models import InstanciaDispositivo, Obra, Proyecto
+from core.models import CatalogoDispositivo, InstanciaDispositivo, Obra, Proyecto, Cliente
 
 
 class ProyectoSerializer(serializers.ModelSerializer):
@@ -24,6 +24,16 @@ class ProyectoSerializer(serializers.ModelSerializer):
             "estado_proyecto",
             "ubicacion_fisica",
         ]
+
+
+class ClienteSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo Cliente.
+    """
+
+    class Meta:
+        model = Cliente
+        fields = "__all__"
 
 
 class ObraSerializer(serializers.ModelSerializer):
@@ -52,6 +62,20 @@ class InstanciaDispositivoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CatalogoDispositivoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para la biblioteca de Dispositivos (Catalogo).
+    Permite al frontend ver y crear nuevas plantillas de dispositivos.
+    """
+
+    marca = serializers.StringRelatedField()
+    categoria = serializers.StringRelatedField()
+
+    class Meta:
+        model = CatalogoDispositivo
+        fields = "__all__"
+
+
 class RegistroUsuarioSerializer(serializers.ModelSerializer):
     """
     Serializador para registrar nuevos usuarios.
@@ -62,14 +86,11 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         model = User
         fields = ("username", "password", "email", "first_name", "last_name")
         extra_kwargs = {
-            "password": {"write_only": True},  # 'write_only' significa que la contrasena no se puede LEER
+            "password": {"write_only": True},
         }
 
     def create(self, validated_data):
-        """
-        Esta funcion se llama cuando los datos son validos.
-        Usamos 'create_user' para asegurar que la contrasena se guarde hasheada.
-        """
+        """Crea el usuario, guardando la contrasena hasheada."""
         usuario = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data.get("email", ""),

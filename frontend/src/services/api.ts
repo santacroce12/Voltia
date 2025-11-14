@@ -26,6 +26,17 @@ export type TokenRespuesta = {
     refresh: string;
 };
 
+export type Cliente = {
+    id: number;
+    nombre: string;
+    cuil: string;
+    direccion?: string;
+    notas?: string;
+};
+
+// Payload para crear un cliente (no necesita 'id')
+export type ClientePayload = Omit<Cliente, "id">;
+
 // --- Constantes ---
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
@@ -128,3 +139,43 @@ export async function loginUsuario(credenciales: {
 }
 
 // (Aquí añadiremos futuras funciones: crearObra, crearInstancia, etc.)
+
+/**
+ * [PROTEGIDO] Lista todos los clientes.
+ */
+export async function listarClientes(): Promise<Cliente[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/clientes/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener la lista de clientes");
+    }
+    return respuesta.json();
+}
+
+// (Aquí añadiremos futuras funciones: crearObra, crearInstancia, etc.)
+
+/**
+ * [PROTEGIDO] Crea un nuevo cliente.
+ */
+export async function crearCliente(datosCliente: ClientePayload): Promise<Cliente> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/clientes/`, {
+        method: "POST",
+        body: JSON.stringify(datosCliente),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        // Podríamos leer el body para ver errores de validación
+        throw new Error("No se pudo crear el cliente");
+    }
+    return respuesta.json();
+}

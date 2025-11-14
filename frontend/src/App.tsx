@@ -1,53 +1,57 @@
 /**
  * Vista principal que actúa como "portero".
- * Muestra el Login si no hay token, o la app principal si el usuario está logueado.
+ * Ahora también gestiona la lista de Clientes y Proyectos.
  */
 import { useEffect, useState } from "react";
+// Importamos los nuevos componentes
+import { ClienteList } from "./components/ClienteList";
+import { ClienteForm } from "./components/ClienteForm";
 import { ProjectList } from "./components/ProjectList";
-import { LoginForm } from "./components/LoginForm"; // Importamos el Login
+import { LoginForm } from "./components/LoginForm";
 import {
     listarProyectos,
     obtenerSalud,
-    getAuthToken, // Importamos utilidades
+    getAuthToken,
     limpiarToken,
+    listarClientes,
 } from "./services/api";
-import type { Proyecto, SaludAPI } from "./services/api";
+import type { Proyecto, SaludAPI, Cliente } from "./services/api";
 
 export default function App() {
-    // 1. Estado de autenticación. Leemos el token de localStorage al iniciar.
+    // --- Estados de Autenticación ---
     const [token, setToken] = useState<string | null>(() => getAuthToken());
 
-    // 2. Estados de datos (como antes)
+    // --- Estados de Datos ---
     const [mensajeSalud, setMensajeSalud] = useState<string>("Consultando API...");
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    // 3. Efecto para cargar datos (solo si estamos logueados)
+    // --- Efecto para Cargar Datos ---
     useEffect(() => {
         async function cargarDatos() {
             if (token) {
-                // Solo cargamos datos protegidos si tenemos token
                 try {
                     setError(null);
-                    // 'obtenerSalud' es pública, 'listarProyectos' es protegida
-                    const [estado, lista] = await Promise.all([
+                    // Ahora cargamos clientes Y proyectos en paralelo
+                    const [estado, listaProy, listaCli] = await Promise.all([
                         obtenerSalud(),
                         listarProyectos(),
+                        listarClientes(),
                     ]);
 
                     setMensajeSalud(`${estado.mensaje} (Proyectos: ${estado.total_proyectos})`);
-                    setProyectos(lista);
+                    setProyectos(listaProy);
+                    setClientes(listaCli);
                 } catch (err) {
                     console.error(err);
                     setError(
                         "No se pudo cargar información desde el backend. (Tu sesión puede haber expirado)",
                     );
-                    // Si falla (ej. 401), limpiamos el token para forzar login
                     limpiarToken();
                     setToken(null);
                 }
             } else {
-                // Si no hay token, solo cargamos datos públicos
                 obtenerSalud()
                     .then((estado: SaludAPI) =>
                         setMensajeSalud(`${estado.mensaje} (Proyectos: ${estado.total_proyectos})`),
@@ -57,22 +61,26 @@ export default function App() {
         }
 
         cargarDatos();
-    }, [token]); // Este efecto se re-ejecuta si el 'token' cambia
+    }, [token]);
 
-    // 4. Funciones de Login/Logout
+    // --- Funciones de Login/Logout ---
     const handleLoginExitoso = (nuevoToken: string) => {
-        setToken(nuevoToken); // Esto dispara el useEffect de arriba
+        setToken(nuevoToken);
     };
 
     const handleLogout = () => {
         limpiarToken();
         setToken(null);
-        setProyectos([]); // Limpiamos datos
+        setProyectos([]);
+        setClientes([]);
     };
 
-    // --- Renderizado Condicional ---
+    // --- Callback para el formulario ---
+    const handleClienteCreado = (nuevoCliente: Cliente) => {
+        setClientes([...clientes, nuevoCliente]);
+    };
 
-    // Si NO hay token, mostramos el formulario de Login
+    // --- Renderizado ---
     if (!token) {
         return (
             <main className="layout">
@@ -81,7 +89,6 @@ export default function App() {
         );
     }
 
-    // Si HAY token, mostramos la aplicación principal
     return (
         <main className="layout">
             <header className="hero">
@@ -92,7 +99,20 @@ export default function App() {
                 <span className="status">{mensajeSalud}</span>
             </header>
 
-            {error ? <p className="error">{error}</p> : <ProjectList proyectos={proyectos} />}
+            {error && <p className="error">{error}</p>}
+
+            {/* Seccion de Clientes */}
+            <ClienteForm onClienteCreado={handleClienteCreado} />
+            <ClienteList clientes={clientes} />
+
+            {/* Separador */}
+            <hr className="divider" />
+
+            {/* Seccion de Proyectos */}
+            <section className="cards-wrapper">
+                <h2>Proyectos Existentes</h2>
+                <ProjectList proyectos={proyectos} />
+            </section>
         </main>
     );
 }
