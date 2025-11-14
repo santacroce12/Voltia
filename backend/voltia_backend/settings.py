@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",  # API REST en espanol
     "corsheaders",  # Control de origenes para permitir al front comunicarse
+    "rest_framework_simplejwt",
     "core.apps.CoreConfig",  # Nuestra app base donde iniciaremos el dominio del negocio
 ]
 
@@ -111,16 +113,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Configuracion centralizada para DRF con comentarios para proximas ampliaciones
 REST_FRAMEWORK = {
+    # Comentado en espanol para explicar
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.renderers.BrowsableAPIRenderer",  # Para ver la API en el navegador
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        # Usamos SessionAuthentication para el Admin de Django
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
+        # Usamos JWT para que React se autentique
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        # Por defecto, ahora todo estara BLOQUEADO.
+        # Solo usuarios autenticados podran acceder a la API.
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -130,3 +137,16 @@ if cors_origins:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOW_ALL_ORIGINS = True
+
+# --- Configuracion de Simple JWT (JSON Web Tokens) ---
+SIMPLE_JWT = {
+    # Tiempo de vida del token de acceso principal
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    # Tiempo de vida del token de refresco (para obtener uno nuevo)
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    # Algoritmo de firma
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,  # Usa la misma clave secreta de Django
+}
