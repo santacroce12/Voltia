@@ -10,7 +10,7 @@ type ProyectoListProps = {
 
 export function ProjectList({ proyectos }: ProyectoListProps) {
     if (proyectos.length === 0) {
-        return <p className="placeholder">Todavia no hay proyectos registrados.</p>;
+        return <p className="placeholder">Todavía no hay proyectos registrados.</p>;
     }
 
     return (
@@ -18,10 +18,15 @@ export function ProjectList({ proyectos }: ProyectoListProps) {
             {proyectos.map((proyecto) => (
                 <article key={proyecto.id} className="card">
                     <header>
-                        <h3>{proyecto.nombre}</h3>
-                        <small>Creado: {new Date(proyecto.creado_en).toLocaleString()}</small>
+                        <h3>{proyecto.nombre_proyecto}</h3>
+                        <small>
+                            Creado el {new Date(proyecto.fecha_creacion).toLocaleString()} por{" "}
+                            {proyecto.usuario_creador}
+                        </small>
                     </header>
-                    <p>{proyecto.descripcion}</p>
+                    <p>Tipo: {proyecto.tipo} - Obra #{proyecto.obra}</p>
+                    <p>Estado: {proyecto.estado_proyecto}</p>
+                    <p>Ubicación: {proyecto.ubicacion_fisica}</p>
                 </article>
             ))}
         </section>
