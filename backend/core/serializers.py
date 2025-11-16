@@ -4,7 +4,16 @@ Serializadores para transformar los modelos en JSON listo para el front.
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from core.models import CatalogoDispositivo, InstanciaDispositivo, Obra, Proyecto, Cliente
+from core.models import (
+    CatalogoDispositivo,
+    InstanciaDispositivo,
+    Obra,
+    Proyecto,
+    Cliente,
+    Marca,
+    Categoria,
+    FuncionDispositivo,
+)
 
 
 class ProyectoSerializer(serializers.ModelSerializer):
@@ -68,8 +77,15 @@ class CatalogoDispositivoSerializer(serializers.ModelSerializer):
     Permite al frontend ver y crear nuevas plantillas de dispositivos.
     """
 
-    marca = serializers.StringRelatedField()
-    categoria = serializers.StringRelatedField()
+    marca = serializers.PrimaryKeyRelatedField(queryset=Marca.objects.all())
+    categoria = serializers.PrimaryKeyRelatedField(queryset=Categoria.objects.all())
+    funciones_soportadas = serializers.PrimaryKeyRelatedField(
+        queryset=FuncionDispositivo.objects.all(), many=True, required=False
+    )
+    marca_nombre = serializers.CharField(source="marca.nombre", read_only=True)
+    categoria_nombre = serializers.CharField(
+        source="categoria.categoria_principal", read_only=True
+    )
 
     class Meta:
         model = CatalogoDispositivo
@@ -99,3 +115,33 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             last_name=validated_data.get("last_name", ""),
         )
         return usuario
+
+
+class MarcaSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo Marca.
+    """
+
+    class Meta:
+        model = Marca
+        fields = "__all__"
+
+
+class CategoriaSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo Categoria.
+    """
+
+    class Meta:
+        model = Categoria
+        fields = "__all__"
+
+
+class FuncionDispositivoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo FuncionDispositivo.
+    """
+
+    class Meta:
+        model = FuncionDispositivo
+        fields = "__all__"
