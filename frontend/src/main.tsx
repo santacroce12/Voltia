@@ -14,11 +14,15 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ClientesPage } from "./pages/ClientesPage";
 import { ObrasPage } from "./pages/ObrasPage";
 import { ProyectosPage } from "./pages/ProyectosPage";
+import { ProyectoDetallePage } from "./pages/ProyectoDetallePage";
+import { IngenieriaPage } from "./pages/IngenieriaPage";
+import { IngenieriaDetallePage } from "./pages/IngenieriaDetallePage";
 import { CatalogoLayout } from "./pages/CatalogoLayout";
 import { MarcasPage } from "./pages/MarcasPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { FuncionesPage } from "./pages/FuncionesPage";
 import { DispositivosPage } from "./pages/DispositivosPage";
+import { DispositivosListadoPage } from "./pages/DispositivosListadoPage";
 import { LoginForm } from "./components/LoginForm";
 
 // Definicion de todas las rutas de la aplicacion
@@ -49,6 +53,18 @@ const router = createBrowserRouter([
                         element: <ProyectosPage />,
                     },
                     {
+                        path: "/proyecto/:proyectoId",
+                        element: <ProyectoDetallePage />,
+                    },
+                    {
+                        path: "/ingenieria",
+                        element: <IngenieriaPage />,
+                    },
+                    {
+                        path: "/ingenieria/proyecto/:proyectoId",
+                        element: <IngenieriaDetallePage />,
+                    },
+                    {
                         path: "/catalogo",
                         element: <CatalogoLayout />,
                         children: [
@@ -67,6 +83,10 @@ const router = createBrowserRouter([
                             {
                                 path: "dispositivos",
                                 element: <DispositivosPage />,
+                            },
+                            {
+                                path: "dispositivos/listar",
+                                element: <DispositivosListadoPage />,
                             },
                         ],
                     },

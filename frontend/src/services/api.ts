@@ -101,6 +101,8 @@ export type CatalogoDispositivo = {
     url_ficha_tecnica?: string;
     especificaciones: Record<string, any>;
     funciones_soportadas: number[];
+    marca_nombre?: string;
+    categoria_nombre?: string;
 };
 
 // Payload para crear un Dispositivo del Catalogo
@@ -112,6 +114,23 @@ export type CatalogoDispositivoPayload = {
     url_ficha_tecnica?: string;
     especificaciones: string;
     funciones_soportadas: number[];
+};
+
+export type InstanciaDispositivo = {
+    id: number;
+    proyecto: number;
+    catalogo: number;
+    usuario_creador: string;
+    tag_dispositivo?: string;
+    atributos: Record<string, any>;
+    funciones_usadas: number[];
+};
+
+export type InstanciaPayload = {
+    proyecto: number;
+    catalogo: number;
+    tag_dispositivo?: string;
+    atributos: string;
 };
 
 // --- Constantes ---
@@ -463,6 +482,45 @@ export async function crearCatalogoDispositivo(
         const errorData = await respuesta.json().catch(() => ({}));
         console.error("Error al crear dispositivo:", errorData);
         throw new Error("No se pudo crear el dispositivo. Revisa los campos.");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista Instancias de Dispositivo, filtradas por ID de Proyecto.
+ */
+export async function listarInstancias(proyectoId: number): Promise<InstanciaDispositivo[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/?proyecto=${proyectoId}`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudieron cargar las instancias del proyecto");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea una nueva Instancia de Dispositivo.
+ */
+export async function crearInstancia(
+    datosInstancia: InstanciaPayload,
+): Promise<InstanciaDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/`, {
+        method: "POST",
+        body: JSON.stringify(datosInstancia),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la instancia");
     }
     return respuesta.json();
 }

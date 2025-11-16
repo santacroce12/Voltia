@@ -96,6 +96,11 @@ class CatalogoDispositivo(models.Model):
         null=True,
         verbose_name="Ficha Tecnica (URL)",
     )
+    especificaciones = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Especificaciones (Potencia, Fase, etc.)",
+    )
     funciones_soportadas = models.ManyToManyField(
         "FuncionDispositivo",
         blank=True,

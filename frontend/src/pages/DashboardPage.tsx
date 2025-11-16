@@ -1,32 +1,40 @@
 ﻿/**
  * DashboardPage.tsx
- * Página principal que muestra la lista de proyectos.
+ * Página de bienvenida (Inicio) con métricas clave.
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ProjectList } from "../components/ProjectList";
 import { listarProyectos, type Proyecto } from "../services/api";
 
 export function DashboardPage() {
-    const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+    const [totalProyectos, setTotalProyectos] = useState(0);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         listarProyectos()
-            .then(setProyectos)
-            .catch(() => setError("No se pudieron cargar los proyectos."));
+            .then((data: Proyecto[]) => setTotalProyectos(data.length))
+            .catch(() => setError("No se pudo obtener el resumen de proyectos."));
     }, []);
 
     return (
-        <>
-            <button className="primary-button" onClick={() => navigate("/catalogo")}>
-                Gestionar Catálogo de Dispositivos
-            </button>
-            <section className="cards-wrapper">
-                <h2>Proyectos Existentes</h2>
-                {error ? <p className="error">{error}</p> : <ProjectList proyectos={proyectos} />}
-            </section>
-        </>
+        <section className="inicio-panel">
+            <div className="inicio-hero">
+                <h2>Bienvenido al centro energético de VOLTIA</h2>
+                <p>
+                    Visualiza en un único lugar las obras activas, coordina los equipos de ingeniería y
+                    asegura la trazabilidad de cada dispositivo desplegado.
+                </p>
+            </div>
+
+            <div className="inicio-stats">
+                <article className="stat-card">
+                    <h3>Proyectos monitoreados</h3>
+                    {error ? <p className="error">{error}</p> : <p className="stat-value">{totalProyectos}</p>}
+                </article>
+                <article className="stat-card">
+                    <h3>Flujo operativo</h3>
+                    <p className="stat-value">Ingeniería · Dispositivos · Catálogo</p>
+                </article>
+            </div>
+        </section>
     );
 }

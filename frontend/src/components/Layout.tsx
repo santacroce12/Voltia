@@ -27,7 +27,10 @@ export function Layout() {
     return (
         <>
             <header className="hero">
-                <h1>Sistema VOLTIA</h1>
+                <h1>Voltia | Plataforma Energética</h1>
+                <p className="hero-subtitle">
+                    Supervisión profesional de infraestructura eléctrica e ingeniería operativa.
+                </p>
                 <button onClick={handleLogout} className="logout-button">
                     Cerrar Sesión
                 </button>
@@ -35,11 +38,12 @@ export function Layout() {
             </header>
 
             <nav className="main-nav">
-                <Link to="/">Dashboard</Link>
+                <Link to="/">Inicio</Link>
                 <Link to="/clientes">Clientes</Link>
                 <Link to="/obras">Obras</Link>
                 <Link to="/proyectos">Proyectos</Link>
-                <Link to="/catalogo">Catálogo</Link>
+                <Link to="/ingenieria">Ingeniería</Link>
+                <Link to="/catalogo">Dispositivo</Link>
             </nav>
 
             <main className="layout">

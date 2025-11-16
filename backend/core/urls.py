@@ -16,4 +16,7 @@ urlpatterns = [
     path("obras/", views.ObraListCreateAPIView.as_view(), name="obras"),
     path("instancias/", views.InstanciaDispositivoListCreateAPIView.as_view(), name="instancias"),
     path("catalogo/", views.CatalogoDispositivoListCreateAPIView.as_view(), name="catalogo"),
+    path("marcas/", views.MarcaListCreateAPIView.as_view(), name="marcas"),
+    path("categorias/", views.CategoriaListCreateAPIView.as_view(), name="categorias"),
+    path("funciones/", views.FuncionDispositivoListCreateAPIView.as_view(), name="funciones"),
 ]

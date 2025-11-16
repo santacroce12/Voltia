@@ -8,7 +8,7 @@ import { NavLink, Outlet } from "react-router-dom";
 export function CatalogoLayout() {
     return (
         <div>
-            <h2 className="page-title">Gestión de Catálogo</h2>
+            <h2 className="page-title">Gestión de Dispositivos</h2>
 
             {/* Sub-Navegacion */}
             <nav className="sub-nav">
@@ -16,6 +16,7 @@ export function CatalogoLayout() {
                 <NavLink to="/catalogo/categorias">Categorías</NavLink>
                 <NavLink to="/catalogo/funciones">Funciones</NavLink>
                 <NavLink to="/catalogo/dispositivos">Dispositivos</NavLink>
+                <NavLink to="/catalogo/dispositivos/listar">Listar Dispositivos</NavLink>
             </nav>
 
             {/* Contenido de la pagina hija (ej. MarcasPage) */}

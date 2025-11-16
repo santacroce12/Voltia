@@ -7,7 +7,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import CatalogoDispositivo, InstanciaDispositivo, Obra, Proyecto, Cliente
+from core.models import (
+    CatalogoDispositivo,
+    InstanciaDispositivo,
+    Obra,
+    Proyecto,
+    Cliente,
+    Marca,
+    Categoria,
+    FuncionDispositivo,
+)
 from core.serializers import (
     CatalogoDispositivoSerializer,
     InstanciaDispositivoSerializer,
@@ -15,6 +24,9 @@ from core.serializers import (
     ProyectoSerializer,
     RegistroUsuarioSerializer,
     ClienteSerializer,
+    MarcaSerializer,
+    CategoriaSerializer,
+    FuncionDispositivoSerializer,
 )
 
 
@@ -94,9 +106,18 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
     Solo usuarios autenticados pueden acceder.
     """
 
-    queryset = InstanciaDispositivo.objects.all()
     serializer_class = InstanciaDispositivoSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Filtra por proyecto cuando llegue el parametro ?proyecto=ID.
+        """
+        queryset = InstanciaDispositivo.objects.all().order_by("-id")
+        proyecto_id = self.request.query_params.get("proyecto")
+        if proyecto_id:
+            queryset = queryset.filter(proyecto_id=proyecto_id)
+        return queryset
 
     def perform_create(self, serializer):
         """Asigna automaticamente al usuario logueado como creador de la Instancia."""
@@ -108,9 +129,28 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
     Vista para LISTAR (GET) y CREAR (POST) Dispositivos del Catalogo.
     """
 
-    queryset = CatalogoDispositivo.objects.all()
     serializer_class = CatalogoDispositivoSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Permite filtrar el catálogo por marca, categoría o texto en nombre/modelo.
+        """
+        queryset = CatalogoDispositivo.objects.all().order_by("-id")
+        marca_id = self.request.query_params.get("marca")
+        categoria_id = self.request.query_params.get("categoria")
+        search = self.request.query_params.get("q")
+
+        if marca_id:
+            queryset = queryset.filter(marca_id=marca_id)
+        if categoria_id:
+            queryset = queryset.filter(categoria_id=categoria_id)
+        if search:
+            queryset = queryset.filter(
+                models.Q(nombre_completo_producto__icontains=search)
+                | models.Q(modelo__icontains=search)
+            )
+        return queryset
 
 
 class ClienteListCreateAPIView(generics.ListCreateAPIView):
@@ -121,4 +161,34 @@ class ClienteListCreateAPIView(generics.ListCreateAPIView):
 
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class MarcaListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Marcas.
+    """
+
+    queryset = Marca.objects.all()
+    serializer_class = MarcaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class CategoriaListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Categorias.
+    """
+
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class FuncionDispositivoListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Funciones de Dispositivos.
+    """
+
+    queryset = FuncionDispositivo.objects.all()
+    serializer_class = FuncionDispositivoSerializer
     permission_classes = [permissions.IsAuthenticated]
