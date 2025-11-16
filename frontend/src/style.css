@@ -271,3 +271,57 @@ button:disabled {
     border-bottom: 1px solid #d1d5db;
     padding-bottom: 0.5rem;
 }
+
+/* --- Boton destacado para llamar a acciones clave --- */
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.75rem;
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.primary-button:hover {
+    background-color: #1d4ed8;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+.sub-nav {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid #d1d5db;
+    margin-bottom: 2rem;
+}
+
+.sub-nav a {
+    text-decoration: none;
+    color: #6b7280;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 2px solid transparent;
+    transform: translateY(2px);
+}
+
+.sub-nav a:hover {
+    color: #1f232b;
+}
+
+.sub-nav a.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+}
+
+.sub-page-content {
+    padding-top: 1rem;
+}
+
+.form-grid .self-end {
+    align-self: flex-end;
+}

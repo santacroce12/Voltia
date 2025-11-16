@@ -1,7 +1,6 @@
-/**
+﻿/**
  * ProyectosPage.tsx
  * Página de gestión de Proyectos (Flujo Master-Detail).
- * Muestra lista de Obras, y al seleccionar una, muestra sus Proyectos y el formulario.
  */
 import { useEffect, useState } from "react";
 import { ProjectList } from "../components/ProjectList";

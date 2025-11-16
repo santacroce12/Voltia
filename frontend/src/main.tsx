@@ -14,6 +14,11 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ClientesPage } from "./pages/ClientesPage";
 import { ObrasPage } from "./pages/ObrasPage";
 import { ProyectosPage } from "./pages/ProyectosPage";
+import { CatalogoLayout } from "./pages/CatalogoLayout";
+import { MarcasPage } from "./pages/MarcasPage";
+import { CategoriasPage } from "./pages/CategoriasPage";
+import { FuncionesPage } from "./pages/FuncionesPage";
+import { DispositivosPage } from "./pages/DispositivosPage";
 import { LoginForm } from "./components/LoginForm";
 
 // Definicion de todas las rutas de la aplicacion
@@ -43,7 +48,28 @@ const router = createBrowserRouter([
                         path: "/proyectos",
                         element: <ProyectosPage />,
                     },
-                    // (Aqui agregaremos /obras y /catalogo despues)
+                    {
+                        path: "/catalogo",
+                        element: <CatalogoLayout />,
+                        children: [
+                            {
+                                path: "marcas",
+                                element: <MarcasPage />,
+                            },
+                            {
+                                path: "categorias",
+                                element: <CategoriasPage />,
+                            },
+                            {
+                                path: "funciones",
+                                element: <FuncionesPage />,
+                            },
+                            {
+                                path: "dispositivos",
+                                element: <DispositivosPage />,
+                            },
+                        ],
+                    },
                 ],
             },
             // --- Rutas Publicas ---

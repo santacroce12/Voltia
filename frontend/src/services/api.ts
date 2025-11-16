@@ -63,6 +63,57 @@ export type ProyectoPayload = {
     estado_proyecto: string;
 };
 
+export type Marca = {
+    id: number;
+    nombre: string;
+};
+
+export type Categoria = {
+    id: number;
+    categoria_principal: string;
+    subcategoria: string;
+    descripcion?: string;
+};
+
+export type FuncionDispositivo = {
+    id: number;
+    codigo_funcion?: string;
+    nombre: string;
+    descripcion?: string;
+};
+
+// Payload para crear una Marca
+export type MarcaPayload = Omit<Marca, "id">;
+
+// Payload para crear una Categoria
+export type CategoriaPayload = Omit<Categoria, "id">;
+
+// Payload para crear una Funcion
+export type FuncionPayload = Omit<FuncionDispositivo, "id">;
+
+export type CatalogoDispositivo = {
+    id: number;
+    marca: number;
+    categoria: number;
+    modelo: string;
+    nombre_completo_producto: string;
+    descripcion_funcional?: string;
+    url_ficha_tecnica?: string;
+    especificaciones: Record<string, any>;
+    funciones_soportadas: number[];
+};
+
+// Payload para crear un Dispositivo del Catalogo
+export type CatalogoDispositivoPayload = {
+    modelo: string;
+    nombre_completo_producto: string;
+    marca: number;
+    categoria: number;
+    url_ficha_tecnica?: string;
+    especificaciones: string;
+    funciones_soportadas: number[];
+};
+
 // --- Constantes ---
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
@@ -260,6 +311,158 @@ export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Pro
 
     if (!respuesta.ok) {
         throw new Error("No se pudo crear el proyecto");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista todas las Marcas.
+ */
+export async function listarMarcas(): Promise<Marca[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/marcas/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener la lista de marcas");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista todas las Categorias.
+ */
+export async function listarCategorias(): Promise<Categoria[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/categorias/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener la lista de categorías");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista todas las Funciones de Dispositivos.
+ */
+export async function listarFunciones(): Promise<FuncionDispositivo[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/funciones/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener la lista de funciones");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea una nueva Categoria.
+ */
+export async function crearCategoria(datosCategoria: CategoriaPayload): Promise<Categoria> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/categorias/`, {
+        method: "POST",
+        body: JSON.stringify(datosCategoria),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la categoría");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea una nueva Funcion de Dispositivo.
+ */
+export async function crearFuncion(datosFuncion: FuncionPayload): Promise<FuncionDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/funciones/`, {
+        method: "POST",
+        body: JSON.stringify(datosFuncion),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la función");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea una nueva Marca.
+ */
+export async function crearMarca(datosMarca: MarcaPayload): Promise<Marca> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/marcas/`, {
+        method: "POST",
+        body: JSON.stringify(datosMarca),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la marca");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista todos los dispositivos del Catalogo.
+ */
+export async function listarCatalogoDispositivos(): Promise<CatalogoDispositivo[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/catalogo/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener el catálogo de dispositivos");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea un nuevo Dispositivo en el Catalogo.
+ */
+export async function crearCatalogoDispositivo(
+    datosDispositivo: CatalogoDispositivoPayload,
+): Promise<CatalogoDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/catalogo/`, {
+        method: "POST",
+        body: JSON.stringify(datosDispositivo),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({}));
+        console.error("Error al crear dispositivo:", errorData);
+        throw new Error("No se pudo crear el dispositivo. Revisa los campos.");
     }
     return respuesta.json();
 }

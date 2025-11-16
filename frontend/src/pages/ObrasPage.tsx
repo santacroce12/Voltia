@@ -1,7 +1,7 @@
-/**
+﻿/**
  * ObrasPage.tsx
  * Página de gestión de Obras (Flujo Master-Detail).
- * Muestra lista de Clientes, y al seleccionar uno, muestra sus Obras y el formulario.
+ * Muestra lista de Clientes y, al seleccionar uno, muestra sus Obras y el formulario.
  */
 import { useEffect, useState } from "react";
 import { ObraList } from "../components/ObraList";
@@ -72,7 +72,11 @@ export function ObrasPage() {
 
             <section className="cards-wrapper">
                 <h2>Obras en {clienteSeleccionado.nombre}</h2>
-                {cargando ? <p>Cargando obras...</p> : <ObraList obras={obras} onObraSeleccionada={() => {}} />}
+                {cargando ? (
+                    <p>Cargando obras...</p>
+                ) : (
+                    <ObraList obras={obras} onObraSeleccionada={() => {}} />
+                )}
             </section>
         </>
     );

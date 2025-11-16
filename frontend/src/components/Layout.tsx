@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Layout.tsx
- * Componente principal que define la estructura visual de la app (header, navegacion).
+ * Componente principal que define la estructura visual de la app (header, navegación).
  * Muestra el contenido de la ruta activa usando el componente <Outlet>.
  */
 import { Link, Outlet, useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ export function Layout() {
     const navigate = useNavigate();
     const [mensajeSalud, setMensajeSalud] = useState("Consultando API...");
 
-    // Carga el estado de salud al montar el layout
     useEffect(() => {
         obtenerSalud()
             .then((estado: SaludAPI) =>
@@ -22,7 +21,7 @@ export function Layout() {
 
     const handleLogout = () => {
         limpiarToken();
-        navigate("/login"); // Redirige al login
+        navigate("/login");
     };
 
     return (
@@ -35,7 +34,6 @@ export function Layout() {
                 <span className="status">{mensajeSalud}</span>
             </header>
 
-            {/* Barra de Navegacion Principal */}
             <nav className="main-nav">
                 <Link to="/">Dashboard</Link>
                 <Link to="/clientes">Clientes</Link>
@@ -44,9 +42,7 @@ export function Layout() {
                 <Link to="/catalogo">Catálogo</Link>
             </nav>
 
-            {/* Contenedor principal donde se renderizará la página activa */}
             <main className="layout">
-                {/* Outlet es el marcador de posicion de React Router */}
                 <Outlet />
             </main>
         </>

@@ -12,8 +12,11 @@ export default function App() {
     const location = useLocation();
 
     if (!token) {
-        // Si no hay token, redirigimos al login
-        // Guardamos la ruta a la que queria ir (location.pathname)
+        // Permitimos acceder al login sin token
+        if (location.pathname === "/login") {
+            return <Outlet />;
+        }
+        // Si no hay token y la ruta no es /login, redirigimos
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
