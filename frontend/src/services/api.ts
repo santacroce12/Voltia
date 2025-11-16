@@ -203,10 +203,15 @@ export async function crearCliente(datosCliente: ClientePayload): Promise<Client
 }
 
 /**
- * [PROTEGIDO] Lista todas las obras.
+ * [PROTEGIDO] Lista todas las obras, opcionalmente filtradas por cliente.
  */
-export async function listarObras(): Promise<Obra[]> {
-    const respuesta = await fetchProtegido(`${API_BASE_URL}/obras/`);
+export async function listarObras(clienteId?: number): Promise<Obra[]> {
+    let url = `${API_BASE_URL}/obras/`;
+    if (clienteId) {
+        url += `?cliente=${clienteId}`;
+    }
+
+    const respuesta = await fetchProtegido(url);
 
     if (respuesta.status === 401) {
         limpiarToken();

@@ -70,9 +70,18 @@ class ObraListCreateAPIView(generics.ListCreateAPIView):
     Solo usuarios autenticados pueden acceder.
     """
 
-    queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Filtra por cliente cuando llegue el parametro ?cliente=ID.
+        """
+        queryset = Obra.objects.all().order_by("-id")
+        cliente_id = self.request.query_params.get("cliente")
+        if cliente_id:
+            queryset = queryset.filter(cliente_id=cliente_id)
+        return queryset
 
     def perform_create(self, serializer):
         """Asigna automaticamente al usuario logueado como creador de la Obra."""

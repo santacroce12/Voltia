@@ -1,51 +1,32 @@
 /**
  * Formulario para crear una nueva Obra.
- * Carga la lista de clientes para un <select>.
+ * Recibe el Cliente padre como prop.
  */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-import {
-    crearObra,
-    listarClientes,
-    type Obra,
-    type ObraPayload,
-    type Cliente,
-} from "../services/api";
+import { crearObra, type Obra, type ObraPayload, type Cliente } from "../services/api";
 
 type ObraFormProps = {
+    cliente: Cliente;
     onObraCreada: (nuevaObra: Obra) => void;
 };
 
-export function ObraForm({ onObraCreada }: ObraFormProps) {
+export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
     const [nombre, setNombre] = useState("");
     const [ubicacion, setUbicacion] = useState("");
     const [estado, setEstado] = useState("pendiente");
-    const [clienteId, setClienteId] = useState("");
-
-    const [clientes, setClientes] = useState<Cliente[]>([]);
 
     const [error, setError] = useState<string | null>(null);
     const [cargando, setCargando] = useState(false);
 
-    useEffect(() => {
-        listarClientes()
-            .then(setClientes)
-            .catch(() => setError("Error: No se pudieron cargar los clientes para el selector."));
-    }, []);
-
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!clienteId) {
-            setError("Debe seleccionar un cliente.");
-            return;
-        }
-
         setError(null);
         setCargando(true);
 
         const payload: ObraPayload = {
             nombre_obra: nombre,
-            cliente: Number(clienteId),
+            cliente: cliente.id,
             estado_obra: estado,
             ubicacion,
         };
@@ -53,10 +34,8 @@ export function ObraForm({ onObraCreada }: ObraFormProps) {
         try {
             const nuevaObra = await crearObra(payload);
             onObraCreada(nuevaObra);
-
             setNombre("");
             setUbicacion("");
-            setClienteId("");
         } catch (err) {
             setError("Error al crear la obra.");
         } finally {
@@ -66,27 +45,8 @@ export function ObraForm({ onObraCreada }: ObraFormProps) {
 
     return (
         <form className="inline-form" onSubmit={handleSubmit}>
-            <h2>Crear Nueva Obra</h2>
+            <h2>Crear Obra para: {cliente.nombre}</h2>
             <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="obra-cliente">Cliente (Requerido)</label>
-                    <select
-                        id="obra-cliente"
-                        value={clienteId}
-                        onChange={(e) => setClienteId(e.target.value)}
-                        required
-                    >
-                        <option value="" disabled>
-                            -- Seleccionar Cliente --
-                        </option>
-                        {clientes.map((cliente) => (
-                            <option key={cliente.id} value={cliente.id}>
-                                {cliente.nombre} (CUIT: {cliente.cuil})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
                 <div className="form-group">
                     <label htmlFor="obra-nombre">Nombre de la Obra</label>
                     <input

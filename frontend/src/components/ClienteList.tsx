@@ -5,9 +5,10 @@ import type { Cliente } from "../services/api";
 
 type ClienteListProps = {
     clientes: Cliente[];
+    onClienteSeleccionado: (cliente: Cliente) => void;
 };
 
-export function ClienteList({ clientes }: ClienteListProps) {
+export function ClienteList({ clientes, onClienteSeleccionado }: ClienteListProps) {
     if (clientes.length === 0) {
         return <p className="placeholder">No hay clientes cargados.</p>;
     }
@@ -15,9 +16,15 @@ export function ClienteList({ clientes }: ClienteListProps) {
     return (
         <section className="cards-wrapper">
             <h2>Clientes Existentes</h2>
-            <div className="cards small-cards">
+            <div className="cards small-cards clickable-cards">
                 {clientes.map((cliente) => (
-                    <article key={cliente.id} className="card">
+                    <article
+                        key={cliente.id}
+                        className="card"
+                        onClick={() => onClienteSeleccionado(cliente)}
+                        tabIndex={0}
+                        onKeyDown={(e) => (e.key === "Enter" ? onClienteSeleccionado(cliente) : null)}
+                    >
                         <header>
                             <h3>{cliente.nombre}</h3>
                             <small>ID: {cliente.id}</small>

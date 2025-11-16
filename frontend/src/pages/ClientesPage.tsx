@@ -24,7 +24,11 @@ export function ClientesPage() {
     return (
         <>
             <ClienteForm onClienteCreado={handleClienteCreado} />
-            {error ? <p className="error">{error}</p> : <ClienteList clientes={clientes} />}
+            {error ? (
+                <p className="error">{error}</p>
+            ) : (
+                <ClienteList clientes={clientes} onClienteSeleccionado={() => {}} />
+            )}
         </>
     );
 }

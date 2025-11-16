@@ -1,52 +1,33 @@
 /**
  * Formulario para crear un nuevo Proyecto.
- * Carga la lista de Obras para un <select>.
+ * Recibe la Obra padre como prop.
  */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-import {
-    crearProyecto,
-    listarObras,
-    type Proyecto,
-    type ProyectoPayload,
-    type Obra,
-} from "../services/api";
+import { crearProyecto, type Proyecto, type ProyectoPayload, type Obra } from "../services/api";
 
 type ProyectoFormProps = {
+    obra: Obra;
     onProyectoCreado: (nuevoProyecto: Proyecto) => void;
 };
 
-export function ProyectoForm({ onProyectoCreado }: ProyectoFormProps) {
+export function ProyectoForm({ obra, onProyectoCreado }: ProyectoFormProps) {
     const [nombre, setNombre] = useState("");
     const [tipo, setTipo] = useState("proteccion");
     const [ubicacion, setUbicacion] = useState("");
     const [estado, setEstado] = useState("proceso");
-    const [obraId, setObraId] = useState("");
-
-    const [obras, setObras] = useState<Obra[]>([]);
 
     const [error, setError] = useState<string | null>(null);
     const [cargando, setCargando] = useState(false);
 
-    useEffect(() => {
-        listarObras()
-            .then(setObras)
-            .catch(() => setError("Error: No se pudieron cargar las obras."));
-    }, []);
-
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!obraId) {
-            setError("Debe seleccionar una obra.");
-            return;
-        }
-
         setError(null);
         setCargando(true);
 
         const payload: ProyectoPayload = {
             nombre_proyecto: nombre,
-            obra: Number(obraId),
+            obra: obra.id,
             tipo,
             ubicacion_fisica: ubicacion,
             estado_proyecto: estado,
@@ -55,10 +36,8 @@ export function ProyectoForm({ onProyectoCreado }: ProyectoFormProps) {
         try {
             const nuevoProyecto = await crearProyecto(payload);
             onProyectoCreado(nuevoProyecto);
-
             setNombre("");
             setUbicacion("");
-            setObraId("");
             setTipo("proteccion");
             setEstado("proceso");
         } catch (err) {
@@ -70,28 +49,9 @@ export function ProyectoForm({ onProyectoCreado }: ProyectoFormProps) {
 
     return (
         <form className="inline-form" onSubmit={handleSubmit}>
-            <h2>Crear Nuevo Proyecto</h2>
-            <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="proy-obra">Obra (Requerido)</label>
-                    <select
-                        id="proy-obra"
-                        value={obraId}
-                        onChange={(e) => setObraId(e.target.value)}
-                        required
-                    >
-                        <option value="" disabled>
-                            -- Seleccionar Obra --
-                        </option>
-                        {obras.length === 0 && <option disabled>Cargando obras...</option>}
-                        {obras.map((obra) => (
-                            <option key={obra.id} value={obra.id}>
-                                {obra.nombre_obra}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <h2>Crear Proyecto en: {obra.nombre_obra}</h2>
 
+            <div className="form-grid">
                 <div className="form-group">
                     <label htmlFor="proy-nombre">Nombre del Proyecto</label>
                     <input
@@ -132,7 +92,7 @@ export function ProyectoForm({ onProyectoCreado }: ProyectoFormProps) {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="proy-ubicacion">Ubicación Física</label>
+                    <label htmlFor="proy-ubicacion">Ubicación Física (Opcional)</label>
                     <input
                         id="proy-ubicacion"
                         type="text"
