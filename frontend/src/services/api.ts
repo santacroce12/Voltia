@@ -37,6 +37,32 @@ export type Cliente = {
 // Payload para crear un cliente (no necesita 'id')
 export type ClientePayload = Omit<Cliente, "id">;
 
+export type Obra = {
+    id: number;
+    cliente: number;
+    usuario_creador: string;
+    nombre_obra: string;
+    ubicacion?: string;
+    estado_obra: string;
+};
+
+// Payload para crear una Obra
+export type ObraPayload = {
+    nombre_obra: string;
+    cliente: number;
+    ubicacion?: string;
+    estado_obra: string;
+};
+
+// Payload para crear un Proyecto
+export type ProyectoPayload = {
+    nombre_proyecto: string;
+    obra: number;
+    tipo: string;
+    ubicacion_fisica?: string;
+    estado_proyecto: string;
+};
+
 // --- Constantes ---
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
@@ -138,8 +164,6 @@ export async function loginUsuario(credenciales: {
     return data.access;
 }
 
-// (Aquí añadiremos futuras funciones: crearObra, crearInstancia, etc.)
-
 /**
  * [PROTEGIDO] Lista todos los clientes.
  */
@@ -156,8 +180,6 @@ export async function listarClientes(): Promise<Cliente[]> {
     }
     return respuesta.json();
 }
-
-// (Aquí añadiremos futuras funciones: crearObra, crearInstancia, etc.)
 
 /**
  * [PROTEGIDO] Crea un nuevo cliente.
@@ -179,3 +201,62 @@ export async function crearCliente(datosCliente: ClientePayload): Promise<Client
     }
     return respuesta.json();
 }
+
+/**
+ * [PROTEGIDO] Lista todas las obras.
+ */
+export async function listarObras(): Promise<Obra[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/obras/`);
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener la lista de obras");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea una nueva obra.
+ */
+export async function crearObra(datosObra: ObraPayload): Promise<Obra> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/obras/`, {
+        method: "POST",
+        body: JSON.stringify(datosObra),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la obra");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Crea un nuevo proyecto.
+ */
+export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Proyecto> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/proyectos/`, {
+        method: "POST",
+        body: JSON.stringify(datosProyecto),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear el proyecto");
+    }
+    return respuesta.json();
+}
+
+// (Aquí añadiremos futuras funciones: crearInstancia, etc.)
