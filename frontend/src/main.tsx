@@ -7,6 +7,8 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App";
 import "./style.css";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 // Importamos los componentes de página y layout
 import { Layout } from "./components/Layout";
@@ -23,80 +25,89 @@ import { CategoriasPage } from "./pages/CategoriasPage";
 import { FuncionesPage } from "./pages/FuncionesPage";
 import { DispositivosPage } from "./pages/DispositivosPage";
 import { DispositivosListadoPage } from "./pages/DispositivosListadoPage";
-import { LoginForm } from "./components/LoginForm";
+import { LoginPage } from "./pages/LoginPage";
 
-// Definicion de todas las rutas de la aplicacion
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <App />, // App ahora es el "portero" de seguridad
+        element: <App />,
         children: [
-            // --- Rutas Protegidas ---
-            // Usan el Layout principal (con header y navegacion)
             {
                 element: <Layout />,
                 children: [
                     {
                         path: "/",
                         element: <DashboardPage />,
+                        handle: { crumb: () => "Inicio" },
                     },
                     {
                         path: "/clientes",
                         element: <ClientesPage />,
+                        handle: { crumb: () => "Clientes" },
                     },
                     {
                         path: "/obras",
                         element: <ObrasPage />,
+                        handle: { crumb: () => "Obras" },
                     },
                     {
                         path: "/proyectos",
                         element: <ProyectosPage />,
+                        handle: { crumb: () => "Proyectos" },
                     },
                     {
                         path: "/proyecto/:proyectoId",
                         element: <ProyectoDetallePage />,
+                        handle: { crumb: (data: any) => `Proyecto #${data.params.proyectoId}` },
                     },
                     {
                         path: "/ingenieria",
                         element: <IngenieriaPage />,
+                        handle: { crumb: () => "Ingeniería" },
                     },
                     {
                         path: "/ingenieria/proyecto/:proyectoId",
                         element: <IngenieriaDetallePage />,
+                        handle: { crumb: (data: any) => `Ing. Proyecto #${data.params.proyectoId}` },
                     },
                     {
                         path: "/catalogo",
                         element: <CatalogoLayout />,
+                        handle: { crumb: () => "Catálogo" },
                         children: [
                             {
                                 path: "marcas",
                                 element: <MarcasPage />,
+                                handle: { crumb: () => "Marcas" },
                             },
                             {
                                 path: "categorias",
                                 element: <CategoriasPage />,
+                                handle: { crumb: () => "Categorías" },
                             },
                             {
                                 path: "funciones",
                                 element: <FuncionesPage />,
+                                handle: { crumb: () => "Funciones" },
                             },
                             {
                                 path: "dispositivos",
                                 element: <DispositivosPage />,
+                                handle: { crumb: () => "Crear Dispositivo" },
                             },
                             {
                                 path: "dispositivos/listar",
                                 element: <DispositivosListadoPage />,
+                                handle: { crumb: () => "Listar Dispositivos" },
                             },
                         ],
                     },
                 ],
             },
-            // --- Rutas Publicas ---
-            // No usan el Layout principal
             {
                 path: "/login",
-                element: <LoginForm onLoginExitoso={() => (window.location.href = "/")} />,
+                element: <LoginPage />,
+                handle: { crumb: () => "Login" },
             },
         ],
     },
@@ -109,6 +120,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
     <StrictMode>
-        <RouterProvider router={router} />
+        <ThemeProvider defaultTheme="light" storageKey="voltia-theme">
+            <TooltipProvider>
+                <RouterProvider router={router} />
+            </TooltipProvider>
+        </ThemeProvider>
     </StrictMode>,
 );

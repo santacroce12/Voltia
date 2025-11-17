@@ -1,14 +1,12 @@
 /**
  * Pagina de gestion de Dispositivos del Catalogo.
  */
-import { useEffect, useMemo, useState, type FormEvent, type ChangeEvent } from "react";
+import { useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 import {
-    listarCatalogoDispositivos,
     listarMarcas,
     listarCategorias,
     listarFunciones,
     crearCatalogoDispositivo,
-    type CatalogoDispositivo,
     type CatalogoDispositivoPayload,
     type Marca,
     type Categoria,
@@ -19,10 +17,9 @@ type DispositivoFormProps = {
     marcas: Marca[];
     categorias: Categoria[];
     funciones: FuncionDispositivo[];
-    onDispositivoCreado: (disp: CatalogoDispositivo) => void;
 };
 
-function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }: DispositivoFormProps) {
+function DispositivoForm({ marcas, categorias, funciones }: DispositivoFormProps) {
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [url, setUrl] = useState("");
@@ -33,6 +30,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
 
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [exito, setExito] = useState<string | null>(null);
 
     const handleFuncionesChange = (e: ChangeEvent<HTMLSelectElement>) => {
         const opciones = Array.from(e.target.selectedOptions, (option) => Number(option.value));
@@ -54,6 +52,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
 
         setCargando(true);
         setError(null);
+        setExito(null);
 
         const payload: CatalogoDispositivoPayload = {
             modelo,
@@ -66,12 +65,12 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
         };
 
         try {
-            const nuevo = await crearCatalogoDispositivo(payload);
-            onDispositivoCreado(nuevo);
+            await crearCatalogoDispositivo(payload);
             setModelo("");
             setNombre("");
             setUrl("");
             setFuncionesIds([]);
+            setExito("Dispositivo guardado correctamente.");
         } catch (err: any) {
             setError(err.message || "Error al guardar.");
         } finally {
@@ -139,209 +138,41 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
             </div>
             <button type="submit" disabled={cargando}>{cargando ? "Guardando..." : "Guardar Dispositivo"}</button>
             {error && <p className="error small-error">{error}</p>}
+            {exito && <p className="success small-success">{exito}</p>}
         </form>
     );
 }
 
-type FiltrosProps = {
-    marcas: Marca[];
-    categorias: Categoria[];
-    filtroMarca: string;
-    filtroCategoriaPrincipal: string;
-    filtroSubcategoria: string;
-    filtroTexto: string;
-    onChange: (campo: string, valor: string) => void;
-};
-
-function FiltrosCatalogo({
-    marcas,
-    categorias,
-    filtroMarca,
-    filtroCategoriaPrincipal,
-    filtroSubcategoria,
-    filtroTexto,
-    onChange,
-}: FiltrosProps) {
-    const categoriasPrincipales = Array.from(new Set(categorias.map((c) => c.categoria_principal))).sort();
-    const subcategoriasDisponibles = Array.from(
-        new Set(
-            categorias
-                .filter((c) => (filtroCategoriaPrincipal ? c.categoria_principal === filtroCategoriaPrincipal : true))
-                .map((c) => c.subcategoria),
-        ),
-    ).sort();
-
-    return (
-        <div className="inline-form catalogo-filter-card">
-            <div className="section-header">
-                <h3>Listar Dispositivos</h3>
-                <p>Visualiza el catálogo aplicando los filtros que necesites.</p>
-            </div>
-            <div className="form-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-                <div className="form-group">
-                    <label>Marca</label>
-                    <select value={filtroMarca} onChange={(e) => onChange("marca", e.target.value)}>
-                        <option value="">Todas</option>
-                        {marcas.map((m) => (
-                            <option key={m.id} value={m.id}>
-                                {m.nombre}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label>Categoría</label>
-                    <select value={filtroCategoriaPrincipal} onChange={(e) => onChange("categoriaPrincipal", e.target.value)}>
-                        <option value="">Todas</option>
-                        {categoriasPrincipales.map((categoria) => (
-                            <option key={categoria} value={categoria}>
-                                {categoria}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label>Subcategoría</label>
-                    <select value={filtroSubcategoria} onChange={(e) => onChange("subcategoria", e.target.value)}>
-                        <option value="">Todas</option>
-                        {subcategoriasDisponibles.map((subcategoria) => (
-                            <option key={subcategoria} value={subcategoria}>
-                                {subcategoria}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                    <label>Buscar por nombre o modelo</label>
-                    <input
-                        type="text"
-                        value={filtroTexto}
-                        onChange={(e) => onChange("texto", e.target.value)}
-                        placeholder="Ej: Protección"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function TablaCatalogo({ dispositivos }: { dispositivos: CatalogoDispositivo[] }) {
-    if (dispositivos.length === 0) {
-        return <p className="placeholder">No hay dispositivos con los filtros seleccionados.</p>;
-    }
-
-    return (
-        <div className="table-wrapper">
-            <table className="catalogo-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Marca</th>
-                        <th>Categoría</th>
-                        <th>Modelo</th>
-                        <th>Nombre Comercial</th>
-                        <th>Funciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {dispositivos.map((d) => (
-                        <tr key={d.id}>
-                            <td>{d.id}</td>
-                            <td>{d.marca_nombre ?? d.marca}</td>
-                            <td>{d.categoria_nombre ?? d.categoria}</td>
-                            <td>{d.modelo}</td>
-                            <td>{d.nombre_completo_producto}</td>
-                            <td>{d.funciones_soportadas?.length ?? 0}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
 
 export function DispositivosPage() {
-    const [dispositivos, setDispositivos] = useState<CatalogoDispositivo[]>([]);
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
-
-    const [filtroMarca, setFiltroMarca] = useState("");
-    const [filtroCategoriaPrincipal, setFiltroCategoriaPrincipal] = useState("");
-    const [filtroSubcategoria, setFiltroSubcategoria] = useState("");
-    const [filtroTexto, setFiltroTexto] = useState("");
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        Promise.all([listarCatalogoDispositivos(), listarMarcas(), listarCategorias(), listarFunciones()])
-            .then(([listaDisp, listaMarcas, listaCats, listaFuncs]) => {
-                setDispositivos(listaDisp);
+        Promise.all([listarMarcas(), listarCategorias(), listarFunciones()])
+            .then(([listaMarcas, listaCats, listaFuncs]) => {
                 setMarcas(listaMarcas);
                 setCategorias(listaCats);
                 setFunciones(listaFuncs);
             })
-            .catch(() => console.error("No se pudo cargar el catálogo"));
+            .catch(() => setError("No se pudieron cargar las referencias del catálogo."))
+            .finally(() => setCargando(false));
     }, []);
 
-    const categoriaLookup = useMemo(() => {
-        const mapa = new Map<number, Categoria>();
-        categorias.forEach((cat) => mapa.set(cat.id, cat));
-        return mapa;
-    }, [categorias]);
+    if (cargando) {
+        return <p>Cargando datos del catálogo...</p>;
+    }
 
-    const dispositivosFiltrados = useMemo(() => {
-        return dispositivos.filter((d) => {
-            const coincideMarca = filtroMarca ? d.marca === Number(filtroMarca) : true;
-            const categoriaInfo = categoriaLookup.get(d.categoria);
-            const coincideCategoriaPrincipal = filtroCategoriaPrincipal
-                ? categoriaInfo?.categoria_principal === filtroCategoriaPrincipal
-                : true;
-            const coincideSub = filtroSubcategoria ? categoriaInfo?.subcategoria === filtroSubcategoria : true;
-            const search = filtroTexto.toLowerCase();
-            const coincideTexto = search
-                ? d.nombre_completo_producto.toLowerCase().includes(search) ||
-                  d.modelo.toLowerCase().includes(search)
-                : true;
-            return coincideMarca && coincideCategoriaPrincipal && coincideSub && coincideTexto;
-        });
-    }, [dispositivos, filtroMarca, filtroCategoriaPrincipal, filtroSubcategoria, filtroTexto, categoriaLookup]);
-
-    const handleFiltroChange = (campo: string, valor: string) => {
-        if (campo === "marca") setFiltroMarca(valor);
-        if (campo === "categoriaPrincipal") {
-            setFiltroCategoriaPrincipal(valor);
-            setFiltroSubcategoria("");
-        }
-        if (campo === "subcategoria") setFiltroSubcategoria(valor);
-        if (campo === "texto") setFiltroTexto(valor);
-    };
-
-    const handleDispositivoCreado = (nuevo: CatalogoDispositivo) => {
-        setDispositivos([nuevo, ...dispositivos]);
-    };
+    if (error) {
+        return <p className="error">{error}</p>;
+    }
 
     return (
         <div className="catalogo-grid">
-            <DispositivoForm
-                marcas={marcas}
-                categorias={categorias}
-                funciones={funciones}
-                onDispositivoCreado={handleDispositivoCreado}
-            />
-
-            <section className="catalogo-list-section">
-                <FiltrosCatalogo
-                    marcas={marcas}
-                    categorias={categorias}
-                    filtroMarca={filtroMarca}
-                    filtroCategoriaPrincipal={filtroCategoriaPrincipal}
-                    filtroSubcategoria={filtroSubcategoria}
-                    filtroTexto={filtroTexto}
-                    onChange={handleFiltroChange}
-                />
-                <div className="catalogo-table-card">
-                    <TablaCatalogo dispositivos={dispositivosFiltrados} />
-                </div>
-            </section>
+            <DispositivoForm marcas={marcas} categorias={categorias} funciones={funciones} />
         </div>
     );
 }

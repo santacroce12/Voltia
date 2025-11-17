@@ -90,7 +90,7 @@ DATABASES = {
     }
 }
 
-# Validaciones estandar de contrasenas para cuentas internas
+# Validaciones estandar de contraseñas para cuentas internas
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
