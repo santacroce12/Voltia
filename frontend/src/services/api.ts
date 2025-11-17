@@ -131,7 +131,28 @@ export type InstanciaPayload = {
     catalogo: number;
     tag_dispositivo?: string;
     atributos: string;
+    funciones_usadas: number[];
 };
+
+export type ServicioProyecto = {
+    id: number;
+    proyecto: number;
+    obra: number;
+    item_servicio: string;
+    horas_estimadas?: number;
+    tarifa_hora_ref?: number;
+    notas_alcance?: string;
+};
+export type ServicioPayload = Omit<ServicioProyecto, "id">;
+
+export type UrlExterna = {
+    id: number;
+    proyecto: number;
+    tipo_enlace: string;
+    url: string;
+    descripcion?: string;
+};
+export type UrlExternaPayload = Omit<UrlExterna, "id">;
 
 // --- Constantes ---
 
@@ -525,4 +546,85 @@ export async function crearInstancia(
     return respuesta.json();
 }
 
-// (Aquí añadiremos futuras funciones: crearInstancia, etc.)
+/**
+ * [PROTEGIDO] Actualiza parcialmente un dispositivo del Catalogo.
+ * Principalmente para modificar las funciones soportadas.
+ */
+export async function updateCatalogoFunciones(
+    dispositivoId: number,
+    funcionesSoportadasIds: number[],
+): Promise<CatalogoDispositivo> {
+    const payload = { funciones_soportadas: funcionesSoportadasIds };
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/catalogo/${dispositivoId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar el dispositivo del catálogo");
+    }
+    return respuesta.json();
+}
+
+/** [PROTEGIDO] Lista Servicios filtrados por ID de Proyecto */
+export async function listarServicios(proyectoId: number): Promise<ServicioProyecto[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/servicios/?proyecto=${proyectoId}`);
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+    if (!respuesta.ok) {
+        throw new Error("No se pudieron cargar los servicios");
+    }
+    return respuesta.json();
+}
+
+/** [PROTEGIDO] Crea un nuevo Servicio */
+export async function crearServicio(payload: ServicioPayload): Promise<ServicioProyecto> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/servicios/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear el servicio");
+    }
+    return respuesta.json();
+}
+
+/** [PROTEGIDO] Lista URLs filtradas por ID de Proyecto */
+export async function listarUrls(proyectoId: number): Promise<UrlExterna[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/urls-externas/?proyecto=${proyectoId}`);
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+    if (!respuesta.ok) {
+        throw new Error("No se pudieron cargar las URLs");
+    }
+    return respuesta.json();
+}
+
+/** [PROTEGIDO] Crea una nueva URL */
+export async function crearUrl(payload: UrlExternaPayload): Promise<UrlExterna> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/urls-externas/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+    if (!respuesta.ok) {
+        throw new Error("No se pudo crear la URL");
+    }
+    return respuesta.json();
+}

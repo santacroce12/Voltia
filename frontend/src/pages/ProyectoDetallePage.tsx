@@ -1,62 +1,61 @@
-﻿/**
- * Pagina de Detalle de un Proyecto.
- * Muestra el formulario para añadir instancias y la lista de instancias existentes.
+/**
+ * ProyectoDetallePage.tsx
+ * Página de Detalle de un Proyecto (desde /proyectos).
+ * Muestra formularios para añadir Servicios y URLs Externas.
  */
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-    listarInstancias,
-    crearInstancia,
-    listarCatalogoDispositivos,
-    type InstanciaDispositivo,
-    type InstanciaPayload,
-    type CatalogoDispositivo,
+    listarServicios,
+    crearServicio,
+    listarUrls,
+    crearUrl,
+    listarProyectos,
+    type ServicioProyecto,
+    type ServicioPayload,
+    type UrlExterna,
+    type UrlExternaPayload,
+    type Proyecto,
 } from "../services/api";
 
-type InstanciaFormProps = {
+function ServicioForm({
+    proyectoId,
+    obraId,
+    onServicioCreado,
+}: {
     proyectoId: number;
-    catalogo: CatalogoDispositivo[];
-    onInstanciaCreada: (instancia: InstanciaDispositivo) => void;
-};
-
-function InstanciaForm({ proyectoId, catalogo, onInstanciaCreada }: InstanciaFormProps) {
-    const [catalogoId, setCatalogoId] = useState("");
-    const [tag, setTag] = useState("");
-    const [atributos, setAtributos] = useState('{\n  "ip": "192.168.1.100"\n}');
+    obraId: number | null;
+    onServicioCreado: (s: ServicioProyecto) => void;
+}) {
+    const [item, setItem] = useState("");
+    const [horas, setHoras] = useState(0);
+    const [tarifa, setTarifa] = useState(0);
+    const [notas, setNotas] = useState("");
     const [cargando, setCargando] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!catalogoId) {
-            setError("Debe seleccionar un dispositivo del catálogo.");
+        if (obraId == null) {
             return;
         }
-
-        try {
-            JSON.parse(atributos);
-        } catch {
-            setError("El campo 'Atributos' no es un JSON válido.");
-            return;
-        }
-
         setCargando(true);
-        setError(null);
-
-        const payload: InstanciaPayload = {
+        const payload: ServicioPayload = {
             proyecto: proyectoId,
-            catalogo: Number(catalogoId),
-            tag_dispositivo: tag,
-            atributos,
+            obra: obraId,
+            item_servicio: item,
+            horas_estimadas: horas,
+            tarifa_hora_ref: tarifa,
+            notas_alcance: notas || undefined,
         };
-
         try {
-            const nuevaInstancia = await crearInstancia(payload);
-            onInstanciaCreada(nuevaInstancia);
-            setCatalogoId("");
-            setTag("");
-        } catch (err: any) {
-            setError(err.message || "Error al añadir instancia.");
+            const nuevo = await crearServicio(payload);
+            onServicioCreado(nuevo);
+            setItem("");
+            setHoras(0);
+            setTarifa(0);
+            setNotas("");
+        } catch (err) {
+            console.error(err);
         } finally {
             setCargando(false);
         }
@@ -64,72 +63,87 @@ function InstanciaForm({ proyectoId, catalogo, onInstanciaCreada }: InstanciaFor
 
     return (
         <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Añadir Dispositivo al Proyecto</h3>
+            <h3>Añadir Servicio al Proyecto</h3>
             <div className="form-grid">
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                    <label htmlFor="inst-catalogo">Dispositivo del Catálogo</label>
-                    <select
-                        id="inst-catalogo"
-                        value={catalogoId}
-                        onChange={(e) => setCatalogoId(e.target.value)}
-                        required
-                    >
-                        <option value="" disabled>
-                            -- Seleccionar Dispositivo --
-                        </option>
-                        {catalogo.map((d) => (
-                            <option key={d.id} value={d.id}>
-                                {d.marca_nombre ?? d.marca} {d.modelo} ({d.nombre_completo_producto})
-                            </option>
-                        ))}
-                    </select>
+                <div className="form-group">
+                    <label>Item o Servicio</label>
+                    <input type="text" value={item} onChange={(e) => setItem(e.target.value)} required />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="inst-tag">TAG (Opcional)</label>
+                    <label>Horas Estimadas</label>
                     <input
-                        id="inst-tag"
-                        type="text"
-                        value={tag}
-                        onChange={(e) => setTag(e.target.value)}
-                        placeholder="Ej: REL-001"
+                        type="number"
+                        value={horas}
+                        min={0}
+                        onChange={(e) => setHoras(Number(e.target.value))}
                     />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="inst-atributos">Atributos (JSON)</label>
-                    <textarea
-                        id="inst-atributos"
-                        value={atributos}
-                        onChange={(e) => setAtributos(e.target.value)}
-                        rows={4}
+                    <label>Tarifa Hora (Referencia)</label>
+                    <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={tarifa}
+                        onChange={(e) => setTarifa(Number(e.target.value))}
                     />
+                </div>
+                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                    <label>Notas / Alcance (Opcional)</label>
+                    <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={3} />
                 </div>
             </div>
-            <button type="submit" disabled={cargando}>
-                {cargando ? "Añadiendo..." : "Añadir Instancia"}
+            {obraId == null && <p className="small-placeholder">Cargando información del proyecto...</p>}
+            <button type="submit" disabled={cargando || obraId == null}>
+                {cargando ? "Añadiendo..." : "Añadir Servicio"}
             </button>
-            {error && <p className="error small-error">{error}</p>}
         </form>
     );
 }
 
-function InstanciaList({ instancias }: { instancias: InstanciaDispositivo[] }) {
+function UrlForm({ proyectoId, onUrlCreada }: { proyectoId: number; onUrlCreada: (u: UrlExterna) => void }) {
+    const [tipo, setTipo] = useState("Plano");
+    const [url, setUrl] = useState("");
+    const [cargando, setCargando] = useState(false);
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setCargando(true);
+        const payload: UrlExternaPayload = { proyecto: proyectoId, tipo_enlace: tipo, url };
+        try {
+            const nueva = await crearUrl(payload);
+            onUrlCreada(nueva);
+            setUrl("");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setCargando(false);
+        }
+    };
+
     return (
-        <section className="cards-wrapper">
-            <h2>Dispositivos en este Proyecto</h2>
-            {instancias.length === 0 ? (
-                <p className="placeholder">Aún no hay dispositivos en este proyecto.</p>
-            ) : (
-                <div className="cards small-cards">
-                    {instancias.map((i) => (
-                        <article key={i.id} className="card">
-                            <h3>{i.tag_dispositivo || `Instancia #${i.id}`}</h3>
-                            <p>Catálogo ID: {i.catalogo}</p>
-                            <small>Añadido por: {i.usuario_creador}</small>
-                        </article>
-                    ))}
+        <form className="inline-form" onSubmit={handleSubmit}>
+            <h3>Añadir Enlace Externo (Plano, Pliego)</h3>
+            <div className="form-grid">
+                <div className="form-group">
+                    <label>Tipo de Enlace</label>
+                    <input type="text" value={tipo} onChange={(e) => setTipo(e.target.value)} required />
                 </div>
-            )}
-        </section>
+                <div className="form-group">
+                    <label>URL Completa</label>
+                    <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        required
+                        placeholder="https://..."
+                    />
+                </div>
+            </div>
+            <button type="submit" disabled={cargando}>
+                {cargando ? "Añadiendo..." : "Añadir Enlace"}
+            </button>
+        </form>
     );
 }
 
@@ -137,28 +151,32 @@ export function ProyectoDetallePage() {
     const { proyectoId } = useParams<{ proyectoId: string }>();
     const numProyectoId = Number(proyectoId);
 
-    const [instancias, setInstancias] = useState<InstanciaDispositivo[]>([]);
-    const [catalogo, setCatalogo] = useState<CatalogoDispositivo[]>([]);
+    const [servicios, setServicios] = useState<ServicioProyecto[]>([]);
+    const [urls, setUrls] = useState<UrlExterna[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [cargando, setCargando] = useState(true);
+    const [obraId, setObraId] = useState<number | null>(null);
 
     useEffect(() => {
         if (!numProyectoId) return;
-
-        Promise.all([listarInstancias(numProyectoId), listarCatalogoDispositivos()])
-            .then(([listaInstancias, listaCatalogo]) => {
-                setInstancias(listaInstancias);
-                setCatalogo(listaCatalogo);
+        Promise.all([listarServicios(numProyectoId), listarUrls(numProyectoId), listarProyectos()])
+            .then(([listaServicios, listaUrls, listaProyectos]) => {
+                setServicios(listaServicios);
+                setUrls(listaUrls);
+                const proyectoActual = (listaProyectos as Proyecto[]).find((p) => p.id === numProyectoId);
+                if (proyectoActual) {
+                    setObraId(proyectoActual.obra);
+                } else if (listaServicios.length > 0) {
+                    setObraId(listaServicios[0].obra);
+                } else {
+                    setObraId(null);
+                }
             })
             .catch(() => setError("Error al cargar los datos del proyecto."))
             .finally(() => setCargando(false));
     }, [numProyectoId]);
 
-    const handleInstanciaCreada = (nuevaInstancia: InstanciaDispositivo) => {
-        setInstancias([nuevaInstancia, ...instancias]);
-    };
-
-    if (cargando) return <p>Cargando proyecto...</p>;
+    if (cargando) return <p>Cargando datos del proyecto...</p>;
     if (error) return <p className="error">{error}</p>;
 
     return (
@@ -167,15 +185,57 @@ export function ProyectoDetallePage() {
                 &larr; Volver a la lista de Proyectos
             </Link>
 
-            <InstanciaForm
+            <ServicioForm
                 proyectoId={numProyectoId}
-                catalogo={catalogo}
-                onInstanciaCreada={handleInstanciaCreada}
+                obraId={obraId}
+                onServicioCreado={(s) => {
+                    setServicios((prev) => [s, ...prev]);
+                    if (obraId == null && s.obra) {
+                        setObraId(s.obra);
+                    }
+                }}
             />
+
+            <section className="cards-wrapper">
+                <h2>Servicios del Proyecto</h2>
+                {servicios.length === 0 ? (
+                    <p className="placeholder">No hay servicios.</p>
+                ) : (
+                    <div className="cards small-cards">
+                        {servicios.map((s) => (
+                            <article key={s.id} className="card">
+                                <h3>{s.item_servicio}</h3>
+                                <p>Horas: {s.horas_estimadas ?? "N/A"}</p>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
 
             <hr className="divider" />
 
-            <InstanciaList instancias={instancias} />
+            <UrlForm proyectoId={numProyectoId} onUrlCreada={(u) => setUrls((prev) => [u, ...prev])} />
+
+            <section className="cards-wrapper">
+                <h2>Enlaces del Proyecto</h2>
+                {urls.length === 0 ? (
+                    <p className="placeholder">No hay enlaces.</p>
+                ) : (
+                    <div className="cards small-cards">
+                        {urls.map((u) => (
+                            <article key={u.id} className="card">
+                                <h3>{u.tipo_enlace}</h3>
+                                <p>
+                                    <a href={u.url} target="_blank" rel="noopener noreferrer">
+                                        Abrir enlace
+                                    </a>
+                                </p>
+                                {u.descripcion && <small>{u.descripcion}</small>}
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     );
 }

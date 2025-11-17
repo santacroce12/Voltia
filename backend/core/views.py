@@ -2,6 +2,7 @@
 Vistas REST responsables de entregar datos al frontend de React.
 """
 from django.contrib.auth.models import User
+from django.db import models
 from rest_framework import generics, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -16,6 +17,8 @@ from core.models import (
     Marca,
     Categoria,
     FuncionDispositivo,
+    ServiciosProyecto,
+    UrlsExternasProyecto,
 )
 from core.serializers import (
     CatalogoDispositivoSerializer,
@@ -27,6 +30,8 @@ from core.serializers import (
     MarcaSerializer,
     CategoriaSerializer,
     FuncionDispositivoSerializer,
+    ServiciosProyectoSerializer,
+    UrlsExternasProyectoSerializer,
 )
 
 
@@ -153,6 +158,16 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
         return queryset
 
 
+class CatalogoDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Vista para LEER, ACTUALIZAR y BORRAR un dispositivo específico del catálogo.
+    """
+
+    queryset = CatalogoDispositivo.objects.all()
+    serializer_class = CatalogoDispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class ClienteListCreateAPIView(generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Clientes.
@@ -192,3 +207,37 @@ class FuncionDispositivoListCreateAPIView(generics.ListCreateAPIView):
     queryset = FuncionDispositivo.objects.all()
     serializer_class = FuncionDispositivoSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class ServiciosProyectoListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) Servicios de un Proyecto.
+    """
+
+    serializer_class = ServiciosProyectoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtra servicios por el ID del proyecto."""
+        queryset = ServiciosProyecto.objects.all()
+        proyecto_id = self.request.query_params.get("proyecto")
+        if proyecto_id:
+            queryset = queryset.filter(proyecto_id=proyecto_id)
+        return queryset
+
+
+class UrlsExternasProyectoListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR (GET) y CREAR (POST) URLs externas de un Proyecto.
+    """
+
+    serializer_class = UrlsExternasProyectoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filtra URLs por el ID del proyecto."""
+        queryset = UrlsExternasProyecto.objects.all()
+        proyecto_id = self.request.query_params.get("proyecto")
+        if proyecto_id:
+            queryset = queryset.filter(proyecto_id=proyecto_id)
+        return queryset

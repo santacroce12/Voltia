@@ -13,6 +13,8 @@ from core.models import (
     Marca,
     Categoria,
     FuncionDispositivo,
+    ServiciosProyecto,
+    UrlsExternasProyecto,
 )
 
 
@@ -89,6 +91,26 @@ class CatalogoDispositivoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CatalogoDispositivo
+        fields = "__all__"
+
+
+class ServiciosProyectoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para los Servicios de un Proyecto.
+    """
+
+    class Meta:
+        model = ServiciosProyecto
+        fields = "__all__"
+
+
+class UrlsExternasProyectoSerializer(serializers.ModelSerializer):
+    """
+    Serializador para las URLs Externas de un Proyecto.
+    """
+
+    class Meta:
+        model = UrlsExternasProyecto
         fields = "__all__"
 
 
