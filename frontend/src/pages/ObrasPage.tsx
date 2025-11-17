@@ -1,83 +1,72 @@
-﻿/**
- * ObrasPage.tsx
- * Página de gestión de Obras (Flujo Master-Detail).
- * Muestra lista de Clientes y, al seleccionar uno, muestra sus Obras y el formulario.
- */
 import { useEffect, useState } from "react";
 import { ObraList } from "../components/ObraList";
 import { ObraForm } from "../components/ObraForm";
 import { ClienteList } from "../components/ClienteList";
 import { listarObras, listarClientes, type Obra, type Cliente } from "../services/api";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft } from "lucide-react";
 
 export function ObrasPage() {
-    const [obras, setObras] = useState<Obra[]>([]);
-    const [clientes, setClientes] = useState<Cliente[]>([]);
-    const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [cargando, setCargando] = useState(false);
+  const [obras, setObras] = useState<Obra[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
 
-    useEffect(() => {
-        listarClientes()
-            .then(setClientes)
-            .catch(() => setError("No se pudieron cargar los clientes."));
-    }, []);
+  useEffect(() => {
+    listarClientes()
+      .then(setClientes)
+      .catch(() => setError("No se pudieron cargar los clientes."));
+  }, []);
 
-    useEffect(() => {
-        if (clienteSeleccionado) {
-            setCargando(true);
-            setError(null);
-            listarObras(clienteSeleccionado.id)
-                .then(setObras)
-                .catch(() => setError("No se pudieron cargar las obras de este cliente."))
-                .finally(() => setCargando(false));
-        } else {
-            setObras([]);
-        }
-    }, [clienteSeleccionado]);
-
-    const handleObraCreada = (nuevaObra: Obra) => {
-        setObras([nuevaObra, ...obras]);
-    };
-
-    const handleVolver = () => {
-        setClienteSeleccionado(null);
-    };
-
+  useEffect(() => {
     if (!clienteSeleccionado) {
-        return (
-            <>
-                <h2 className="page-title">Gestión de Obras</h2>
-                <p>Por favor, seleccione un cliente para ver sus obras.</p>
-                {error ? (
-                    <p className="error">{error}</p>
-                ) : (
-                    <ClienteList
-                        clientes={clientes}
-                        onClienteSeleccionado={setClienteSeleccionado}
-                    />
-                )}
-            </>
-        );
+      setObras([]);
+      return;
     }
+    setCargando(true);
+    setError(null);
+    listarObras(clienteSeleccionado.id)
+      .then(setObras)
+      .catch(() => setError("No se pudieron cargar las obras de este cliente."))
+      .finally(() => setCargando(false));
+  }, [clienteSeleccionado]);
 
+  const handleObraCreada = (obra: Obra) => {
+    setObras((prev) => [obra, ...prev]);
+  };
+
+  if (!clienteSeleccionado) {
     return (
-        <>
-            <button className="back-button" onClick={handleVolver}>
-                &larr; Volver a la lista de Clientes
-            </button>
-
-            <ObraForm cliente={clienteSeleccionado} onObraCreada={handleObraCreada} />
-
-            <hr className="divider" />
-
-            <section className="cards-wrapper">
-                <h2>Obras en {clienteSeleccionado.nombre}</h2>
-                {cargando ? (
-                    <p>Cargando obras...</p>
-                ) : (
-                    <ObraList obras={obras} onObraSeleccionada={() => {}} />
-                )}
-            </section>
-        </>
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Gestión de Obras</h2>
+          <p className="text-muted-foreground">Paso 1: Selecciona un cliente para ver sus obras.</p>
+        </div>
+        {error ? (
+          <p className="text-destructive">{error}</p>
+        ) : (
+          <ClienteList clientes={clientes} onClienteSeleccionado={setClienteSeleccionado} />
+        )}
+      </div>
     );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Button variant="outline" size="sm" onClick={() => setClienteSeleccionado(null)} className="w-fit">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a Clientes
+      </Button>
+      <ObraForm cliente={clienteSeleccionado} onObraCreada={handleObraCreada} />
+
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-semibold">Obras en {clienteSeleccionado.nombre}</h2>
+        {cargando ? <p>Cargando obras…</p> : <ObraList obras={obras} />}
+      </div>
+    </div>
+  );
 }
