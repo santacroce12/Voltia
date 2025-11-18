@@ -1,7 +1,3 @@
-/**
- * Componente presentacional para mostrar un listado de Obras.
- * Refactorizado para usar shadcn/ui Card.
- */
 import type { Obra } from "../services/api";
 import {
   Card,
@@ -9,44 +5,47 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 type ObraListProps = {
   obras: Obra[];
-  onObraSeleccionado?: (obra: Obra) => void;
+  onObraSeleccionada?: (obra: Obra) => void;
 };
 
-export function ObraList({ obras, onObraSeleccionado }: ObraListProps) {
+export function ObraList({ obras, onObraSeleccionada }: ObraListProps) {
   if (obras.length === 0) {
-    return <p className="text-center text-muted-foreground">No hay obras cargadas.</p>;
+    return <div className="py-8 text-center text-muted-foreground">No hay obras cargadas.</div>;
   }
-
-  const isClickable = Boolean(onObraSeleccionado);
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {obras.map((obra) => (
-        <Card
-          key={obra.id}
-          className={cn(
-            isClickable && "cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md",
-          )}
-          onClick={() => onObraSeleccionado?.(obra)}
-          tabIndex={isClickable ? 0 : undefined}
-          onKeyDown={(e) => (isClickable && e.key === "Enter" ? onObraSeleccionado?.(obra) : null)}
-        >
+        <Card key={obra.id} className="flex flex-col">
           <CardHeader>
             <CardTitle>{obra.nombre_obra}</CardTitle>
             <CardDescription>Cliente ID: {obra.cliente}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm">Estado: {obra.estado_obra}</p>
-            <p className="text-sm">
-              Ubicación: {obra.ubicacion?.length ? obra.ubicacion : "No especificada"}
-            </p>
-            <small className="text-xs text-muted-foreground">Creada por: {obra.usuario_creador}</small>
+          <CardContent className="flex-1">
+            <div className="space-y-1 text-sm">
+              <p>
+                <span className="font-medium">Estado:</span> {obra.estado_obra}
+              </p>
+              <p>
+                <span className="font-medium">Ubicacion:</span> {obra.ubicacion || "N/A"}
+              </p>
+              <p className="text-xs text-muted-foreground">Creada por: {obra.usuario_creador}</p>
+            </div>
           </CardContent>
+          {onObraSeleccionada && (
+            <CardFooter>
+              <Button className="w-full" onClick={() => onObraSeleccionada(obra)}>
+                Seleccionar Obra <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardFooter>
+          )}
         </Card>
       ))}
     </div>
