@@ -1,6 +1,6 @@
-﻿/**
+/**
  * CatalogoPage.tsx
- * Vista inicial del catálogo de dispositivos: muestra Marcas, Categorías y Funciones.
+ * Vista inicial del catalogo de dispositivos: muestra Marcas, Categorias y Funciones.
  */
 import { useEffect, useState } from "react";
 import {
@@ -26,12 +26,12 @@ export function CatalogoPage() {
                 setCategorias(datosCategorias);
                 setFunciones(datosFunciones);
             })
-            .catch(() => setError("No se pudo cargar la información del catálogo."))
+            .catch(() => setError("No se pudo cargar la informacion del catalogo."))
             .finally(() => setCargando(false));
     }, []);
 
     if (cargando) {
-        return <p>Cargando catálogo...</p>;
+        return <p>Cargando catalogo...</p>;
     }
 
     if (error) {
@@ -43,7 +43,7 @@ export function CatalogoPage() {
             <section className="cards-wrapper">
                 <h2>Marcas Registradas</h2>
                 {marcas.length === 0 ? (
-                    <p className="placeholder">Aún no hay marcas cargadas.</p>
+                    <p className="placeholder">Aun no hay marcas cargadas.</p>
                 ) : (
                     <div className="cards small-cards">
                         {marcas.map((marca) => (
@@ -56,9 +56,9 @@ export function CatalogoPage() {
             </section>
 
             <section className="cards-wrapper">
-                <h2>Categorías de Dispositivo</h2>
+                <h2>Categorias de Dispositivo</h2>
                 {categorias.length === 0 ? (
-                    <p className="placeholder">Aún no hay categorías cargadas.</p>
+                    <p className="placeholder">Aun no hay categorias cargadas.</p>
                 ) : (
                     <div className="cards small-cards">
                         {categorias.map((cat) => (
@@ -75,13 +75,13 @@ export function CatalogoPage() {
             <section className="cards-wrapper">
                 <h2>Funciones Disponibles</h2>
                 {funciones.length === 0 ? (
-                    <p className="placeholder">Aún no hay funciones cargadas.</p>
+                    <p className="placeholder">Aun no hay funciones cargadas.</p>
                 ) : (
                     <div className="cards small-cards">
                         {funciones.map((funcion) => (
                             <article key={funcion.id} className="card">
                                 <h3>{funcion.nombre}</h3>
-                                {funcion.codigo_funcion && <p>Código: {funcion.codigo_funcion}</p>}
+                                {funcion.codigo_funcion && <p>Codigo: {funcion.codigo_funcion}</p>}
                                 {funcion.descripcion && <small>{funcion.descripcion}</small>}
                             </article>
                         ))}

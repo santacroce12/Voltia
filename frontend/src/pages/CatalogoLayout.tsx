@@ -1,28 +1,45 @@
-/**
- * Layout para la seccion de Catalogo.
- * Muestra el sub-menu de navegacion (Marcas, Categorias, etc.)
- * y renderiza la pagina hija correspondiente.
- */
 import { NavLink, Outlet } from "react-router-dom";
+import { cn } from "@/lib/utils";
+
+const subRoutes = [
+    { to: "/catalogo/marcas", label: "Marcas" },
+    { to: "/catalogo/categorias", label: "Categorias" },
+    { to: "/catalogo/funciones", label: "Funciones" },
+    { to: "/catalogo/dispositivos", label: "Dispositivos" },
+    { to: "/catalogo/dispositivos/listar", label: "Listar Dispositivos" },
+];
 
 export function CatalogoLayout() {
     return (
-        <div>
-            <h2 className="page-title">Gestión de Dispositivos</h2>
+        <section className="space-y-6">
+            <div className="space-y-1">
+                <p className="text-sm uppercase tracking-wide text-muted-foreground">Catalogo maestro</p>
+                <h2 className="text-3xl font-bold tracking-tight">Gestion de Dispositivos</h2>
+                <p className="text-muted-foreground">Administra marcas, categorias, funciones y modelos desde aqui.</p>
+            </div>
 
-            {/* Sub-Navegacion */}
-            <nav className="sub-nav">
-                <NavLink to="/catalogo/marcas">Marcas</NavLink>
-                <NavLink to="/catalogo/categorias">Categorías</NavLink>
-                <NavLink to="/catalogo/funciones">Funciones</NavLink>
-                <NavLink to="/catalogo/dispositivos">Dispositivos</NavLink>
-                <NavLink to="/catalogo/dispositivos/listar">Listar Dispositivos</NavLink>
+            <nav className="flex flex-wrap gap-2">
+                {subRoutes.map((route) => (
+                    <NavLink
+                        key={route.to}
+                        to={route.to}
+                        className={({ isActive }) =>
+                            cn(
+                                "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                                isActive
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )
+                        }
+                    >
+                        {route.label}
+                    </NavLink>
+                ))}
             </nav>
 
-            {/* Contenido de la pagina hija (ej. MarcasPage) */}
-            <div className="sub-page-content">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
                 <Outlet />
             </div>
-        </div>
+        </section>
     );
 }

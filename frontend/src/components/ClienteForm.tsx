@@ -47,7 +47,7 @@ export function ClienteForm({ onClienteCreado }: ClienteFormProps) {
             <h2>Crear Nuevo Cliente</h2>
             <div className="form-grid">
                 <div className="form-group">
-                    <label htmlFor="cli-nombre">Nombre / Razón Social</label>
+                    <label htmlFor="cli-nombre">Nombre / Razon Social</label>
                     <input
                         id="cli-nombre"
                         type="text"
@@ -67,7 +67,7 @@ export function ClienteForm({ onClienteCreado }: ClienteFormProps) {
                     />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="cli-dir">Dirección (Opcional)</label>
+                    <label htmlFor="cli-dir">Direccion (Opcional)</label>
                     <input
                         id="cli-dir"
                         type="text"

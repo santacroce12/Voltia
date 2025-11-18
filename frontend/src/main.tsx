@@ -10,7 +10,7 @@ import "./style.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { TooltipProvider } from "./components/ui/tooltip";
 
-// Importamos los componentes de página y layout
+// Importamos los componentes de pagina y layout
 import { Layout } from "./components/Layout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ClientesPage } from "./pages/ClientesPage";
@@ -63,7 +63,7 @@ const router = createBrowserRouter([
                     {
                         path: "/ingenieria",
                         element: <IngenieriaPage />,
-                        handle: { crumb: () => "Ingeniería" },
+                        handle: { crumb: () => "Ingenieria" },
                     },
                     {
                         path: "/ingenieria/proyecto/:proyectoId",
@@ -73,7 +73,7 @@ const router = createBrowserRouter([
                     {
                         path: "/catalogo",
                         element: <CatalogoLayout />,
-                        handle: { crumb: () => "Catálogo" },
+                        handle: { crumb: () => "Catalogo" },
                         children: [
                             {
                                 path: "marcas",
@@ -83,7 +83,7 @@ const router = createBrowserRouter([
                             {
                                 path: "categorias",
                                 element: <CategoriasPage />,
-                                handle: { crumb: () => "Categorías" },
+                                handle: { crumb: () => "Categorias" },
                             },
                             {
                                 path: "funciones",

@@ -60,7 +60,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
             <Input id="obra-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="obra-ubicacion">Ubicación (opcional)</Label>
+            <Label htmlFor="obra-ubicacion">Ubicacion (opcional)</Label>
             <Input
               id="obra-ubicacion"
               value={ubicacion}

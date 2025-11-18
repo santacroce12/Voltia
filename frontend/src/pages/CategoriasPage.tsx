@@ -1,13 +1,10 @@
-/**
- * Pagina de gestion de Categorias.
- */
 import { useEffect, useState, type FormEvent } from "react";
-import {
-    listarCategorias,
-    crearCategoria,
-    type Categoria,
-    type CategoriaPayload,
-} from "../services/api";
+import { listarCategorias, crearCategoria, type Categoria } from "../services/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 function CategoriaForm({ onCategoriaCreada }: { onCategoriaCreada: (cat: Categoria) => void }) {
     const [principal, setPrincipal] = useState("");
@@ -17,100 +14,62 @@ function CategoriaForm({ onCategoriaCreada }: { onCategoriaCreada: (cat: Categor
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setCargando(true);
-        setError(null);
-
-        const payload: CategoriaPayload = {
-            categoria_principal: principal,
-            subcategoria,
-        };
-
+        setCargando(true); setError(null);
         try {
-            const nuevaCategoria = await crearCategoria(payload);
-            onCategoriaCreada(nuevaCategoria);
-            setPrincipal("");
-            setSubcategoria("");
-        } catch {
-            setError("Error al guardar la categoría.");
-        } finally {
-            setCargando(false);
-        }
+            const nueva = await crearCategoria({ categoria_principal: principal, subcategoria });
+            onCategoriaCreada(nueva);
+            setPrincipal(""); setSubcategoria("");
+        } catch { setError("Error al guardar."); } 
+        finally { setCargando(false); }
     };
 
     return (
-        <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Registrar Nueva Categoría</h3>
-            <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="cat-principal">Categoría Principal</label>
-                    <input
-                        id="cat-principal"
-                        type="text"
-                        value={principal}
-                        onChange={(e) => setPrincipal(e.target.value)}
-                        placeholder="Ej: Relés"
-                        required
-                    />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="cat-sub">Sub-Categoría</label>
-                    <input
-                        id="cat-sub"
-                        type="text"
-                        value={subcategoria}
-                        onChange={(e) => setSubcategoria(e.target.value)}
-                        placeholder="Ej: Protección"
-                        required
-                    />
-                </div>
-            </div>
-            <button type="submit" disabled={cargando}>
-                {cargando ? "Guardando..." : "Guardar Categoría"}
-            </button>
-            {error && <p className="error small-error">{error}</p>}
-        </form>
-    );
-}
-
-function CategoriaList({ categorias }: { categorias: Categoria[] }) {
-    return (
-        <section className="cards-wrapper">
-            <h3>Categorías Registradas</h3>
-            {categorias.length === 0 ? (
-                <p className="placeholder">No hay categorías.</p>
-            ) : (
-                <div className="cards small-cards">
-                    {categorias.map((cat) => (
-                        <article key={cat.id} className="card">
-                            <h3>{cat.categoria_principal}</h3>
-                            <p>{cat.subcategoria}</p>
-                        </article>
-                    ))}
-                </div>
-            )}
-        </section>
+        <Card className="max-w-2xl">
+            <CardHeader><CardTitle>Registrar Nueva Categoria</CardTitle></CardHeader>
+            <CardContent>
+                <form id="cat-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
+                        <Label>Categoria Principal</Label>
+                        <Input value={principal} onChange={(e) => setPrincipal(e.target.value)} placeholder="Ej: Reles" required />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Sub-Categoria</Label>
+                        <Input value={subcategoria} onChange={(e) => setSubcategoria(e.target.value)} placeholder="Ej: Proteccion" required />
+                    </div>
+                </form>
+                {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+            </CardContent>
+            <CardFooter>
+                <Button form="cat-form" type="submit" disabled={cargando}>{cargando ? "Guardando..." : "Guardar Categoria"}</Button>
+            </CardFooter>
+        </Card>
     );
 }
 
 export function CategoriasPage() {
     const [categorias, setCategorias] = useState<Categoria[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        listarCategorias()
-            .then(setCategorias)
-            .catch(() => setError("No se pudieron cargar las categorías."));
-    }, []);
-
-    const handleCategoriaCreada = (nuevaCategoria: Categoria) => {
-        setCategorias([nuevaCategoria, ...categorias]);
-    };
-
+    useEffect(() => { listarCategorias().then(setCategorias).catch(console.error); }, []);
     return (
-        <div>
-            <CategoriaForm onCategoriaCreada={handleCategoriaCreada} />
-            <hr className="divider" />
-            {error ? <p className="error">{error}</p> : <CategoriaList categorias={categorias} />}
+        <div className="space-y-8">
+            <CategoriaForm onCategoriaCreada={(c) => setCategorias([c, ...categorias])} />
+            <Separator />
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Categorias Disponibles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {categorias.map((c) => (
+                        <Card key={c.id} className="hover:shadow-md transition-all border-l-4 hover:border-l-primary">
+                            <CardHeader className="p-5">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                    {c.categoria_principal}
+                                </p>
+                                <CardTitle className="text-lg font-semibold leading-tight">
+                                    {c.subcategoria}
+                                </CardTitle>
+                            </CardHeader>
+                        </Card>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }

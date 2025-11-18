@@ -25,7 +25,7 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
       const token = await loginUsuario({ username: email, password });
       onLoginExitoso(token);
     } catch {
-      setError("Credenciales inválidas. Intenta nuevamente.");
+      setError("Credenciales invalidas. Intenta nuevamente.");
     } finally {
       setCargando(false);
     }
@@ -42,7 +42,7 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
               </span>
               <h1 className="text-2xl font-semibold">Bienvenido de nuevo</h1>
               <p className="text-sm text-muted-foreground">
-                Ingresa con tus credenciales para administrar la plataforma energética.
+                Ingresa con tus credenciales para administrar la plataforma energetica.
               </p>
             </div>
             <div className="grid gap-2">
@@ -57,9 +57,9 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">Contrasena</Label>
                 <a className="text-xs text-yellow-600 underline-offset-2 hover:underline" href="#">
-                  ¿Olvidaste tu contraseña?
+                  Olvidaste tu contrasena?
                 </a>
               </div>
               <Input
@@ -79,16 +79,16 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
             <span className="rounded-full bg-white/10 p-4">
               <Bolt className="h-10 w-10" />
             </span>
-            <p className="text-lg font-semibold">Energía asegurada</p>
+            <p className="text-lg font-semibold">Energia asegurada</p>
             <p className="text-sm text-white/80 text-center">
-              Voltia protege tus operaciones eléctricas con monitoreo y trazabilidad profesional.
+              Voltia protege tus operaciones electricas con monitoreo y trazabilidad profesional.
             </p>
           </div>
         </CardContent>
       </Card>
       <p className="px-2 text-center text-xs text-muted-foreground">
-        Al continuar aceptas los <a className="text-yellow-600 underline-offset-2 hover:underline" href="#">Términos</a> y la{" "}
-        <a className="text-yellow-600 underline-offset-2 hover:underline" href="#">Política de Privacidad</a>.
+        Al continuar aceptas los <a className="text-yellow-600 underline-offset-2 hover:underline" href="#">Terminos</a> y la{" "}
+        <a className="text-yellow-600 underline-offset-2 hover:underline" href="#">Politica de Privacidad</a>.
       </p>
     </div>
   );

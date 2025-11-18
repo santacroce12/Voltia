@@ -41,7 +41,7 @@ export function ObrasPage() {
     return (
       <div className="flex flex-col gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Gestión de Obras</h2>
+          <h2 className="text-2xl font-semibold">Gestion de Obras</h2>
           <p className="text-muted-foreground">Paso 1: Selecciona un cliente para ver sus obras.</p>
         </div>
         {error ? (
@@ -65,7 +65,7 @@ export function ObrasPage() {
 
       <div>
         <h2 className="text-2xl font-semibold">Obras en {clienteSeleccionado.nombre}</h2>
-        {cargando ? <p>Cargando obras…</p> : <ObraList obras={obras} />}
+        {cargando ? <p>Cargando obras...</p> : <ObraList obras={obras} />}
       </div>
     </div>
   );

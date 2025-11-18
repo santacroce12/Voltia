@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -11,18 +10,12 @@ import {
   Bolt,
   Menu,
   Search,
-  Gauge,
-  ShieldCheck,
-  PlugZap,
-  BatteryCharging,
-  Lightbulb,
-  Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { limpiarToken, obtenerSalud, type SaludAPI } from "../services/api";
+import { limpiarToken } from "../services/api";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -30,66 +23,12 @@ const navLinks = [
   { to: "/clientes", label: "Clientes", icon: Building },
   { to: "/obras", label: "Obras", icon: HardHat },
   { to: "/proyectos", label: "Proyectos", icon: ClipboardList },
-  { to: "/catalogo", label: "Catalogo", icon: BookMarked },
+  { to: "/catalogo", label: "Dispositivos", icon: BookMarked },
   { to: "/ingenieria", label: "Ingenieria", icon: Factory },
 ];
 
 export function Layout() {
   const navigate = useNavigate();
-  const [salud, setSalud] = useState<SaludAPI | null>(null);
-  const [apiMensaje, setApiMensaje] = useState("Consultando API...");
-
-  useEffect(() => {
-    obtenerSalud()
-      .then((estado) => {
-        setSalud(estado);
-        setApiMensaje(`${estado.mensaje} · Proyectos: ${estado.total_proyectos}`);
-      })
-      .catch(() => setApiMensaje("No se pudo consultar el estado de la API"));
-  }, []);
-
-  const summaryCards = useMemo(
-    () => [
-      {
-        label: "Proyectos monitoreados",
-        value: salud?.total_proyectos ?? "—",
-        icon: Gauge,
-      },
-      {
-        label: "Estado API",
-        value: apiMensaje,
-        icon: ShieldCheck,
-      },
-    ],
-    [salud, apiMensaje],
-  );
-
-  const energyTiles = [
-    {
-      title: "Red operativa",
-      value: "28 subestaciones",
-      description: "Monitoreo en tiempo real",
-      icon: PlugZap,
-    },
-    {
-      title: "Catálogo activo",
-      value: "312 dispositivos",
-      description: "Equipos homologados",
-      icon: BatteryCharging,
-    },
-    {
-      title: "Ingeniería en curso",
-      value: "6 flujos",
-      description: "Planes sincronizados",
-      icon: Lightbulb,
-    },
-    {
-      title: "Resiliencia SLA",
-      value: "99.1%",
-      description: "Infraestructura disponible",
-      icon: Waves,
-    },
-  ];
 
   const handleLogout = () => {
     limpiarToken();
@@ -147,49 +86,17 @@ export function Layout() {
             </div>
           </form>
           <ThemeToggle />
-          <Button variant="secondary" size="sm" onClick={handleLogout} className="bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30">
-            Cerrar Sesión
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleLogout}
+            className="bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30"
+          >
+            Cerrar Sesion
           </Button>
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          <section className="grid gap-4 md:grid-cols-2">
-            {summaryCards.map((card) => (
-              <div
-                key={card.label}
-                className="flex items-center gap-4 rounded-2xl border bg-background p-4 shadow-sm"
-              >
-                <span className="rounded-full bg-yellow-500/20 p-3 text-yellow-600">
-                  <card.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</p>
-                  <p className="text-xl font-semibold text-foreground">{card.value}</p>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {energyTiles.map((tile) => (
-              <div
-                key={tile.title}
-                className="rounded-2xl border border-yellow-500/20 bg-card/80 p-4 shadow-sm transition hover:-translate-y-[2px]"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="rounded-2xl bg-yellow-500/20 p-2 text-yellow-600">
-                    <tile.icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{tile.title}</p>
-                    <p className="text-xs text-muted-foreground">{tile.description}</p>
-                  </div>
-                </div>
-                <p className="mt-4 text-2xl font-semibold text-foreground">{tile.value}</p>
-              </div>
-            ))}
-          </section>
-
           <Outlet />
         </main>
       </div>

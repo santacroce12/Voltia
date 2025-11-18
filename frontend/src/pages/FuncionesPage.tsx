@@ -1,130 +1,71 @@
-/**
- * Pagina de gestion de Funciones de Dispositivo.
- */
 import { useEffect, useState, type FormEvent } from "react";
-import {
-    listarFunciones,
-    crearFuncion,
-    type FuncionDispositivo,
-    type FuncionPayload,
-} from "../services/api";
+import { listarFunciones, crearFuncion, type FuncionDispositivo } from "../services/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-function FuncionForm({ onFuncionCreada }: { onFuncionCreada: (func: FuncionDispositivo) => void }) {
+function FuncionForm({ onFuncionCreada }: { onFuncionCreada: (f: FuncionDispositivo) => void }) {
     const [codigo, setCodigo] = useState("");
     const [nombre, setNombre] = useState("");
-    const [descripcion, setDescripcion] = useState("");
     const [cargando, setCargando] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setCargando(true);
-        setError(null);
-
-        const payload: FuncionPayload = {
-            codigo_funcion: codigo,
-            nombre,
-            descripcion,
-        };
-
         try {
-            const nuevaFuncion = await crearFuncion(payload);
-            onFuncionCreada(nuevaFuncion);
-            setCodigo("");
-            setNombre("");
-            setDescripcion("");
-        } catch {
-            setError("Error al guardar la función.");
-        } finally {
-            setCargando(false);
-        }
+            const nueva = await crearFuncion({ codigo_funcion: codigo, nombre });
+            onFuncionCreada(nueva);
+            setCodigo(""); setNombre("");
+        } catch { console.error("Error"); } 
+        finally { setCargando(false); }
     };
 
     return (
-        <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Registrar Nueva Función</h3>
-            <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="func-codigo">Código (Opcional)</label>
-                    <input
-                        id="func-codigo"
-                        type="text"
-                        value={codigo}
-                        onChange={(e) => setCodigo(e.target.value)}
-                        placeholder="Ej: 50/51, 87"
-                    />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="func-nombre">Nombre de la Función</label>
-                    <input
-                        id="func-nombre"
-                        type="text"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        placeholder="Ej: Sobrecorriente de Fase"
-                        required
-                    />
-                </div>
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                    <label htmlFor="func-desc">Descripción (Opcional)</label>
-                    <input
-                        id="func-desc"
-                        type="text"
-                        value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
-                    />
-                </div>
-            </div>
-            <button type="submit" disabled={cargando}>
-                {cargando ? "Guardando..." : "Guardar Función"}
-            </button>
-            {error && <p className="error small-error">{error}</p>}
-        </form>
-    );
-}
-
-function FuncionList({ funciones }: { funciones: FuncionDispositivo[] }) {
-    return (
-        <section className="cards-wrapper">
-            <h3>Funciones Disponibles</h3>
-            {funciones.length === 0 ? (
-                <p className="placeholder">No hay funciones.</p>
-            ) : (
-                <div className="cards small-cards">
-                    {funciones.map((func) => (
-                        <article key={func.id} className="card">
-                            <h3>
-                                {func.codigo_funcion ? `[${func.codigo_funcion}] ` : ""}
-                                {func.nombre}
-                            </h3>
-                            <p>{func.descripcion || "Sin descripción"}</p>
-                        </article>
-                    ))}
-                </div>
-            )}
-        </section>
+        <Card className="max-w-2xl">
+            <CardHeader><CardTitle>Nueva Funcion</CardTitle></CardHeader>
+            <CardContent>
+                <form id="func-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
+                        <Label>Codigo (ANSI)</Label>
+                        <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: 50/51" />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Nombre</Label>
+                        <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Sobrecorriente" required />
+                    </div>
+                </form>
+            </CardContent>
+            <CardFooter><Button form="func-form" disabled={cargando}>Guardar</Button></CardFooter>
+        </Card>
     );
 }
 
 export function FuncionesPage() {
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        listarFunciones()
-            .then(setFunciones)
-            .catch(() => setError("No se pudieron cargar las funciones."));
-    }, []);
-
-    const handleFuncionCreada = (nuevaFuncion: FuncionDispositivo) => {
-        setFunciones([nuevaFuncion, ...funciones]);
-    };
-
+    useEffect(() => { listarFunciones().then(setFunciones).catch(console.error); }, []);
     return (
-        <div>
-            <FuncionForm onFuncionCreada={handleFuncionCreada} />
-            <hr className="divider" />
-            {error ? <p className="error">{error}</p> : <FuncionList funciones={funciones} />}
+        <div className="space-y-8">
+            <FuncionForm onFuncionCreada={(f) => setFunciones([f, ...funciones])} />
+            <Separator />
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Funciones Disponibles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {funciones.map((f) => (
+                        <Card key={f.id} className="p-3 flex items-center gap-3 hover:bg-accent/5 transition-colors">
+                            <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded bg-muted font-mono text-xs font-bold text-primary">
+                                {f.codigo_funcion || "#"}
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="truncate font-medium text-sm" title={f.nombre}>
+                                    {f.nombre}
+                                </span>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }

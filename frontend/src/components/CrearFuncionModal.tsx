@@ -1,5 +1,5 @@
 /**
- * Modal para crear una nueva función de dispositivo.
+ * Modal para crear una nueva funcion de dispositivo.
  */
 import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
@@ -43,21 +43,21 @@ export function CrearFuncionModal({ isOpen, onClose, onFuncionCreada }: Props) {
             resetFormulario();
             onClose();
         } catch {
-            setError("No se pudo crear la función. Intenta nuevamente.");
+            setError("No se pudo crear la funcion. Intenta nuevamente.");
         } finally {
             setCargando(false);
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Registrar Nueva Función">
+        <Modal isOpen={isOpen} onClose={onClose} title="Registrar Nueva Funcion">
             <form className="inline-form" onSubmit={handleSave}>
                 <div className="form-group">
-                    <label>Código (opcional)</label>
+                    <label>Codigo (opcional)</label>
                     <input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej: 50/51" />
                 </div>
                 <div className="form-group">
-                    <label>Nombre de la Función</label>
+                    <label>Nombre de la Funcion</label>
                     <input
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
@@ -66,12 +66,12 @@ export function CrearFuncionModal({ isOpen, onClose, onFuncionCreada }: Props) {
                     />
                 </div>
                 <div className="form-group">
-                    <label>Descripción (opcional)</label>
+                    <label>Descripcion (opcional)</label>
                     <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} />
                 </div>
                 {error && <p className="error small-error">{error}</p>}
                 <button type="submit" disabled={cargando}>
-                    {cargando ? "Guardando..." : "Guardar Función"}
+                    {cargando ? "Guardando..." : "Guardar Funcion"}
                 </button>
             </form>
         </Modal>

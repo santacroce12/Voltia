@@ -1,8 +1,10 @@
-/**
- * Pagina de gestion de Marcas.
- */
 import { useEffect, useState, type FormEvent } from "react";
-import { listarMarcas, crearMarca, type Marca, type MarcaPayload } from "../services/api";
+import { listarMarcas, crearMarca, type Marca } from "../services/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 function MarcaForm({ onMarcaCreada }: { onMarcaCreada: (marca: Marca) => void }) {
     const [nombre, setNombre] = useState("");
@@ -11,83 +13,63 @@ function MarcaForm({ onMarcaCreada }: { onMarcaCreada: (marca: Marca) => void })
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setCargando(true);
-        setError(null);
-
-        const payload: MarcaPayload = { nombre };
-
+        setCargando(true); setError(null);
         try {
-            const nuevaMarca = await crearMarca(payload);
+            const nuevaMarca = await crearMarca({ nombre });
             onMarcaCreada(nuevaMarca);
             setNombre("");
-        } catch {
-            setError("Error al guardar la marca.");
-        } finally {
-            setCargando(false);
-        }
+        } catch { setError("Error al guardar la marca."); } 
+        finally { setCargando(false); }
     };
 
     return (
-        <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Registrar Nueva Marca</h3>
-            <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="marca-nombre">Nombre de la Marca</label>
-                    <input
-                        id="marca-nombre"
-                        type="text"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit" disabled={cargando} className="self-end">
-                    {cargando ? "Guardando..." : "Guardar Marca"}
-                </button>
-            </div>
-            {error && <p className="error small-error">{error}</p>}
-        </form>
+        <Card className="max-w-lg">
+            <CardHeader><CardTitle>Registrar Nueva Marca</CardTitle></CardHeader>
+            <CardContent>
+                <form id="marca-form" className="grid gap-4" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
+                        <Label htmlFor="nombre">Nombre de la Marca</Label>
+                        <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+                    </div>
+                </form>
+                {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+            </CardContent>
+            <CardFooter>
+                <Button form="marca-form" type="submit" disabled={cargando}>{cargando ? "Guardando..." : "Guardar Marca"}</Button>
+            </CardFooter>
+        </Card>
     );
 }
 
 function MarcaList({ marcas }: { marcas: Marca[] }) {
+    if (marcas.length === 0) return <div className="text-center text-muted-foreground py-12 border rounded-lg bg-muted/10">No hay marcas registradas.</div>;
+    
     return (
-        <section className="cards-wrapper">
-            <h3>Marcas Registradas</h3>
-            {marcas.length === 0 ? (
-                <p className="placeholder">No hay marcas.</p>
-            ) : (
-                <div className="cards small-cards">
-                    {marcas.map((marca) => (
-                        <article key={marca.id} className="card">
-                            <h3>{marca.nombre}</h3>
-                        </article>
-                    ))}
-                </div>
-            )}
-        </section>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {marcas.map((m) => (
+                <Card key={m.id} className="group relative overflow-hidden transition-all hover:shadow-md hover:border-primary/50">
+                    <CardContent className="p-6 flex items-center justify-center text-center">
+                        <span className="font-semibold text-lg group-hover:text-primary transition-colors">
+                            {m.nombre}
+                        </span>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
     );
 }
 
 export function MarcasPage() {
     const [marcas, setMarcas] = useState<Marca[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        listarMarcas()
-            .then(setMarcas)
-            .catch(() => setError("No se pudieron cargar las marcas."));
-    }, []);
-
-    const handleMarcaCreada = (nuevaMarca: Marca) => {
-        setMarcas([nuevaMarca, ...marcas]);
-    };
-
+    useEffect(() => { listarMarcas().then(setMarcas).catch(console.error); }, []);
     return (
-        <div>
-            <MarcaForm onMarcaCreada={handleMarcaCreada} />
-            <hr className="divider" />
-            {error ? <p className="error">{error}</p> : <MarcaList marcas={marcas} />}
+        <div className="space-y-8">
+            <MarcaForm onMarcaCreada={(m) => setMarcas([m, ...marcas])} />
+            <Separator />
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Marcas Registradas</h3>
+                <MarcaList marcas={marcas} />
+            </div>
         </div>
     );
 }

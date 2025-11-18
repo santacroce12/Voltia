@@ -1,7 +1,7 @@
 /**
  * ProyectoDetallePage.tsx
- * Página de Detalle de un Proyecto (desde /proyectos).
- * Muestra formularios para añadir Servicios y URLs Externas.
+ * Pagina de Detalle de un Proyecto (desde /proyectos).
+ * Muestra formularios para anadir Servicios y URLs Externas.
  */
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -63,7 +63,7 @@ function ServicioForm({
 
     return (
         <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Añadir Servicio al Proyecto</h3>
+            <h3>Anadir Servicio al Proyecto</h3>
             <div className="form-grid">
                 <div className="form-group">
                     <label>Item o Servicio</label>
@@ -93,9 +93,9 @@ function ServicioForm({
                     <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={3} />
                 </div>
             </div>
-            {obraId == null && <p className="small-placeholder">Cargando información del proyecto...</p>}
+            {obraId == null && <p className="small-placeholder">Cargando informacion del proyecto...</p>}
             <button type="submit" disabled={cargando || obraId == null}>
-                {cargando ? "Añadiendo..." : "Añadir Servicio"}
+                {cargando ? "Anadiendo..." : "Anadir Servicio"}
             </button>
         </form>
     );
@@ -123,7 +123,7 @@ function UrlForm({ proyectoId, onUrlCreada }: { proyectoId: number; onUrlCreada:
 
     return (
         <form className="inline-form" onSubmit={handleSubmit}>
-            <h3>Añadir Enlace Externo (Plano, Pliego)</h3>
+            <h3>Anadir Enlace Externo (Plano, Pliego)</h3>
             <div className="form-grid">
                 <div className="form-group">
                     <label>Tipo de Enlace</label>
@@ -141,7 +141,7 @@ function UrlForm({ proyectoId, onUrlCreada }: { proyectoId: number; onUrlCreada:
                 </div>
             </div>
             <button type="submit" disabled={cargando}>
-                {cargando ? "Añadiendo..." : "Añadir Enlace"}
+                {cargando ? "Anadiendo..." : "Anadir Enlace"}
             </button>
         </form>
     );

@@ -59,7 +59,7 @@ function ClienteForm({ onClienteCreado }: { onClienteCreado: (cliente: Cliente) 
       <CardContent>
         <form id="cliente-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <div className="grid gap-2">
-            <Label htmlFor="cli-nombre">Nombre / Razón Social *</Label>
+            <Label htmlFor="cli-nombre">Nombre / Razon Social *</Label>
             <Input id="cli-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
           </div>
           <div className="grid gap-2">
@@ -67,7 +67,7 @@ function ClienteForm({ onClienteCreado }: { onClienteCreado: (cliente: Cliente) 
             <Input id="cli-cuil" value={cuil} onChange={(e) => setCuil(e.target.value)} required />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="cli-dir">Dirección (Opcional)</Label>
+            <Label htmlFor="cli-dir">Direccion (Opcional)</Label>
             <Input id="cli-dir" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
           </div>
           <div className="grid gap-2">

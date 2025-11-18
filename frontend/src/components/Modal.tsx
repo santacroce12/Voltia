@@ -1,7 +1,10 @@
-/**
- * Modal.tsx
- */
-import type { ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import type { ReactNode } from "react"
 
 type ModalProps = {
     isOpen: boolean;
@@ -11,18 +14,16 @@ type ModalProps = {
 };
 
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
-    if (!isOpen) return null;
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <header className="modal-header">
-                    <h2>{title}</h2>
-                    <button onClick={onClose} className="close-button">
-                        &times;
-                    </button>
-                </header>
-                <div className="modal-body">{children}</div>
-            </div>
-        </div>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    {children}
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
