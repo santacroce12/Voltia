@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Factory,
   BookMarked,
-  LogOut,
   Bolt,
   Menu,
   Search,

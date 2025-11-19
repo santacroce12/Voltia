@@ -36,6 +36,7 @@ export type Cliente = {
 
 // Payload para crear un cliente (no necesita 'id')
 export type ClientePayload = Omit<Cliente, "id">;
+export type ClienteUpdatePayload = Partial<ClientePayload>;
 
 export type Obra = {
     id: number;
@@ -53,6 +54,7 @@ export type ObraPayload = {
     ubicacion?: string;
     estado_obra: string;
 };
+export type ObraUpdatePayload = Partial<ObraPayload>;
 
 // Payload para crear un Proyecto
 export type ProyectoPayload = {
@@ -62,6 +64,7 @@ export type ProyectoPayload = {
     ubicacion_fisica?: string;
     estado_proyecto: string;
 };
+export type ProyectoUpdatePayload = Partial<ProyectoPayload>;
 
 export type Marca = {
     id: number;
@@ -84,12 +87,15 @@ export type FuncionDispositivo = {
 
 // Payload para crear una Marca
 export type MarcaPayload = Omit<Marca, "id">;
+export type MarcaUpdatePayload = Partial<MarcaPayload>;
 
 // Payload para crear una Categoria
 export type CategoriaPayload = Omit<Categoria, "id">;
+export type CategoriaUpdatePayload = Partial<CategoriaPayload>;
 
 // Payload para crear una Funcion
 export type FuncionPayload = Omit<FuncionDispositivo, "id">;
+export type FuncionUpdatePayload = Partial<FuncionPayload>;
 
 export type CatalogoDispositivo = {
     id: number;
@@ -115,6 +121,10 @@ export type CatalogoDispositivoPayload = {
     especificaciones: string;
     funciones_soportadas: number[];
 };
+export type CatalogoDispositivoUpdatePayload = Partial<CatalogoDispositivoPayload> & {
+    descripcion_funcional?: string;
+    especificaciones?: Record<string, any>;
+};
 
 export type InstanciaDispositivo = {
     id: number;
@@ -124,6 +134,10 @@ export type InstanciaDispositivo = {
     tag_dispositivo?: string;
     atributos: Record<string, any>;
     funciones_usadas: number[];
+    nombre_dispositivo?: string;
+    marca_dispositivo?: string;
+    categoria_dispositivo?: string;
+    subcategoria_dispositivo?: string;
 };
 
 export type InstanciaPayload = {
@@ -263,7 +277,7 @@ export async function listarClientes(): Promise<Cliente[]> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -289,6 +303,29 @@ export async function crearCliente(datosCliente: ClientePayload): Promise<Client
     if (!respuesta.ok) {
         // Podríamos leer el body para ver errores de validación
         throw new Error("No se pudo crear el cliente");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Actualiza parcialmente un cliente existente.
+ */
+export async function actualizarCliente(
+    clienteId: number,
+    datosCliente: ClienteUpdatePayload,
+): Promise<Cliente> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/clientes/${clienteId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosCliente),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesión expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar el cliente");
     }
     return respuesta.json();
 }
@@ -336,6 +373,29 @@ export async function crearObra(datosObra: ObraPayload): Promise<Obra> {
 }
 
 /**
+ * [PROTEGIDO] Actualiza parcialmente una obra existente.
+ */
+export async function actualizarObra(
+    obraId: number,
+    datosObra: ObraUpdatePayload,
+): Promise<Obra> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/obras/${obraId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosObra),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar la obra");
+    }
+    return respuesta.json();
+}
+
+/**
  * [PROTEGIDO] Crea un nuevo proyecto.
  */
 export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Proyecto> {
@@ -351,6 +411,29 @@ export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Pro
 
     if (!respuesta.ok) {
         throw new Error("No se pudo crear el proyecto");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Actualiza parcialmente un proyecto.
+ */
+export async function actualizarProyecto(
+    proyectoId: number,
+    datosProyecto: ProyectoUpdatePayload,
+): Promise<Proyecto> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/proyectos/${proyectoId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosProyecto),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar el proyecto");
     }
     return respuesta.json();
 }
@@ -427,6 +510,29 @@ export async function crearCategoria(datosCategoria: CategoriaPayload): Promise<
 }
 
 /**
+ * [PROTEGIDO] Actualiza parcialmente una Categoria.
+ */
+export async function actualizarCategoria(
+    categoriaId: number,
+    datosCategoria: CategoriaUpdatePayload,
+): Promise<Categoria> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/categorias/${categoriaId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosCategoria),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar la categoria");
+    }
+    return respuesta.json();
+}
+
+/**
  * [PROTEGIDO] Crea una nueva Funcion de Dispositivo.
  */
 export async function crearFuncion(datosFuncion: FuncionPayload): Promise<FuncionDispositivo> {
@@ -447,6 +553,29 @@ export async function crearFuncion(datosFuncion: FuncionPayload): Promise<Funcio
 }
 
 /**
+ * [PROTEGIDO] Actualiza parcialmente una Funcion de Dispositivo.
+ */
+export async function actualizarFuncion(
+    funcionId: number,
+    datosFuncion: FuncionUpdatePayload,
+): Promise<FuncionDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/funciones/${funcionId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosFuncion),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar la funcion");
+    }
+    return respuesta.json();
+}
+
+/**
  * [PROTEGIDO] Crea una nueva Marca.
  */
 export async function crearMarca(datosMarca: MarcaPayload): Promise<Marca> {
@@ -462,6 +591,23 @@ export async function crearMarca(datosMarca: MarcaPayload): Promise<Marca> {
 
     if (!respuesta.ok) {
         throw new Error("No se pudo crear la marca");
+    }
+    return respuesta.json();
+}
+
+export async function actualizarMarca(marcaId: number, datosMarca: MarcaUpdatePayload): Promise<Marca> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/marcas/${marcaId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datosMarca),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar la marca");
     }
     return respuesta.json();
 }
@@ -503,6 +649,29 @@ export async function crearCatalogoDispositivo(
         const errorData = await respuesta.json().catch(() => ({}));
         console.error("Error al crear dispositivo:", errorData);
         throw new Error("No se pudo crear el dispositivo. Revisa los campos.");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Actualiza parcialmente un dispositivo del Catalogo (datos generales).
+ */
+export async function actualizarCatalogoDispositivo(
+    dispositivoId: number,
+    datos: CatalogoDispositivoUpdatePayload,
+): Promise<CatalogoDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/catalogo/${dispositivoId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(datos),
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok) {
+        throw new Error("No se pudo actualizar el dispositivo del catalogo");
     }
     return respuesta.json();
 }
@@ -569,6 +738,24 @@ export async function updateCatalogoFunciones(
         throw new Error("No se pudo actualizar el dispositivo del catálogo");
     }
     return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Borra una instancia de dispositivo por su ID.
+ */
+export async function borrarInstancia(instanciaId: number): Promise<void> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/${instanciaId}/`, {
+        method: "DELETE",
+    });
+
+    if (respuesta.status === 401) {
+        limpiarToken();
+        throw new Error("Sesion expirada");
+    }
+
+    if (!respuesta.ok && respuesta.status !== 204) {
+        throw new Error("No se pudo borrar la instancia.");
+    }
 }
 
 /** [PROTEGIDO] Lista Servicios filtrados por ID de Proyecto */

@@ -70,6 +70,14 @@ class ProyectoListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(usuario_creador=self.request.user)
 
 
+class ProyectoDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite consultar o actualizar un proyecto especifico."""
+
+    queryset = Proyecto.objects.all()
+    serializer_class = ProyectoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class RegistroUsuarioAPIView(generics.CreateAPIView):
     """
     Endpoint de API para que nuevos usuarios puedan registrarse.
@@ -105,6 +113,14 @@ class ObraListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(usuario_creador=self.request.user)
 
 
+class ObraDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite leer o actualizar una obra puntual."""
+
+    queryset = Obra.objects.all()
+    serializer_class = ObraSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Instancias de Dispositivos.
@@ -127,6 +143,14 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         """Asigna automaticamente al usuario logueado como creador de la Instancia."""
         serializer.save(usuario_creador=self.request.user)
+
+
+class InstanciaDispositivoDetailAPIView(generics.RetrieveDestroyAPIView):
+    """Permite consultar o eliminar una instancia de dispositivo puntual."""
+
+    queryset = InstanciaDispositivo.objects.all()
+    serializer_class = InstanciaDispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
@@ -179,10 +203,26 @@ class ClienteListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+class ClienteDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite consultar o actualizar un cliente en particular."""
+
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class MarcaListCreateAPIView(generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Marcas.
     """
+
+    queryset = Marca.objects.all()
+    serializer_class = MarcaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class MarcaDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite consultar o actualizar una marca."""
 
     queryset = Marca.objects.all()
     serializer_class = MarcaSerializer
@@ -199,10 +239,26 @@ class CategoriaListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+class CategoriaDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite consultar o actualizar una categoria."""
+
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class FuncionDispositivoListCreateAPIView(generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Funciones de Dispositivos.
     """
+
+    queryset = FuncionDispositivo.objects.all()
+    serializer_class = FuncionDispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class FuncionDispositivoDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Permite consultar o actualizar una funcion de dispositivo."""
 
     queryset = FuncionDispositivo.objects.all()
     serializer_class = FuncionDispositivoSerializer

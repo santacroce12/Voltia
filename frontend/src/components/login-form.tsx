@@ -57,10 +57,8 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contrasena</Label>
-                <a className="text-xs text-yellow-600 underline-offset-2 hover:underline" href="#">
-                  Olvidaste tu contrasena?
-                </a>
+                <Label htmlFor="password">Contraseña</Label>
+                
               </div>
               <Input
                 id="password"

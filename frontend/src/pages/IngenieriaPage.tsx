@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ObraList } from "../components/ObraList";
 import { ProjectList } from "../components/ProjectList";
-import { listarObras, listarProyectos, type Obra, type Proyecto } from "../services/api";
+import { listarObras, listarProyectos, listarClientes, type Obra, type Proyecto, type Cliente } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft } from "lucide-react";
@@ -9,17 +9,35 @@ import { ArrowLeft } from "lucide-react";
 export function IngenieriaPage() {
     const [obras, setObras] = useState<Obra[]>([]);
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
     const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        Promise.all([listarObras(), listarProyectos()])
-            .then(([listaObras, listaProyectos]) => {
+        Promise.all([listarObras(), listarProyectos(), listarClientes()])
+            .then(([listaObras, listaProyectos, listaClientes]) => {
                 setObras(listaObras);
                 setProyectos(listaProyectos);
+                setClientes(listaClientes);
             })
             .catch(() => setError("No se pudieron cargar los datos."));
     }, []);
+
+    const clienteNombreMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        clientes.forEach((cliente) => {
+            map[cliente.id] = cliente.nombre;
+        });
+        return map;
+    }, [clientes]);
+
+    const clientePorObra = useMemo(() => {
+        const map: Record<number, string> = {};
+        obras.forEach((obra) => {
+            map[obra.id] = clienteNombreMap[obra.cliente] || `Cliente #${obra.cliente}`;
+        });
+        return map;
+    }, [obras, clienteNombreMap]);
 
     const handleVolver = () => setObraSeleccionada(null);
 
@@ -32,7 +50,7 @@ export function IngenieriaPage() {
                     <p className="text-muted-foreground">Seleccione una obra para comenzar la carga de dispositivos.</p>
                 </div>
                 {error ? <p className="text-destructive">{error}</p> : (
-                    <ObraList obras={obras} onObraSeleccionada={setObraSeleccionada} />
+                    <ObraList obras={obras} onObraSeleccionada={setObraSeleccionada} clienteNombres={clienteNombreMap} />
                 )}
             </div>
         );
@@ -61,7 +79,7 @@ export function IngenieriaPage() {
                 </div>
             ) : (
                 // Usamos el linkPrefix para dirigir a la pagina de detalle de ingenieria
-                <ProjectList proyectos={proyectosFiltrados} linkPrefix="/ingenieria/proyecto" />
+                <ProjectList proyectos={proyectosFiltrados} linkPrefix="/ingenieria/proyecto" clientePorObra={clientePorObra} />
             )}
         </div>
     );

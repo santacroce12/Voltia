@@ -2,47 +2,91 @@
  * Componente presentacional para mostrar un listado de Clientes.
  * Refactorizado para usar shadcn/ui Card.
  */
+import { useState } from "react";
 import type { Cliente } from "../services/api";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 type ClienteListProps = {
   clientes: Cliente[];
   onClienteSeleccionado: (cliente: Cliente) => void;
+  mostrarSoloNombre?: boolean;
 };
 
-export function ClienteList({ clientes, onClienteSeleccionado }: ClienteListProps) {
+export function ClienteList({
+  clientes,
+  onClienteSeleccionado,
+  mostrarSoloNombre = false,
+}: ClienteListProps) {
   if (clientes.length === 0) {
     return <p className="text-center text-muted-foreground">No hay clientes cargados.</p>;
   }
+  const [filtro, setFiltro] = useState("");
+  const filtrados = clientes.filter((cliente) =>
+    cliente.nombre.toLowerCase().includes(filtro.toLowerCase()),
+  );
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {clientes.map((cliente) => (
-        <Card
-          key={cliente.id}
-          className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-          onClick={() => onClienteSeleccionado(cliente)}
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === "Enter" ? onClienteSeleccionado(cliente) : null)}
-        >
-          <CardHeader>
-            <CardTitle>{cliente.nombre}</CardTitle>
-            <CardDescription>ID: {cliente.id}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-medium">CUIT: {cliente.cuil}</p>
-            {cliente.direccion && (
-              <p className="text-xs text-muted-foreground">Dir: {cliente.direccion}</p>
+    <div className="space-y-3">
+      <Input
+        placeholder="Buscar cliente..."
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        className="max-w-sm"
+      />
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              {!mostrarSoloNombre && (
+                <>
+                  <TableHead>CUIT</TableHead>
+                  <TableHead>Direccion</TableHead>
+                  <TableHead className="text-right">Editar</TableHead>
+                </>
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtrados.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={mostrarSoloNombre ? 1 : 4}
+                  className="text-center text-muted-foreground"
+                >
+                  Sin resultados.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtrados.map((cliente) => (
+                <TableRow
+                  key={cliente.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => onClienteSeleccionado(cliente)}
+                    tabIndex={0}
+                    onKeyDown={(e) => (e.key === "Enter" ? onClienteSeleccionado(cliente) : null)}
+                >
+                  <TableCell className="font-medium">{cliente.nombre}</TableCell>
+                  {!mostrarSoloNombre && (
+                    <>
+                      <TableCell>{cliente.cuil}</TableCell>
+                      <TableCell>{cliente.direccion || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </>
+                  )}
+                </TableRow>
+              ))
             )}
-          </CardContent>
-        </Card>
-      ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

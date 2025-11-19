@@ -63,10 +63,14 @@ class ObraSerializer(serializers.ModelSerializer):
 class InstanciaDispositivoSerializer(serializers.ModelSerializer):
     """
     Serializador para el modelo InstanciaDispositivo.
-    El campo usuario_creador es de solo lectura.
+    Añade datos legibles del dispositivo del catálogo.
     """
 
     usuario_creador = serializers.ReadOnlyField(source="usuario_creador.username")
+    nombre_dispositivo = serializers.ReadOnlyField(source="catalogo.nombre_completo_producto")
+    marca_dispositivo = serializers.ReadOnlyField(source="catalogo.marca.nombre")
+    categoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.categoria_principal")
+    subcategoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.subcategoria")
 
     class Meta:
         model = InstanciaDispositivo

@@ -2,58 +2,121 @@
  * Componente presentacional para mostrar un listado de proyectos.
  * Refactorizado para usar shadcn/ui.
  */
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Proyecto } from "../services/api";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Pencil, FileText } from "lucide-react";
 
 type ProyectoListProps = {
   proyectos: Proyecto[];
   linkPrefix?: string;
+  clientePorObra?: Record<number, string>;
+  onEditarProyecto?: (proyecto: Proyecto) => void;
+  onGestionProyecto?: (proyecto: Proyecto) => void;
 };
 
-export function ProjectList({ proyectos, linkPrefix = "/proyecto" }: ProyectoListProps) {
+export function ProjectList({
+  proyectos,
+  linkPrefix = "/proyecto",
+  clientePorObra,
+  onEditarProyecto,
+  onGestionProyecto,
+}: ProyectoListProps) {
   if (proyectos.length === 0) {
     return <p className="text-center text-muted-foreground">Todavia no hay proyectos registrados.</p>;
   }
+  const [filtro, setFiltro] = useState("");
+  const filtrados = proyectos.filter((proyecto) =>
+    proyecto.nombre_proyecto.toLowerCase().includes(filtro.toLowerCase()),
+  );
+  const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {proyectos.map((proyecto) => (
-        <Link
-          to={`${linkPrefix}/${proyecto.id}`}
-          key={proyecto.id}
-          className="block transition-all hover:-translate-y-1"
-        >
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardHeader>
-              <CardTitle>{proyecto.nombre_proyecto}</CardTitle>
-              <CardDescription>
-                Creado el {new Date(proyecto.fecha_creacion).toLocaleDateString()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-semibold">Tipo:</span> {proyecto.tipo}
-                </p>
-                <p>
-                  <span className="font-semibold">Estado:</span> {proyecto.estado_proyecto}
-                </p>
-                <p>
-                  <span className="font-semibold">Ubicacion:</span> {proyecto.ubicacion_fisica || "N/A"}
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">Por: {proyecto.usuario_creador}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
+    <div className="space-y-3">
+      <Input
+        placeholder="Buscar proyecto..."
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        className="max-w-sm"
+      />
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+          <TableRow>
+            <TableHead>Proyecto</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Tipo</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Ubicacion</TableHead>
+            <TableHead>Creado</TableHead>
+            {onEditarProyecto && <TableHead className="text-right">Editar</TableHead>}
+            {onGestionProyecto && (
+              <TableHead className="text-right">Servicios / Planos</TableHead>
+            )}
+          </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtrados.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6 + (onEditarProyecto ? 1 : 0) + (onGestionProyecto ? 1 : 0)}
+                  className="text-center text-muted-foreground"
+                >
+                  Sin resultados.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtrados.map((proyecto) => (
+                <TableRow
+                  key={proyecto.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`${linkPrefix}/${proyecto.id}`)}
+                >
+                  <TableCell className="font-medium">{proyecto.nombre_proyecto}</TableCell>
+                  <TableCell>{clientePorObra?.[proyecto.obra] || `Cliente #${proyecto.obra}`}</TableCell>
+                  <TableCell>{proyecto.tipo}</TableCell>
+                  <TableCell>{proyecto.estado_proyecto}</TableCell>
+                  <TableCell>{proyecto.ubicacion_fisica || "N/A"}</TableCell>
+                  <TableCell>{new Date(proyecto.fecha_creacion).toLocaleDateString()}</TableCell>
+                  {onEditarProyecto && (
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditarProyecto(proyecto);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                  {onGestionProyecto && (
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGestionProyecto(proyecto);
+                        }}
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
