@@ -146,6 +146,7 @@ export function ClientesPage() {
   const [filtroNombre, setFiltroNombre] = useState("");
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [editNombre, setEditNombre] = useState("");
   const [editCuil, setEditCuil] = useState("");
   const [editDireccion, setEditDireccion] = useState("");
   const [editNotas, setEditNotas] = useState("");
@@ -164,6 +165,7 @@ export function ClientesPage() {
 
   const abrirEditor = (cliente: Cliente) => {
     setClienteEditando(cliente);
+    setEditNombre(cliente.nombre || "");
     setEditCuil(cliente.cuil || "");
     setEditDireccion(cliente.direccion || "");
     setEditNotas(cliente.notas || "");
@@ -175,6 +177,7 @@ export function ClientesPage() {
     setEditOpen(false);
     setClienteEditando(null);
     setEditError(null);
+    setEditNombre("");
   };
 
   const handleEditarSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -186,6 +189,7 @@ export function ClientesPage() {
     setEditError(null);
     try {
       const actualizado = await actualizarCliente(clienteEditando.id, {
+        nombre: editNombre,
         cuil: editCuil,
         direccion: editDireccion,
         notas: editNotas,
@@ -238,7 +242,12 @@ export function ClientesPage() {
             <form className="space-y-4" onSubmit={handleEditarSubmit}>
               <div className="grid gap-2">
                 <Label htmlFor="edit-nombre">Nombre / Razon Social</Label>
-                <Input id="edit-nombre" value={clienteEditando.nombre} disabled />
+                <Input
+                  id="edit-nombre"
+                  value={editNombre}
+                  onChange={(e) => setEditNombre(e.target.value)}
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-cuil">CUIL / CUIT</Label>

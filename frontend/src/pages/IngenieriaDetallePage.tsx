@@ -352,6 +352,8 @@ function BatchForm({ proyectoId, catalogo, masterFunciones, onInstanciasCreadas 
     );
 }
 
+type SortableField = "tag" | "marca" | "categoria" | "subcategoria";
+
 type InstanciaListProps = {
     instancias: InstanciaDispositivo[];
     seleccionados: number[];
@@ -360,7 +362,8 @@ type InstanciaListProps = {
     onDelete: (id: number) => Promise<void>;
     deletingId: number | null;
     busquedaNombre: string;
-    ordenCampo: "marca" | "categoria" | "subcategoria";
+    sortConfig: { field: SortableField; direction: "asc" | "desc" };
+    onSortChange: (field: SortableField) => void;
 };
 
 function InstanciaList({
@@ -371,7 +374,8 @@ function InstanciaList({
     onDelete,
     deletingId,
     busquedaNombre,
-    ordenCampo,
+    sortConfig,
+    onSortChange,
 }: InstanciaListProps) {
     const allSelected = instancias.length > 0 && seleccionados.length === instancias.length;
     const isIndeterminate = seleccionados.length > 0 && !allSelected;
@@ -392,13 +396,30 @@ function InstanciaList({
     const ordenadas = useMemo(() => {
         const copia = [...filtradas];
         const obtenerCampo = (inst: InstanciaDispositivo) => {
-            if (ordenCampo === "marca") return inst.marca_dispositivo || "";
-            if (ordenCampo === "categoria") return inst.categoria_dispositivo || "";
-            return inst.subcategoria_dispositivo || "";
+            switch (sortConfig.field) {
+                case "tag":
+                    return inst.tag_dispositivo || `Sin TAG #${inst.id}`;
+                case "marca":
+                    return inst.marca_dispositivo || "";
+                case "categoria":
+                    return inst.categoria_dispositivo || "";
+                case "subcategoria":
+                    return inst.subcategoria_dispositivo || "";
+                default:
+                    return "";
+            }
         };
-        copia.sort((a, b) => normalizar(obtenerCampo(a)).localeCompare(normalizar(obtenerCampo(b))));
+        copia.sort((a, b) => {
+            const valA = normalizar(obtenerCampo(a));
+            const valB = normalizar(obtenerCampo(b));
+            const comparacion = valA.localeCompare(valB);
+            return sortConfig.direction === "asc" ? comparacion : -comparacion;
+        });
         return copia;
-    }, [filtradas, ordenCampo]);
+    }, [filtradas, sortConfig]);
+
+    const renderIndicator = (field: SortableField) =>
+        sortConfig.field === field ? <span className="ml-1 text-xs">{sortConfig.direction === "asc" ? "^" : "v"}</span> : null;
 
     return (
         <Card className="shadow">
@@ -406,22 +427,42 @@ function InstanciaList({
                 <CardTitle className="text-lg">Dispositivos en el proyecto</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-12">
-                                <Checkbox
-                                    checked={renderCheckboxState as boolean | "indeterminate"}
-                                    onCheckedChange={(checked) => onToggleTodos(Boolean(checked))}
-                                />
-                            </TableHead>
-                            <TableHead>TAG</TableHead>
-                            <TableHead>Marca y modelo</TableHead>
-                            <TableHead>Categoria</TableHead>
-                            <TableHead>Subcategoria</TableHead>
-                            <TableHead className="text-center">Funciones usadas</TableHead>
-                            <TableHead className="text-center">Accion</TableHead>
-                        </TableRow>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-12">
+                                    <Checkbox
+                                        checked={renderCheckboxState as boolean | "indeterminate"}
+                                        onCheckedChange={(checked) => onToggleTodos(Boolean(checked))}
+                                    />
+                                </TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => onSortChange("tag")}
+                                >
+                                    TAG {renderIndicator("tag")}
+                                </TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => onSortChange("marca")}
+                                >
+                                    Marca y modelo {renderIndicator("marca")}
+                                </TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => onSortChange("categoria")}
+                                >
+                                    Categoria {renderIndicator("categoria")}
+                                </TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => onSortChange("subcategoria")}
+                                >
+                                    Subcategoria {renderIndicator("subcategoria")}
+                                </TableHead>
+                                <TableHead className="text-center">Funciones usadas</TableHead>
+                                <TableHead className="text-center">Accion</TableHead>
+                            </TableRow>
                     </TableHeader>
                     <TableBody>
                         {ordenadas.length === 0 ? (
@@ -492,7 +533,10 @@ export function IngenieriaDetallePage() {
     const [batchDeleting, setBatchDeleting] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [busquedaNombre, setBusquedaNombre] = useState("");
-    const [ordenCampo, setOrdenCampo] = useState<"marca" | "categoria" | "subcategoria">("marca");
+    const [sortConfig, setSortConfig] = useState<{ field: SortableField; direction: "asc" | "desc" }>({
+        field: "marca",
+        direction: "asc",
+    });
 
     useEffect(() => {
         if (!pid) return;
@@ -595,6 +639,15 @@ export function IngenieriaDetallePage() {
         }
     };
 
+    const handleHeaderSort = (field: SortableField) => {
+        setSortConfig((prev) => {
+            if (prev.field === field) {
+                return { field, direction: prev.direction === "asc" ? "desc" : "asc" };
+            }
+            return { field, direction: "asc" };
+        });
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -633,16 +686,6 @@ export function IngenieriaDetallePage() {
                                 onChange={(e) => setBusquedaNombre(e.target.value)}
                                 className="md:w-48"
                             />
-                            <Select value={ordenCampo} onValueChange={(value) => setOrdenCampo(value as any)}>
-                                <SelectTrigger className="md:w-48">
-                                    <SelectValue placeholder="Ordenar por" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="marca">Marca</SelectItem>
-                                    <SelectItem value="categoria">Categoria</SelectItem>
-                                    <SelectItem value="subcategoria">Subcategoria</SelectItem>
-                                </SelectContent>
-                            </Select>
                             <Button
                                 variant="destructive"
                                 size="sm"
@@ -662,7 +705,8 @@ export function IngenieriaDetallePage() {
                         onDelete={handleSingleDelete}
                         deletingId={deletingId}
                         busquedaNombre={busquedaNombre}
-                        ordenCampo={ordenCampo}
+                        sortConfig={sortConfig}
+                        onSortChange={handleHeaderSort}
                     />
                 </div>
 

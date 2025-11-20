@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { listarFunciones, crearFuncion, actualizarFuncion, type FuncionDispositivo } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,14 +27,20 @@ function FuncionForm({ onFuncionCreada }: { onFuncionCreada: (f: FuncionDisposit
         try {
             const nueva = await crearFuncion({ codigo_funcion: codigo, nombre });
             onFuncionCreada(nueva);
-            setCodigo(""); setNombre("");
-        } catch { console.error("Error"); } 
-        finally { setCargando(false); }
+            setCodigo("");
+            setNombre("");
+        } catch {
+            console.error("Error");
+        } finally {
+            setCargando(false);
+        }
     };
 
     return (
         <Card className="max-w-2xl">
-            <CardHeader><CardTitle>Nueva Funcion</CardTitle></CardHeader>
+            <CardHeader>
+                <CardTitle>Nueva Funcion</CardTitle>
+            </CardHeader>
             <CardContent>
                 <form id="func-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
                     <div className="grid gap-2">
@@ -43,14 +49,25 @@ function FuncionForm({ onFuncionCreada }: { onFuncionCreada: (f: FuncionDisposit
                     </div>
                     <div className="grid gap-2">
                         <Label>Nombre</Label>
-                        <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Sobrecorriente" required />
+                        <Input
+                            value={nombre}
+                            onChange={(e) => setNombre(e.target.value)}
+                            placeholder="Ej: Sobrecorriente"
+                            required
+                        />
                     </div>
                 </form>
             </CardContent>
-            <CardFooter><Button form="func-form" disabled={cargando}>Guardar</Button></CardFooter>
+            <CardFooter>
+                <Button form="func-form" disabled={cargando}>
+                    {cargando ? "Guardando..." : "Guardar"}
+                </Button>
+            </CardFooter>
         </Card>
     );
 }
+
+type SortField = "codigo" | "nombre";
 
 export function FuncionesPage() {
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
@@ -60,8 +77,13 @@ export function FuncionesPage() {
     const [editNombre, setEditNombre] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+    const [busqueda, setBusqueda] = useState("");
+    const [sortField, setSortField] = useState<SortField>("nombre");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-    useEffect(() => { listarFunciones().then(setFunciones).catch(console.error); }, []);
+    useEffect(() => {
+        listarFunciones().then(setFunciones).catch(console.error);
+    }, []);
 
     const abrirEditor = (funcion: FuncionDispositivo) => {
         setFuncionEditando(funcion);
@@ -96,23 +118,75 @@ export function FuncionesPage() {
             setEditLoading(false);
         }
     };
+
+    const handleSort = (field: SortField) => {
+        setSortField((prev) => {
+            if (prev === field) {
+                setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"));
+                return prev;
+            }
+            setSortDirection("asc");
+            return field;
+        });
+    };
+
+    const funcionesProcesadas = useMemo(() => {
+        const termino = busqueda.toLowerCase();
+        const filtradas = funciones.filter(
+            (f) =>
+                (f.codigo_funcion || "").toLowerCase().includes(termino) ||
+                f.nombre.toLowerCase().includes(termino),
+        );
+        const sorted = [...filtradas].sort((a, b) => {
+            const valorA =
+                sortField === "codigo"
+                    ? (a.codigo_funcion || "").toLowerCase()
+                    : a.nombre.toLowerCase();
+            const valorB =
+                sortField === "codigo"
+                    ? (b.codigo_funcion || "").toLowerCase()
+                    : b.nombre.toLowerCase();
+            return sortDirection === "asc" ? valorA.localeCompare(valorB) : valorB.localeCompare(valorA);
+        });
+        return sorted;
+    }, [funciones, busqueda, sortField, sortDirection]);
+
+    const indicador = (field: SortField) =>
+        sortField === field ? <span className="ml-1 text-xs">{sortDirection === "asc" ? "^" : "v"}</span> : null;
+
     return (
         <div className="space-y-8">
             <FuncionForm onFuncionCreada={(f) => setFunciones([f, ...funciones])} />
             <Separator />
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Funciones Disponibles</h3>
+                <Input
+                    placeholder="Buscar por codigo o nombre..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="max-w-md"
+                />
                 <div className="overflow-x-auto rounded-md border">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Código</TableHead>
-                                <TableHead>Nombre</TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => handleSort("codigo")}
+                                >
+                                    Codigo {indicador("codigo")}
+                                </TableHead>
+                                <TableHead
+                                    className="cursor-pointer select-none"
+                                    onClick={() => handleSort("nombre")}
+                                >
+                                    Nombre {indicador("nombre")}
+                                </TableHead>
                                 <TableHead className="text-right">Editar</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {funciones.map((f) => (
+                            {funcionesProcesadas.map((f) => (
                                 <TableRow key={f.id}>
                                     <TableCell className="font-mono font-semibold">{f.codigo_funcion || "#"}</TableCell>
                                     <TableCell>{f.nombre}</TableCell>
@@ -155,9 +229,7 @@ export function FuncionesPage() {
                                     required
                                 />
                             </div>
-                            {editError && (
-                                <p className="text-sm text-destructive md:col-span-2">{editError}</p>
-                            )}
+                            {editError && <p className="text-sm text-destructive md:col-span-2">{editError}</p>}
                             <DialogFooter className="md:col-span-2">
                                 <Button type="button" variant="outline" onClick={cerrarEditor} disabled={editLoading}>
                                     Cancelar

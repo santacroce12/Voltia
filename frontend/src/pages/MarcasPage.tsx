@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { listarMarcas, crearMarca, actualizarMarca, type Marca } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,17 +51,37 @@ function MarcaForm({ onMarcaCreada }: { onMarcaCreada: (marca: Marca) => void })
     );
 }
 
-function MarcaList({ marcas, onEditar }: { marcas: Marca[]; onEditar: (marca: Marca) => void }) {
+type MarcaListProps = {
+    marcas: Marca[];
+    onEditar: (marca: Marca) => void;
+    sortField: "id" | "nombre";
+    sortDirection: "asc" | "desc";
+    onSortChange: (field: "id" | "nombre") => void;
+};
+
+function MarcaList({ marcas, onEditar, sortField, sortDirection, onSortChange }: MarcaListProps) {
     if (marcas.length === 0)
         return <div className="text-center text-muted-foreground py-12 border rounded-lg bg-muted/10">No hay marcas registradas.</div>;
+    const renderIndicator = (field: "id" | "nombre") =>
+        sortField === field ? <span className="ml-1 text-xs">{sortDirection === "asc" ? "^" : "v"}</span> : null;
 
     return (
         <div className="overflow-x-auto rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Nombre</TableHead>
+                        <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => onSortChange("id")}
+                        >
+                            ID {renderIndicator("id")}
+                        </TableHead>
+                        <TableHead
+                            className="cursor-pointer select-none"
+                            onClick={() => onSortChange("nombre")}
+                        >
+                            Nombre {renderIndicator("nombre")}
+                        </TableHead>
                         <TableHead className="text-right">Editar</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -90,8 +110,34 @@ export function MarcasPage() {
     const [editNombre, setEditNombre] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+    const [busqueda, setBusqueda] = useState("");
+    const [sortField, setSortField] = useState<"id" | "nombre">("nombre");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
     useEffect(() => { listarMarcas().then(setMarcas).catch(console.error); }, []);
+
+    const handleSortChange = (field: "id" | "nombre") => {
+        setSortField((prev) => {
+            if (prev === field) {
+                setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"));
+                return prev;
+            }
+            setSortDirection("asc");
+            return field;
+        });
+    };
+
+    const marcasProcesadas = useMemo(() => {
+        const filtradas = marcas.filter((m) =>
+            m.nombre.toLowerCase().includes(busqueda.toLowerCase()),
+        );
+        const sorted = [...filtradas].sort((a, b) => {
+            const valA = sortField === "id" ? String(a.id) : a.nombre.toLowerCase();
+            const valB = sortField === "id" ? String(b.id) : b.nombre.toLowerCase();
+            return sortDirection === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        });
+        return sorted;
+    }, [marcas, busqueda, sortField, sortDirection]);
 
     const abrirEditor = (marca: Marca) => {
         setMarcaEditando(marca);
@@ -129,7 +175,19 @@ export function MarcasPage() {
             <Separator />
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Marcas Registradas</h3>
-                <MarcaList marcas={marcas} onEditar={abrirEditor} />
+                <Input
+                    placeholder="Filtrar por nombre..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="max-w-sm"
+                />
+                <MarcaList
+                    marcas={marcasProcesadas}
+                    onEditar={abrirEditor}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSortChange={handleSortChange}
+                />
             </div>
             <Dialog open={editOpen} onOpenChange={(open) => (open ? setEditOpen(true) : cerrarEditor())}>
                 <DialogContent className="sm:max-w-[420px]">
