@@ -2,8 +2,8 @@
 Vistas REST responsables de entregar datos al frontend de React.
 """
 from django.contrib.auth.models import User
-from django.db import models
-from rest_framework import generics, permissions
+from django.db import models, transaction
+from rest_framework import generics, permissions, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -33,6 +33,51 @@ from core.serializers import (
     ServiciosProyectoSerializer,
     UrlsExternasProyectoSerializer,
 )
+
+
+def deep_clone_project(source_project_id: int, target_obra_id: int, user):
+    """
+    Realiza una copia profunda de un Proyecto y todas sus dependencias clave (Instancias, Servicios, URLs).
+    Asigna el nuevo proyecto a la obra destino y al usuario que lo clona.
+    """
+    try:
+        source_project = Proyecto.objects.get(pk=source_project_id)
+        target_obra = Obra.objects.get(pk=target_obra_id)
+    except (Proyecto.DoesNotExist, Obra.DoesNotExist):
+        return None
+
+    with transaction.atomic():
+        source_project.pk = None
+        source_project.id = None
+        source_project.obra = target_obra
+        source_project.usuario_creador = user
+        source_project.nombre_proyecto = f"{source_project.nombre_proyecto} (COPIA)"
+        source_project.save()
+        new_project = source_project
+
+        for source_instance in InstanciaDispositivo.objects.filter(proyecto_id=source_project_id):
+            original_funciones_usadas = list(source_instance.funciones_usadas.values_list("id", flat=True))
+            source_instance.pk = None
+            source_instance.id = None
+            source_instance.proyecto = new_project
+            source_instance.usuario_creador = user
+            source_instance.save()
+            source_instance.funciones_usadas.set(original_funciones_usadas)
+
+        for source_servicio in ServiciosProyecto.objects.filter(proyecto_id=source_project_id):
+            source_servicio.pk = None
+            source_servicio.id = None
+            source_servicio.proyecto = new_project
+            source_servicio.obra = target_obra
+            source_servicio.save()
+
+        for source_url in UrlsExternasProyecto.objects.filter(proyecto_id=source_project_id):
+            source_url.pk = None
+            source_url.id = None
+            source_url.proyecto = new_project
+            source_url.save()
+
+        return new_project
 
 
 class EstadoSaludAPIView(APIView):
@@ -297,3 +342,30 @@ class UrlsExternasProyectoListCreateAPIView(generics.ListCreateAPIView):
         if proyecto_id:
             queryset = queryset.filter(proyecto_id=proyecto_id)
         return queryset
+
+
+class ProyectoCloneAPIView(APIView):
+    """
+    Endpoint para clonar un proyecto existente y todas sus dependencias.
+    Requiere project_id y target_obra_id en el payload POST.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        source_project_id = request.data.get("source_project_id")
+        target_obra_id = request.data.get("target_obra_id")
+
+        if not source_project_id or not target_obra_id:
+            return Response(
+                {"error": "Debe proporcionar el ID del proyecto origen y el ID de la obra destino."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        new_project = deep_clone_project(source_project_id, target_obra_id, request.user)
+
+        if new_project:
+            serializer = ProyectoSerializer(new_project)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response({"error": "No se encontró el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)

@@ -10,6 +10,7 @@ app_name = "core"
 
 urlpatterns = [
     path("salud/", views.EstadoSaludAPIView.as_view(), name="salud"),
+    path("proyectos/clone/", views.ProyectoCloneAPIView.as_view(), name="proyecto-clone"),
     path("proyectos/", views.ProyectoListCreateAPIView.as_view(), name="proyectos"),
     path("proyectos/<int:pk>/", views.ProyectoDetailAPIView.as_view(), name="proyecto-detail"),
     path("registro/", views.RegistroUsuarioAPIView.as_view(), name="registro"),

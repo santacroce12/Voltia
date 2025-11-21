@@ -65,6 +65,10 @@ export type ProyectoPayload = {
     estado_proyecto: string;
 };
 export type ProyectoUpdatePayload = Partial<ProyectoPayload>;
+export type ClonePayload = {
+    source_project_id: number;
+    target_obra_id: number;
+};
 
 export type Marca = {
     id: number;
@@ -412,6 +416,23 @@ export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Pro
     if (!respuesta.ok) {
         throw new Error("No se pudo crear el proyecto");
     }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Clona un proyecto existente y todas sus instancias a una nueva obra.
+ */
+export async function clonarProyecto(payload: ClonePayload): Promise<Proyecto> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/proyectos/clone/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+
+    if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({ error: "Error de servidor" }));
+        throw new Error(errorData.error || "No se pudo clonar el proyecto.");
+    }
+
     return respuesta.json();
 }
 
