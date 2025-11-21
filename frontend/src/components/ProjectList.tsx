@@ -8,7 +8,7 @@ import type { Proyecto } from "../services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, FileText } from "lucide-react";
+import { Pencil, FileText, Copy } from "lucide-react";
 
 type ProyectoListProps = {
   proyectos: Proyecto[];
@@ -16,6 +16,7 @@ type ProyectoListProps = {
   clientePorObra?: Record<number, string>;
   onEditarProyecto?: (proyecto: Proyecto) => void;
   onGestionProyecto?: (proyecto: Proyecto) => void;
+  onClonarProyecto?: (proyecto: Proyecto) => void;
 };
 
 export function ProjectList({
@@ -24,6 +25,7 @@ export function ProjectList({
   clientePorObra,
   onEditarProyecto,
   onGestionProyecto,
+  onClonarProyecto,
 }: ProyectoListProps) {
   if (proyectos.length === 0) {
     return <p className="text-center text-muted-foreground">Todavia no hay proyectos registrados.</p>;
@@ -52,9 +54,8 @@ export function ProjectList({
             <TableHead>Estado</TableHead>
             <TableHead>Ubicacion</TableHead>
             <TableHead>Creado</TableHead>
-            {onEditarProyecto && <TableHead className="text-right">Editar</TableHead>}
-            {onGestionProyecto && (
-              <TableHead className="text-right">Servicios / Planos</TableHead>
+            {(onEditarProyecto || onGestionProyecto || onClonarProyecto) && (
+              <TableHead className="text-right">Acciones</TableHead>
             )}
           </TableRow>
           </TableHeader>
@@ -62,7 +63,7 @@ export function ProjectList({
             {filtrados.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6 + (onEditarProyecto ? 1 : 0) + (onGestionProyecto ? 1 : 0)}
+                  colSpan={6 + (onEditarProyecto || onGestionProyecto || onClonarProyecto ? 1 : 0)}
                   className="text-center text-muted-foreground"
                 >
                   Sin resultados.
@@ -81,34 +82,49 @@ export function ProjectList({
                   <TableCell>{proyecto.estado_proyecto}</TableCell>
                   <TableCell>{proyecto.ubicacion_fisica || "N/A"}</TableCell>
                   <TableCell>{new Date(proyecto.fecha_creacion).toLocaleDateString()}</TableCell>
-                  {onEditarProyecto && (
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditarProyecto(proyecto);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  )}
-                  {onGestionProyecto && (
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onGestionProyecto(proyecto);
-                        }}
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
+                  {(onEditarProyecto || onGestionProyecto || onClonarProyecto) && (
+                    <TableCell className="text-right space-x-1">
+                      {onClonarProyecto && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onClonarProyecto(proyecto);
+                          }}
+                          className="inline-flex items-center gap-1"
+                        >
+                          <Copy className="h-3 w-3" />
+                          Clonar
+                        </Button>
+                      )}
+                      {onGestionProyecto && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onGestionProyecto(proyecto);
+                          }}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onEditarProyecto && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditarProyecto(proyecto);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>

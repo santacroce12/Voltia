@@ -762,6 +762,34 @@ export async function updateCatalogoFunciones(
 }
 
 /**
+ * [PROTEGIDO] Obtiene el detalle de una instancia.
+ */
+export async function getInstanciaDetalle(instanciaId: number): Promise<InstanciaDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/${instanciaId}/`);
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener el detalle de la instancia.");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Actualiza parcialmente una instancia de dispositivo.
+ */
+export async function updateInstancia(
+    instanciaId: number,
+    data: Partial<InstanciaPayload>,
+): Promise<InstanciaDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/${instanciaId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
+    if (!respuesta.ok) {
+        throw new Error("Error al actualizar la instancia.");
+    }
+    return respuesta.json();
+}
+
+/**
  * [PROTEGIDO] Borra una instancia de dispositivo por su ID.
  */
 export async function borrarInstancia(instanciaId: number): Promise<void> {

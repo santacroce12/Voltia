@@ -190,8 +190,8 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(usuario_creador=self.request.user)
 
 
-class InstanciaDispositivoDetailAPIView(generics.RetrieveDestroyAPIView):
-    """Permite consultar o eliminar una instancia de dispositivo puntual."""
+class InstanciaDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """Permite consultar, actualizar o eliminar una instancia de dispositivo puntual."""
 
     queryset = InstanciaDispositivo.objects.all()
     serializer_class = InstanciaDispositivoSerializer
