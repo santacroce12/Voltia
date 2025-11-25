@@ -17,6 +17,7 @@ type ProyectoListProps = {
   onEditarProyecto?: (proyecto: Proyecto) => void;
   onGestionProyecto?: (proyecto: Proyecto) => void;
   onClonarProyecto?: (proyecto: Proyecto) => void;
+  onSelectProyecto?: (proyecto: Proyecto) => void;
 };
 
 export function ProjectList({
@@ -26,6 +27,7 @@ export function ProjectList({
   onEditarProyecto,
   onGestionProyecto,
   onClonarProyecto,
+  onSelectProyecto,
 }: ProyectoListProps) {
   if (proyectos.length === 0) {
     return <p className="text-center text-muted-foreground">Todavia no hay proyectos registrados.</p>;
@@ -74,7 +76,13 @@ export function ProjectList({
                 <TableRow
                   key={proyecto.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`${linkPrefix}/${proyecto.id}`)}
+                  onClick={() => {
+                    if (onSelectProyecto) {
+                      onSelectProyecto(proyecto);
+                    } else {
+                      navigate(`${linkPrefix}/${proyecto.id}`);
+                    }
+                  }}
                 >
                   <TableCell className="font-medium">{proyecto.nombre_proyecto}</TableCell>
                   <TableCell>{clientePorObra?.[proyecto.obra] || `Cliente #${proyecto.obra}`}</TableCell>

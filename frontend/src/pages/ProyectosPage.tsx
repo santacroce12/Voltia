@@ -3,7 +3,15 @@ import { ObraList } from "../components/ObraList";
 import { ProyectoForm } from "../components/ProyectoForm";
 import { ProjectList } from "../components/ProjectList";
 import { CloningModal } from "@/components/CloningModal";
-import { listarProyectos, listarObras, actualizarProyecto, type Proyecto, type Obra } from "../services/api";
+import {
+    listarProyectos,
+    listarObras,
+    actualizarProyecto,
+    listarInstancias,
+    type Proyecto,
+    type Obra,
+    type InstanciaDispositivo,
+} from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft } from "lucide-react";
@@ -36,6 +44,9 @@ export function ProyectosPage() {
     const [editUbicacion, setEditUbicacion] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+    const [proyectoDetalle, setProyectoDetalle] = useState<Proyecto | null>(null);
+    const [instanciasDetalle, setInstanciasDetalle] = useState<InstanciaDispositivo[]>([]);
+    const [loadingInstancias, setLoadingInstancias] = useState(false);
 
     useEffect(() => {
         Promise.all([listarObras(), listarProyectos()])
@@ -54,6 +65,15 @@ export function ProyectosPage() {
     const handleClonacionExitosa = (nuevoProyecto: Proyecto) => {
         setProyectos((prev) => [nuevoProyecto, ...prev]);
         setModalAbierto(false);
+    };
+
+    const cargarInstanciasProyecto = (proyecto: Proyecto) => {
+        setProyectoDetalle(proyecto);
+        setLoadingInstancias(true);
+        listarInstancias(proyecto.id)
+            .then(setInstanciasDetalle)
+            .catch(() => setInstanciasDetalle([]))
+            .finally(() => setLoadingInstancias(false));
     };
 
     const iniciarClonacion = (proyecto: Proyecto) => {
@@ -141,15 +161,69 @@ export function ProyectosPage() {
                         </p>
                     </div>
                 </div>
-                <ProjectList
+                                <ProjectList
                     proyectos={proyectosFiltrados}
                     onClonarProyecto={iniciarClonacion}
                     onEditarProyecto={abrirEditorProyecto}
+                    onSelectProyecto={cargarInstanciasProyecto}
                 />
                 {proyectosFiltrados.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">No hay proyectos. Creá uno arriba.</p>
+                    <p className="text-center text-muted-foreground py-4">No hay proyectos. Crea uno arriba.</p>
                 )}
             </div>
+
+            {proyectoDetalle && (
+                <div className="rounded-xl border border-border bg-card shadow-sm p-6 space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Proyecto seleccionado</p>
+                            <h3 className="text-xl font-semibold">{proyectoDetalle.nombre_proyecto}</h3>
+                            <p className="text-sm text-muted-foreground">Tipo: {proyectoDetalle.tipo} · Estado: {proyectoDetalle.estado_proyecto}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="secondary" onClick={() => iniciarClonacion(proyectoDetalle)}>
+                                Clonar
+                            </Button>
+                            <Button variant="outline" onClick={() => setProyectoDetalle(null)}>
+                                Ocultar
+                            </Button>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                        <h4 className="text-lg font-semibold">Dispositivos del proyecto</h4>
+                        {loadingInstancias ? (
+                            <p className="text-sm text-muted-foreground">Cargando dispositivos...</p>
+                        ) : instanciasDetalle.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No hay dispositivos cargados.</p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-md border">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-muted/50 text-left">
+                                        <tr>
+                                            <th className="px-3 py-2">TAG</th>
+                                            <th className="px-3 py-2">Modelo</th>
+                                            <th className="px-3 py-2">Marca</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {instanciasDetalle.map((inst) => (
+                                            <tr key={inst.id} className="hover:bg-muted/30">
+                                                <td className="px-3 py-2 font-mono text-xs">{inst.tag_dispositivo || `ID-${inst.id}`}</td>
+                                                <td className="px-3 py-2">{inst.nombre_dispositivo || "Sin modelo"}</td>
+                                                <td className="px-3 py-2 text-muted-foreground">{inst.marca_dispositivo || "Sin marca"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">Tip: abre Ingenieria para editar o agregar dispositivos.</p>
+                    </div>
+                </div>
+            )}
 
             <CloningModal
                 isOpen={modalAbierto}
