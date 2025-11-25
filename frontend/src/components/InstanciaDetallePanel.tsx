@@ -22,9 +22,17 @@ type Props = {
     onCerrar: () => void;
     onUpdate: (updatedInstance: InstanciaDispositivo) => void;
     onDelete: (deletedId: number) => void;
+    proyectoNombre?: string;
 };
 
-export function InstanciaDetallePanel({ instanciaId, masterFunciones, onCerrar, onUpdate, onDelete }: Props) {
+export function InstanciaDetallePanel({
+    instanciaId,
+    masterFunciones,
+    onCerrar,
+    onUpdate,
+    onDelete,
+    proyectoNombre,
+}: Props) {
     const [instancia, setInstancia] = useState<InstanciaDispositivo | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -122,14 +130,12 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, onCerrar, 
                 </Button>
             </CardHeader>
             <CardContent className="p-4 space-y-6">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 gap-2 text-sm">
                     <div>
-                        <p className="text-muted-foreground font-medium">Proyecto ID</p>
-                        <p className="font-semibold text-primary">{instancia.proyecto}</p>
-                    </div>
-                    <div>
-                        <p className="text-muted-foreground font-medium">Catalogo ID</p>
-                        <p className="font-semibold text-primary">{instancia.catalogo}</p>
+                        <p className="text-muted-foreground font-medium">Nombre del proyecto</p>
+                        <p className="font-semibold text-primary">
+                            {proyectoNombre || instancia.nombre_proyecto || "Sin nombre"}
+                        </p>
                     </div>
                 </div>
 

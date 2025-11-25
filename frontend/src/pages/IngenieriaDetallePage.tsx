@@ -163,6 +163,7 @@ export function IngenieriaDetallePage() {
                         onCerrar={() => setModalDetalleOpen(false)}
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
+                        proyectoNombre={proyectoInfo?.nombre_proyecto}
                     />
                 )}
             </Modal>

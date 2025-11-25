@@ -143,6 +143,7 @@ export type InstanciaDispositivo = {
     marca_dispositivo?: string;
     categoria_dispositivo?: string;
     subcategoria_dispositivo?: string;
+    nombre_proyecto?: string;
 };
 
 export type InstanciaPayload = {

@@ -68,7 +68,17 @@ const router = createBrowserRouter([
                     {
                         path: "/ingenieria/proyecto/:proyectoId",
                         element: <IngenieriaDetallePage />,
-                        handle: { crumb: (data: any) => `Ing. Proyecto #${data.params.proyectoId}` },
+                        handle: {
+                            crumb: (data: any) => {
+                                const search = new URLSearchParams(window.location.search);
+                                const obra = search.get("obra_nombre");
+                                const proy = search.get("proyecto_nombre");
+                                if (obra && proy) {
+                                    return `Obra "${obra}" · Proyecto "${proy}"`;
+                                }
+                                return `Ing. Proyecto #${data.params.proyectoId}`;
+                            },
+                        },
                     },
                     {
                         path: "/catalogo",

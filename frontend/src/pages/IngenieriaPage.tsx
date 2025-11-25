@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ObraList } from "../components/ObraList";
 import { ProjectList } from "../components/ProjectList";
 import { listarObras, listarProyectos, listarClientes, type Obra, type Proyecto, type Cliente } from "../services/api";
@@ -7,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft } from "lucide-react";
 
 export function IngenieriaPage() {
+    const navigate = useNavigate();
     const [obras, setObras] = useState<Obra[]>([]);
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -79,7 +81,17 @@ export function IngenieriaPage() {
                 </div>
             ) : (
                 // Usamos el linkPrefix para dirigir a la pagina de detalle de ingenieria
-                <ProjectList proyectos={proyectosFiltrados} linkPrefix="/ingenieria/proyecto" clientePorObra={clientePorObra} />
+                <ProjectList
+                    proyectos={proyectosFiltrados}
+                    clientePorObra={clientePorObra}
+                    onSelectProyecto={(proyecto) =>
+                        navigate(
+                            `/ingenieria/proyecto/${proyecto.id}?obra_nombre=${encodeURIComponent(
+                                obraSeleccionada.nombre_obra,
+                            )}&proyecto_nombre=${encodeURIComponent(proyecto.nombre_proyecto)}`,
+                        )
+                    }
+                />
             )}
         </div>
     );
