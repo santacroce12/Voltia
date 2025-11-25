@@ -4,9 +4,13 @@ import {
     listarInstancias,
     listarCatalogoDispositivos,
     listarFunciones,
+    listarProyectos,
+    listarObras,
     type InstanciaDispositivo,
     type CatalogoDispositivo,
     type FuncionDispositivo,
+    type Proyecto,
+    type Obra,
 } from "../services/api";
 import { InstanciaForm } from "@/components/InstanciaForm";
 import { BatchInstanciaForm } from "@/components/BatchInstanciaForm";
@@ -27,6 +31,8 @@ export function IngenieriaDetallePage() {
     const [instancias, setInstancias] = useState<InstanciaDispositivo[]>([]);
     const [catalogo, setCatalogo] = useState<CatalogoDispositivo[]>([]);
     const [masterFunciones, setMasterFunciones] = useState<FuncionDispositivo[]>([]);
+    const [proyectoInfo, setProyectoInfo] = useState<Proyecto | null>(null);
+    const [obraInfo, setObraInfo] = useState<Obra | null>(null);
 
     const [modalCatOpen, setModalCatOpen] = useState(false);
     const [modalFuncOpen, setModalFuncOpen] = useState(false);
@@ -38,11 +44,19 @@ export function IngenieriaDetallePage() {
     const cargarDatos = () => {
         if (!pid) return;
         setCargandoInicial(true);
-        Promise.all([listarInstancias(pid), listarCatalogoDispositivos(), listarFunciones()])
-            .then(([i, c, f]) => {
+        Promise.all([listarInstancias(pid), listarCatalogoDispositivos(), listarFunciones(), listarProyectos(), listarObras()])
+            .then(([i, c, f, proyectos, obras]) => {
                 setInstancias(i);
                 setCatalogo(c);
                 setMasterFunciones(f);
+                const proj = proyectos.find((p) => p.id === pid) || null;
+                setProyectoInfo(proj);
+                if (proj) {
+                    const obra = obras.find((o) => o.id === proj.obra) || null;
+                    setObraInfo(obra);
+                } else {
+                    setObraInfo(null);
+                }
             })
             .catch(console.error)
             .finally(() => setCargandoInicial(false));
@@ -76,7 +90,10 @@ export function IngenieriaDetallePage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-3xl font-bold tracking-tight">Carga de Dispositivos Proyecto #{pid}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                    Carga de Dispositivos en Obra "{obraInfo?.nombre_obra || '...'}" proyecto "
+                    {proyectoInfo?.nombre_proyecto || `#${pid}`}"
+                </h1>
             </div>
 
             <Separator />

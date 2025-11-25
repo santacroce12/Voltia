@@ -3,16 +3,19 @@ import {
     listarCatalogoDispositivos,
     listarMarcas,
     listarCategorias,
+    listarFunciones,
     actualizarCatalogoDispositivo,
     type CatalogoDispositivo,
     type Marca,
     type Categoria,
+    type FuncionDispositivo,
 } from "../services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -36,6 +39,7 @@ export function DispositivosListadoPage() {
     const [filtro, setFiltro] = useState("");
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
+    const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
     const [editDispositivo, setEditDispositivo] = useState<CatalogoDispositivo | null>(null);
     const [editOpen, setEditOpen] = useState(false);
     const [editMarcaId, setEditMarcaId] = useState<number | null>(null);
@@ -44,6 +48,8 @@ export function DispositivosListadoPage() {
     const [editNombre, setEditNombre] = useState("");
     const [editUrl, setEditUrl] = useState("");
     const [editDescripcion, setEditDescripcion] = useState("");
+    const [editFunciones, setEditFunciones] = useState<number[]>([]);
+    const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
 
@@ -52,10 +58,11 @@ export function DispositivosListadoPage() {
     }, []);
 
     useEffect(() => {
-        Promise.all([listarMarcas(), listarCategorias()])
-            .then(([listaMarcas, listaCategorias]) => {
+        Promise.all([listarMarcas(), listarCategorias(), listarFunciones()])
+            .then(([listaMarcas, listaCategorias, listaFunciones]) => {
                 setMarcas(listaMarcas);
                 setCategorias(listaCategorias);
+                setFunciones(listaFunciones);
             })
             .catch(console.error);
     }, []);
@@ -73,6 +80,8 @@ export function DispositivosListadoPage() {
         setEditNombre(dispositivo.nombre_completo_producto);
         setEditUrl(dispositivo.url_ficha_tecnica || "");
         setEditDescripcion(dispositivo.descripcion_funcional || "");
+        setEditFunciones(dispositivo.funciones_soportadas || []);
+        setBusquedaFuncion("");
         setEditError(null);
         setEditOpen(true);
     };
@@ -99,6 +108,7 @@ export function DispositivosListadoPage() {
                 nombre_completo_producto: editNombre,
                 url_ficha_tecnica: editUrl || undefined,
                 descripcion_funcional: editDescripcion || undefined,
+                funciones_soportadas: editFunciones,
             });
             const enriched = {
                 ...actualizado,
@@ -254,6 +264,50 @@ export function DispositivosListadoPage() {
                                     onChange={(e) => setEditDescripcion(e.target.value)}
                                     rows={4}
                                 />
+                            </div>
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>Funciones soportadas</Label>
+                                <Input
+                                    placeholder="Buscar por nombre o codigo..."
+                                    value={busquedaFuncion}
+                                    onChange={(e) => setBusquedaFuncion(e.target.value)}
+                                />
+                                <div className="max-h-48 overflow-y-auto rounded-md border bg-muted/40 p-2 space-y-1">
+                                    {funciones
+                                        .filter((f) =>
+                                            `${f.codigo_funcion || ""} ${f.nombre}`
+                                                .toLowerCase()
+                                                .includes(busquedaFuncion.toLowerCase()),
+                                        )
+                                        .map((f) => (
+                                            <label
+                                                key={f.id}
+                                                className="flex items-start gap-2 rounded-md px-2 py-1 hover:bg-background"
+                                            >
+                                                <Checkbox
+                                                    checked={editFunciones.includes(f.id)}
+                                                    onCheckedChange={() =>
+                                                        setEditFunciones((prev) =>
+                                                            prev.includes(f.id)
+                                                                ? prev.filter((id) => id !== f.id)
+                                                                : [...prev, f.id],
+                                                        )
+                                                    }
+                                                />
+                                                <div className="leading-tight">
+                                                    <div className="font-medium text-sm">
+                                                        {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                        {f.nombre}
+                                                    </div>
+                                                    {f.descripcion && (
+                                                        <div className="text-xs text-muted-foreground line-clamp-2">
+                                                            {f.descripcion}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        ))}
+                                </div>
                             </div>
                             {editError && (
                                 <p className="text-sm text-destructive md:col-span-2">{editError}</p>

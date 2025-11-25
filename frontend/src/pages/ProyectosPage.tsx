@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ObraList } from "../components/ObraList";
 import { ProyectoForm } from "../components/ProyectoForm";
 import { ProjectList } from "../components/ProjectList";
@@ -47,6 +48,7 @@ export function ProyectosPage() {
     const [proyectoDetalle, setProyectoDetalle] = useState<Proyecto | null>(null);
     const [instanciasDetalle, setInstanciasDetalle] = useState<InstanciaDispositivo[]>([]);
     const [loadingInstancias, setLoadingInstancias] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         Promise.all([listarObras(), listarProyectos()])
@@ -57,6 +59,13 @@ export function ProyectosPage() {
             })
             .catch(() => setError("No se pudieron cargar los datos."));
     }, []);
+
+    useEffect(() => {
+        // Al cambiar la obra limpiamos cualquier proyecto seleccionado para evitar confusiones
+        setProyectoDetalle(null);
+        setInstanciasDetalle([]);
+        setLoadingInstancias(false);
+    }, [obraSeleccionada]);
 
     const handleProyectoCreado = (nuevoProyecto: Proyecto) => {
         setProyectos((prev) => [nuevoProyecto, ...prev]);
@@ -161,11 +170,12 @@ export function ProyectosPage() {
                         </p>
                     </div>
                 </div>
-                                <ProjectList
+                <ProjectList
                     proyectos={proyectosFiltrados}
                     onClonarProyecto={iniciarClonacion}
                     onEditarProyecto={abrirEditorProyecto}
                     onSelectProyecto={cargarInstanciasProyecto}
+                    onServiciosPlanos={(proy) => navigate(`/proyecto/${proy.id}`)}
                 />
                 {proyectosFiltrados.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">No hay proyectos. Crea uno arriba.</p>
@@ -183,6 +193,9 @@ export function ProyectosPage() {
                         <div className="flex gap-2">
                             <Button variant="secondary" onClick={() => iniciarClonacion(proyectoDetalle)}>
                                 Clonar
+                            </Button>
+                            <Button variant="default" onClick={() => navigate(`/proyecto/${proyectoDetalle.id}`)}>
+                                Servicios / Planos
                             </Button>
                             <Button variant="outline" onClick={() => setProyectoDetalle(null)}>
                                 Ocultar

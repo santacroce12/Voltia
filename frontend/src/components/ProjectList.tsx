@@ -18,6 +18,7 @@ type ProyectoListProps = {
   onGestionProyecto?: (proyecto: Proyecto) => void;
   onClonarProyecto?: (proyecto: Proyecto) => void;
   onSelectProyecto?: (proyecto: Proyecto) => void;
+  onServiciosPlanos?: (proyecto: Proyecto) => void;
 };
 
 export function ProjectList({
@@ -28,6 +29,7 @@ export function ProjectList({
   onGestionProyecto,
   onClonarProyecto,
   onSelectProyecto,
+  onServiciosPlanos,
 }: ProyectoListProps) {
   if (proyectos.length === 0) {
     return <p className="text-center text-muted-foreground">Todavia no hay proyectos registrados.</p>;
@@ -56,7 +58,7 @@ export function ProjectList({
             <TableHead>Estado</TableHead>
             <TableHead>Ubicacion</TableHead>
             <TableHead>Creado</TableHead>
-            {(onEditarProyecto || onGestionProyecto || onClonarProyecto) && (
+            {(onEditarProyecto || onGestionProyecto || onClonarProyecto || onServiciosPlanos) && (
               <TableHead className="text-right">Acciones</TableHead>
             )}
           </TableRow>
@@ -90,8 +92,21 @@ export function ProjectList({
                   <TableCell>{proyecto.estado_proyecto}</TableCell>
                   <TableCell>{proyecto.ubicacion_fisica || "N/A"}</TableCell>
                   <TableCell>{new Date(proyecto.fecha_creacion).toLocaleDateString()}</TableCell>
-                  {(onEditarProyecto || onGestionProyecto || onClonarProyecto) && (
+                  {(onEditarProyecto || onGestionProyecto || onClonarProyecto || onServiciosPlanos) && (
                     <TableCell className="text-right space-x-1">
+                      {onServiciosPlanos && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onServiciosPlanos(proyecto);
+                          }}
+                        >
+                          Servicios / Planos
+                        </Button>
+                      )}
                       {onClonarProyecto && (
                         <Button
                           variant="secondary"

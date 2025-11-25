@@ -184,7 +184,7 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
                 {error && <p className="text-sm text-destructive mt-2">{error}</p>}
             </CardContent>
             <CardFooter>
-                <Button form="batch-form" variant="secondary" type="submit" disabled={cargando} className="w-full">
+                <Button form="batch-form" variant="default" type="submit" disabled={cargando} className="w-full">
                     {cargando ? `Anadiendo...` : `Generar Lote (${cantidad})`}
                 </Button>
             </CardFooter>
