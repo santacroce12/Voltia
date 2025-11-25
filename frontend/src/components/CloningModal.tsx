@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ArrowDown, Copy } from "lucide-react";
@@ -15,14 +16,9 @@ type CloningModalProps = {
     onCloneExitoso: (newProject: Proyecto) => void;
 };
 
-export function CloningModal({
-    isOpen,
-    onClose,
-    sourceProject,
-    allObras,
-    onCloneExitoso,
-}: CloningModalProps) {
+export function CloningModal({ isOpen, onClose, sourceProject, allObras, onCloneExitoso }: CloningModalProps) {
     const [targetObraId, setTargetObraId] = useState("");
+    const [nuevoNombre, setNuevoNombre] = useState("");
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +29,11 @@ export function CloningModal({
         if (!targetObraId) return;
         setCargando(true);
         setError(null);
-        const payload = { source_project_id: sourceProject.id, target_obra_id: Number(targetObraId) };
+        const payload = {
+            source_project_id: sourceProject.id,
+            target_obra_id: Number(targetObraId),
+            nuevo_nombre: nuevoNombre.trim() || undefined,
+        };
         try {
             const newProject = await clonarProyecto(payload);
             onCloneExitoso(newProject);
@@ -80,10 +80,21 @@ export function CloningModal({
                     </Select>
                 </div>
 
+                <div className="grid gap-2">
+                    <Label htmlFor="nuevo-nombre">Nombre opcional para el clon</Label>
+                    <Input
+                        id="nuevo-nombre"
+                        placeholder={`${sourceProject.nombre_proyecto} (copia)`}
+                        value={nuevoNombre}
+                        onChange={(e) => setNuevoNombre(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Dejalo vacio para usar el nombre original con sufijo.</p>
+                </div>
+
                 {error && <p className="text-destructive text-sm">{error}</p>}
 
                 <Button type="submit" disabled={cargando || !targetObraId}>
-                    {cargando ? "Clonando y copiando..." : "Confirmar Clonación"}
+                    {cargando ? "Clonando..." : "Confirmar Clonacion"}
                 </Button>
             </form>
         </Modal>

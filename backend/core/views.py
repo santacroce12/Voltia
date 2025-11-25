@@ -35,7 +35,7 @@ from core.serializers import (
 )
 
 
-def deep_clone_project(source_project_id: int, target_obra_id: int, user):
+def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_nombre: str | None = None):
     """
     Realiza una copia profunda de un Proyecto y todas sus dependencias clave (Instancias, Servicios, URLs).
     Asigna el nuevo proyecto a la obra destino y al usuario que lo clona.
@@ -51,7 +51,10 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user):
         source_project.id = None
         source_project.obra = target_obra
         source_project.usuario_creador = user
-        source_project.nombre_proyecto = f"{source_project.nombre_proyecto} (COPIA)"
+        if nuevo_nombre:
+            source_project.nombre_proyecto = nuevo_nombre
+        else:
+            source_project.nombre_proyecto = f"{source_project.nombre_proyecto} (COPIA)"
         source_project.save()
         new_project = source_project
 
@@ -355,6 +358,7 @@ class ProyectoCloneAPIView(APIView):
     def post(self, request, *args, **kwargs):
         source_project_id = request.data.get("source_project_id")
         target_obra_id = request.data.get("target_obra_id")
+        nuevo_nombre = request.data.get("nuevo_nombre")
 
         if not source_project_id or not target_obra_id:
             return Response(
@@ -362,7 +366,7 @@ class ProyectoCloneAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        new_project = deep_clone_project(source_project_id, target_obra_id, request.user)
+        new_project = deep_clone_project(source_project_id, target_obra_id, request.user, nuevo_nombre)
 
         if new_project:
             serializer = ProyectoSerializer(new_project)

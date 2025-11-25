@@ -68,6 +68,7 @@ export type ProyectoUpdatePayload = Partial<ProyectoPayload>;
 export type ClonePayload = {
     source_project_id: number;
     target_obra_id: number;
+    nuevo_nombre?: string;
 };
 
 export type Marca = {
