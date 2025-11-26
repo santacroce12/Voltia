@@ -17,6 +17,7 @@ urlpatterns = [
     path("clientes/", views.ClienteListCreateAPIView.as_view(), name="clientes"),
     path("clientes/<int:pk>/", views.ClienteDetailAPIView.as_view(), name="cliente-detail"),
     path("obras/", views.ObraListCreateAPIView.as_view(), name="obras"),
+    path("obras/<int:obra_id>/exportar-materiales/", views.ExportarMaterialesAPIView.as_view(), name="obras-exportar-materiales"),
     path("obras/<int:pk>/", views.ObraDetailAPIView.as_view(), name="obra-detail"),
     path("instancias/", views.InstanciaDispositivoListCreateAPIView.as_view(), name="instancias"),
     path("instancias/<int:pk>/", views.InstanciaDispositivoDetailAPIView.as_view(), name="instancia-detail"),

@@ -1,8 +1,11 @@
 """
 Vistas REST responsables de entregar datos al frontend de React.
 """
+import csv
+
 from django.contrib.auth.models import User
 from django.db import models, transaction
+from django.http import HttpResponse
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -373,3 +376,72 @@ class ProyectoCloneAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response({"error": "No se encontró el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ExportarMaterialesAPIView(APIView):
+    """
+    Genera una Lista de Materiales (BOM) en formato CSV para una Obra.
+    Agrupa las instancias de dispositivo por modelo y marca.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, obra_id):
+        try:
+            obra = Obra.objects.get(pk=obra_id)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        instancias = InstanciaDispositivo.objects.filter(proyecto__obra=obra).select_related(
+            "catalogo", "catalogo__marca"
+        )
+
+        agregado: dict[int, dict[str, object]] = {}
+        for inst in instancias:
+            modelo_id = inst.catalogo.id
+            if modelo_id not in agregado:
+                agregado[modelo_id] = {
+                    "cantidad": 0,
+                    "modelo": inst.catalogo.modelo,
+                    "nombre_completo": inst.catalogo.nombre_completo_producto,
+                    "marca": inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
+                    "tag_ref": inst.tag_dispositivo or "VARIO",
+                }
+            agregado[modelo_id]["cantidad"] += 1
+
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="Lista_Materiales_{obra.nombre_obra.replace(" ", "_")}.csv"'
+
+        # BOM para que Excel detecte UTF-8
+        response.write("\ufeff".encode("utf-8"))
+
+        writer = csv.writer(response, delimiter=";")
+        writer.writerow(["VOLTIA LISTA DE MATERIALES", "", "", "", "", f"OBRA: {obra.nombre_obra}"])
+        writer.writerow(
+            [
+                "REFERENCIA (ITEM)",
+                "CANTIDAD",
+                "DESCRIPCIÓN",
+                "FABRICANTE/MARCA",
+                "MODELO/TIPO",
+                "CÓD. FAB.",
+                "OBSERVACIONES",
+            ]
+        )
+
+        for item in agregado.values():
+            writer.writerow(
+                [
+                    item["tag_ref"],
+                    item["cantidad"],
+                    item["nombre_completo"],
+                    item["marca"],
+                    item["modelo"],
+                    "N/A",
+                    "",
+                ]
+            )
+
+        return response
