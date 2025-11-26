@@ -34,7 +34,6 @@ export function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
-  const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [obraEditando, setObraEditando] = useState<Obra | null>(null);
@@ -54,7 +53,6 @@ export function ObrasPage() {
   useEffect(() => {
     if (!clienteSeleccionado) {
       setObras([]);
-      setObraSeleccionada(null);
       return;
     }
     setCargando(true);
@@ -148,17 +146,6 @@ export function ObrasPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver a Clientes
           </Button>
-          {obraSeleccionada && (
-            <Button
-              variant="default"
-              className="bg-primary/90 hover:bg-primary"
-              onClick={() =>
-                (window.location.href = `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api"}/obras/${obraSeleccionada.id}/exportar-materiales/`)
-              }
-            >
-              Exportar Lista de Materiales
-            </Button>
-          )}
         </div>
 
         <ObraForm cliente={clienteSeleccionado} onObraCreada={handleObraCreada} />
@@ -174,7 +161,11 @@ export function ObrasPage() {
               obras={obras}
               clienteNombres={clienteNombreMap}
               onEditarObra={abrirEditorObra}
-              onObraSeleccionada={(obra) => setObraSeleccionada(obra)}
+              onExportarObra={(obra) =>
+                (window.location.href = `${
+                  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api"
+                }/obras/${obra.id}/exportar-materiales/`)
+              }
             />
           )}
         </div>
