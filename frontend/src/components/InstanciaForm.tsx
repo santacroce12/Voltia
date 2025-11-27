@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import {
     crearInstancia,
     type InstanciaDispositivo,
@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit2, Layers } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { DynamicAttributeForm } from "@/components/DynamicAttributeForm";
 
 type Props = {
     proyectoId: number;
@@ -34,13 +34,12 @@ export function InstanciaForm({
 }: Props) {
     const [catalogoId, setCatalogoId] = useState("");
     const [tag, setTag] = useState("");
-    const [atributos, setAtributos] = useState("{}");
+    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [funcionesDisponibles, setFuncionesDisponibles] = useState<FuncionDispositivo[]>([]);
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
-    const [busquedaFuncion, setBusquedaFuncion] = useState("");
 
     useEffect(() => {
         if (catalogoId) {
@@ -51,7 +50,6 @@ export function InstanciaForm({
             setFuncionesDisponibles([]);
         }
         setFuncionesUsadasIds([]);
-        setBusquedaFuncion("");
     }, [catalogoId, catalogo, masterFunciones]);
 
     const handleSubmit = async (e: FormEvent) => {
@@ -59,38 +57,38 @@ export function InstanciaForm({
         if (!catalogoId) return;
         setCargando(true);
         setError(null);
+
         try {
-            JSON.parse(atributos);
+            const atributosArray = Object.entries(valoresEAV).map(([idAttr, val]) => ({
+                atributo: Number(idAttr),
+                valor: val,
+            }));
+
             const payload: InstanciaPayload = {
                 proyecto: proyectoId,
                 catalogo: Number(catalogoId),
                 tag_dispositivo: tag,
-                atributos,
+                atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
             };
+
             const nueva = await crearInstancia(payload);
             onInstanciaCreada(nueva);
+
             setTag("");
-            setAtributos("{}");
+            setValoresEAV({});
             setFuncionesUsadasIds([]);
             setCatalogoId("");
-            setBusquedaFuncion("");
         } catch (err: any) {
-            setError(err.message || "Error al anadir instancia.");
+            setError(err.message || "Error al añadir instancia.");
         } finally {
             setCargando(false);
         }
     };
 
-    const funcionesFiltradas = useMemo(() => {
-        const term = busquedaFuncion.trim().toLowerCase();
-        return funcionesDisponibles.filter((f) =>
-            `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(term),
-        );
-    }, [funcionesDisponibles, busquedaFuncion]);
-
-    const toggleFuncion = (id: number) => {
-        setFuncionesUsadasIds((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
+    const handleFuncionesChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        const opts = Array.from(e.target.selectedOptions, (o) => Number(o.value));
+        setFuncionesUsadasIds(opts);
     };
 
     return (
@@ -103,7 +101,7 @@ export function InstanciaForm({
             <CardContent>
                 <form id="single-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
                     <div className="grid gap-2 md:col-span-2">
-                        <Label>Dispositivo del Catalogo</Label>
+                        <Label>Dispositivo del Catálogo</Label>
                         <div className="flex gap-2">
                             <Select value={catalogoId} onValueChange={setCatalogoId}>
                                 <SelectTrigger className="flex-1">
@@ -112,7 +110,7 @@ export function InstanciaForm({
                                 <SelectContent>
                                     {catalogo.map((d) => (
                                         <SelectItem key={d.id} value={String(d.id)}>
-                                            {(d as any).marca_nombre || `Marca #${d.marca}`} {d.modelo}
+                                            {d.marca_nombre ? `${d.marca_nombre} - ` : ""} {d.modelo}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -122,7 +120,7 @@ export function InstanciaForm({
                                 variant="outline"
                                 size="icon"
                                 onClick={onAbrirModalCatalogo}
-                                title="Crear Nuevo en Catalogo"
+                                title="Crear Nuevo en Catálogo"
                             >
                                 <Plus className="h-4 w-4" />
                             </Button>
@@ -133,79 +131,45 @@ export function InstanciaForm({
                         <Label>TAG del Dispositivo</Label>
                         <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Ej: REL-001" />
                     </div>
+
                     <div className="grid gap-2">
-                        <Label>Atributos (JSON)</Label>
-                        <Textarea
-                            value={atributos}
-                            onChange={(e) => setAtributos(e.target.value)}
-                            rows={4}
-                            className="font-mono text-xs"
-                        />
+                        <Label>Atributos Variables</Label>
+                        <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
                     </div>
 
                     <div className="grid gap-2 md:col-span-2">
-                        <div className="flex items-center justify-between gap-2">
-                            <Label>Funciones a habilitar</Label>
+                        <Label>Funciones a Habilitar (Usadas)</Label>
+                        <div className="flex gap-2 items-start">
+                            <select
+                                multiple
+                                className={cn(
+                                    "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50",
+                                    !catalogoId && "bg-muted",
+                                )}
+                                value={funcionesUsadasIds.map(String)}
+                                onChange={handleFuncionesChange}
+                                disabled={!catalogoId || funcionesDisponibles.length === 0}
+                            >
+                                {funcionesDisponibles.length === 0 && catalogoId && (
+                                    <option disabled>Este dispositivo no tiene funciones soportadas</option>
+                                )}
+                                {funcionesDisponibles.map((f) => (
+                                    <option key={f.id} value={f.id}>
+                                        {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                        {f.nombre}
+                                    </option>
+                                ))}
+                            </select>
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="icon"
                                 onClick={() => onAbrirModalEditarFunciones(Number(catalogoId))}
                                 disabled={!catalogoId}
-                                title="Editar funciones soportadas del catalogo"
+                                title="Editar Soportadas en Catálogo"
                             >
                                 <Edit2 className="h-4 w-4" />
                             </Button>
-                        </div>
-                        <div className="grid gap-2 rounded-md border bg-muted/40 p-3">
-                            <Input
-                                placeholder="Buscar por nombre o codigo..."
-                                value={busquedaFuncion}
-                                onChange={(e) => setBusquedaFuncion(e.target.value)}
-                                disabled={!catalogoId || funcionesDisponibles.length === 0}
-                            />
-                            <div className="max-h-44 overflow-y-auto space-y-1">
-                                {!catalogoId && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Selecciona un dispositivo para ver funciones.
-                                    </p>
-                                )}
-                                {catalogoId && funcionesDisponibles.length === 0 && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Este dispositivo no tiene funciones soportadas.
-                                    </p>
-                                )}
-                                {catalogoId &&
-                                    funcionesDisponibles.length > 0 &&
-                                    (funcionesFiltradas.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">
-                                            No hay coincidencias con el filtro.
-                                        </p>
-                                    ) : (
-                                        funcionesFiltradas.map((f) => (
-                                            <label
-                                                key={f.id}
-                                                className="flex items-start gap-2 rounded-md px-2 py-1 hover:bg-background"
-                                            >
-                                                <Checkbox
-                                                    checked={funcionesUsadasIds.includes(f.id)}
-                                                    onCheckedChange={() => toggleFuncion(f.id)}
-                                                />
-                                                <div className="leading-tight">
-                                                    <div className="font-medium text-sm">
-                                                        {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                                        {f.nombre}
-                                                    </div>
-                                                    {f.descripcion && (
-                                                        <div className="text-xs text-muted-foreground line-clamp-2">
-                                                            {f.descripcion}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </label>
-                                        ))
-                                    ))}
-                            </div>
                         </div>
                     </div>
                 </form>
@@ -213,7 +177,7 @@ export function InstanciaForm({
             </CardContent>
             <CardFooter>
                 <Button form="single-form" type="submit" disabled={cargando} className="w-full">
-                    {cargando ? "Anadiendo..." : "Anadir Instancia"}
+                    {cargando ? "Añadiendo..." : "Añadir Instancia"}
                 </Button>
             </CardFooter>
         </Card>

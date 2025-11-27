@@ -68,7 +68,7 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
                 proyecto: proyectoId,
                 catalogo: Number(catalogoId),
                 tag_dispositivo: `${tagBase}-${String(i + 1).padStart(3, "0")}`,
-                atributos: "{}",
+                atributos_set: [],
                 funciones_usadas: funcionesUsadasIds,
             };
             promesas.push(crearInstancia(payload));

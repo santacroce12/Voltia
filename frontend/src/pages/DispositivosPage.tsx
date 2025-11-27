@@ -16,9 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DynamicAttributeForm } from "../components/DynamicAttributeForm";
 
 type DispositivoFormProps = {
     marcas: Marca[];
@@ -33,9 +33,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
     const [url, setUrl] = useState("");
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
-    const [especificaciones, setEspecificaciones] = useState(`{
-  "potencia_w": 100
-}`);
+    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [funcionesIds, setFuncionesIds] = useState<number[]>([]);
     const [busquedaFunciones, setBusquedaFunciones] = useState("");
     const [cargando, setCargando] = useState(false);
@@ -58,13 +56,6 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
             setError("Faltan datos obligatorios.");
             return;
         }
-        try {
-            JSON.parse(especificaciones);
-        } catch {
-            setError("JSON invalido.");
-            return;
-        }
-
         setCargando(true);
         setError(null);
         setExito(null);
@@ -75,7 +66,10 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
             url_ficha_tecnica: url,
             marca: Number(marcaId),
             categoria: Number(categoriaId),
-            especificaciones,
+            especificaciones_set: Object.entries(valoresEAV).map(([attrId, valor]) => ({
+                atributo: Number(attrId),
+                valor,
+            })),
             funciones_soportadas: funcionesIds,
         };
 
@@ -88,6 +82,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
             setMarcaId("");
             setCategoriaId("");
             setFuncionesIds([]);
+            setValoresEAV({});
             setExito("Dispositivo guardado correctamente.");
         } catch (err: any) {
             setError(err?.message ?? "Error al guardar.");
@@ -133,7 +128,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
                         <Input value={modelo} onChange={(e) => setModelo(e.target.value)} required />
                     </div>
                     <div className="grid gap-2">
-                        <Label>Nombre Completo</Label>
+                        <Label>Nombre Comercial</Label>
                         <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
                     </div>
                     <div className="grid gap-2 md:col-span-2">
@@ -166,10 +161,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
                             )}
                         </div>
                     </div>
-                    <div className="grid gap-2 md:col-span-2">
-                        <Label>Especificaciones (JSON)</Label>
-                        <Textarea value={especificaciones} onChange={(e) => setEspecificaciones(e.target.value)} rows={5} className="font-mono text-xs" />
-                    </div>
+                    <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
                 </form>
                 {error && <p className="text-destructive text-sm mt-2">{error}</p>}
                 {exito && <p className="text-emerald-600 text-sm mt-2">{exito}</p>}
