@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Loader2, Save, Edit } from "lucide-react";
@@ -15,6 +14,7 @@ import {
     type InstanciaPayload,
     type FuncionDispositivo,
 } from "../services/api";
+import { DynamicAttributeForm } from "./DynamicAttributeForm";
 
 type Props = {
     instanciaId: number;
@@ -38,9 +38,9 @@ export function InstanciaDetallePanel({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tag, setTag] = useState("");
-    const [atributos, setAtributos] = useState("{}");
     const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
+    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
 
     useEffect(() => {
         setLoading(true);
@@ -48,7 +48,11 @@ export function InstanciaDetallePanel({
             .then((data) => {
                 setInstancia(data);
                 setTag(data.tag_dispositivo || "");
-                setAtributos(JSON.stringify(data.atributos, null, 2));
+                const inicial: Record<number, string> = {};
+                (data.atributos_set || []).forEach((a) => {
+                    if (a.atributo) inicial[a.atributo] = a.valor;
+                });
+                setValoresEAV(inicial);
                 setFuncionesSeleccionadas(data.funciones_usadas || []);
             })
             .catch(() => setError("No se pudo cargar el detalle."))
@@ -75,10 +79,12 @@ export function InstanciaDetallePanel({
         setSaving(true);
         setError(null);
         try {
-            JSON.parse(atributos);
             const payload: Partial<InstanciaPayload> = {
                 tag_dispositivo: tag,
-                atributos,
+                atributos_set: Object.entries(valoresEAV).map(([attrId, valor]) => ({
+                    atributo: Number(attrId),
+                    valor,
+                })),
                 funciones_usadas: funcionesSeleccionadas,
             };
             const updated = await updateInstancia(instanciaId, payload);
@@ -122,7 +128,7 @@ export function InstanciaDetallePanel({
                         Detalle: {instancia.tag_dispositivo || `ID #${instancia.id}`}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                        {instancia.nombre_dispositivo} · {instancia.marca_dispositivo}
+                        {instancia.nombre_dispositivo} • {instancia.marca_dispositivo}
                     </CardDescription>
                 </div>
                 <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
@@ -150,16 +156,7 @@ export function InstanciaDetallePanel({
                         <Label htmlFor="inst-tag">TAG del dispositivo</Label>
                         <Input id="inst-tag" value={tag} onChange={(e) => setTag(e.target.value)} />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="inst-atributos">Atributos únicos (JSON)</Label>
-                        <Textarea
-                            id="inst-atributos"
-                            value={atributos}
-                            onChange={(e) => setAtributos(e.target.value)}
-                            rows={5}
-                            className="font-mono text-sm"
-                        />
-                    </div>
+                    <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <CardFooter className="p-0 flex justify-end">
                         <Button type="submit" disabled={saving}>

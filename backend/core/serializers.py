@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from core.models import (
+    AtributoMaestro,
     CatalogoDispositivo,
     InstanciaDispositivo,
     Obra,
@@ -15,6 +16,9 @@ from core.models import (
     FuncionDispositivo,
     ServiciosProyecto,
     UrlsExternasProyecto,
+    AtributoMaestro,
+    EspecificacionCatalogo,
+    AtributoInstancia,
 )
 
 
@@ -71,10 +75,14 @@ class InstanciaDispositivoSerializer(serializers.ModelSerializer):
     marca_dispositivo = serializers.ReadOnlyField(source="catalogo.marca.nombre")
     categoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.categoria_principal")
     subcategoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.subcategoria")
+    atributos_set = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = InstanciaDispositivo
         fields = "__all__"
+
+    def get_atributos_set(self, obj):
+        return AtributoInstanciaSerializer(obj.atributos_set.all(), many=True).data
 
 
 class CatalogoDispositivoSerializer(serializers.ModelSerializer):
@@ -92,10 +100,14 @@ class CatalogoDispositivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(
         source="categoria.categoria_principal", read_only=True
     )
+    especificaciones_set = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CatalogoDispositivo
         fields = "__all__"
+
+    def get_especificaciones_set(self, obj):
+        return EspecificacionCatalogoSerializer(obj.especificaciones_set.all(), many=True).data
 
 
 class ServiciosProyectoSerializer(serializers.ModelSerializer):
@@ -171,3 +183,35 @@ class FuncionDispositivoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FuncionDispositivo
         fields = "__all__"
+
+
+class AtributoMaestroSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el diccionario de atributos maestro.
+    """
+
+    class Meta:
+        model = AtributoMaestro
+        fields = "__all__"
+
+
+class EspecificacionCatalogoSerializer(serializers.ModelSerializer):
+    """Serializa los valores fijos de atributos del catalogo."""
+
+    nombre_atributo = serializers.ReadOnlyField(source="atributo.nombre")
+    unidad_atributo = serializers.ReadOnlyField(source="atributo.unidad")
+
+    class Meta:
+        model = EspecificacionCatalogo
+        fields = ["id", "atributo", "nombre_atributo", "unidad_atributo", "valor"]
+
+
+class AtributoInstanciaSerializer(serializers.ModelSerializer):
+    """Serializa los valores unicos de atributos en cada instancia."""
+
+    nombre_atributo = serializers.ReadOnlyField(source="atributo.nombre")
+    unidad_atributo = serializers.ReadOnlyField(source="atributo.unidad")
+
+    class Meta:
+        model = AtributoInstancia
+        fields = ["id", "atributo", "nombre_atributo", "unidad_atributo", "valor"]

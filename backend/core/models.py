@@ -96,11 +96,6 @@ class CatalogoDispositivo(models.Model):
         null=True,
         verbose_name="Ficha Tecnica (URL)",
     )
-    especificaciones = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name="Especificaciones (Potencia, Fase, etc.)",
-    )
     funciones_soportadas = models.ManyToManyField(
         "FuncionDispositivo",
         blank=True,
@@ -115,6 +110,64 @@ class CatalogoDispositivo(models.Model):
         """Muestra la marca y el modelo para identificar el dispositivo."""
         marca_nombre = self.marca.nombre if self.marca else "Sin Marca"
         return f"{marca_nombre} - {self.modelo}"
+
+
+class TipoDatoAtributo(models.TextChoices):
+    """Tipos de dato permitidos para los atributos maestros."""
+
+    CADENA = "str", "Cadena"
+    ENTERO = "int", "Entero"
+    DECIMAL = "dec", "Decimal"
+    BOOLEANO = "bool", "Booleano"
+
+
+class AtributoMaestro(models.Model):
+    """
+    Diccionario de atributos disponibles para describir dispositivos.
+    """
+
+    nombre = models.CharField(max_length=150, unique=True, verbose_name="Nombre del Atributo")
+    unidad = models.CharField(max_length=50, blank=True, null=True, verbose_name="Unidad de Medida")
+    tipo_dato = models.CharField(max_length=10, choices=TipoDatoAtributo.choices, verbose_name="Tipo de Dato")
+
+    class Meta:
+        verbose_name = "Atributo Maestro"
+        verbose_name_plural = "Atributos Maestro"
+        ordering = ["nombre"]
+
+    def __str__(self) -> str:
+        """Muestra el nombre del atributo."""
+        return self.nombre
+
+
+class EspecificacionCatalogo(models.Model):
+    """Valor fijo para un atributo en el Catalogo (sustituye al JSON)."""
+
+    catalogo = models.ForeignKey(
+        "CatalogoDispositivo",
+        on_delete=models.CASCADE,
+        related_name="especificaciones_set",
+    )
+    atributo = models.ForeignKey(AtributoMaestro, on_delete=models.PROTECT)
+    valor = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ("catalogo", "atributo")
+
+
+class AtributoInstancia(models.Model):
+    """Valor unico para un atributo en una Instancia (sustituye al JSON)."""
+
+    instancia = models.ForeignKey(
+        "InstanciaDispositivo",
+        on_delete=models.CASCADE,
+        related_name="atributos_set",
+    )
+    atributo = models.ForeignKey(AtributoMaestro, on_delete=models.PROTECT)
+    valor = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ("instancia", "atributo")
 
 
 class FuncionDispositivo(models.Model):
@@ -171,11 +224,6 @@ class InstanciaDispositivo(models.Model):
         blank=True,
         null=True,
         verbose_name="TAG (Ej: REL-TAB-01)",  # Puede cargarse antes de tener un TAG fisico
-    )
-    atributos = models.JSONField(
-        default=dict,  # Asegura que siempre sea un JSON aunque este vacio
-        blank=True,  # Campo "magico" jsonb para IPs, firmware, etc.
-        verbose_name="Atributos (IP, Rango, etc.)",
     )
     funciones_usadas = models.ManyToManyField(
         "FuncionDispositivo",

@@ -14,15 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DynamicAttributeForm } from "./DynamicAttributeForm";
 
 export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCreado: (d: CatalogoDispositivo) => void }) {
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
-    const [especificaciones, setEspecificaciones] = useState("{}");
+    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [funcionesIds, setFuncionesIds] = useState<number[]>([]);
     const [busquedaFunciones, setBusquedaFunciones] = useState("");
     
@@ -54,7 +54,9 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             nombre_completo_producto: nombre,
             marca: Number(marcaId),
             categoria: Number(categoriaId),
-            especificaciones,
+            especificaciones_set: Object.entries(valoresEAV)
+                .filter(([, v]) => v !== undefined)
+                .map(([attrId, valor]) => ({ atributo: Number(attrId), valor })),
             funciones_soportadas: funcionesIds,
         };
         try {
@@ -64,7 +66,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setNombre("");
             setMarcaId("");
             setCategoriaId("");
-            setEspecificaciones("{}");
+            setValoresEAV({});
             setFuncionesIds([]);
             setBusquedaFunciones("");
         } catch (e) {
@@ -109,13 +111,10 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 <Input value={modelo} onChange={(e) => setModelo(e.target.value)} required />
             </div>
             <div className="grid gap-2">
-                <Label>Nombre Completo</Label>
+                <Label>Nombre comercial</Label>
                 <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
             </div>
-            <div className="grid gap-2">
-                <Label>Especificaciones (JSON)</Label>
-                <Textarea value={especificaciones} onChange={(e) => setEspecificaciones(e.target.value)} rows={3} className="font-mono text-xs" />
-            </div>
+            <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
             <div className="grid gap-2">
                 <Label>Funciones Soportadas</Label>
                 <Input

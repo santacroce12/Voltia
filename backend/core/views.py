@@ -16,6 +16,7 @@ from core.models import (
     InstanciaDispositivo,
     Obra,
     Proyecto,
+    AtributoMaestro,
     Cliente,
     Marca,
     Categoria,
@@ -24,6 +25,7 @@ from core.models import (
     UrlsExternasProyecto,
 )
 from core.serializers import (
+    AtributoMaestroSerializer,
     CatalogoDispositivoSerializer,
     InstanciaDispositivoSerializer,
     ObraSerializer,
@@ -240,6 +242,17 @@ class CatalogoDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = CatalogoDispositivo.objects.all()
     serializer_class = CatalogoDispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class AtributoMaestroListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Vista para LISTAR y CREAR Atributos Maestros.
+    Esta es la base para construir formularios dinamicos y filtros.
+    """
+
+    queryset = AtributoMaestro.objects.all().order_by("nombre")
+    serializer_class = AtributoMaestroSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 

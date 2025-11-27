@@ -90,6 +90,15 @@ export type FuncionDispositivo = {
     descripcion?: string;
 };
 
+export type AtributoMaestro = {
+    id: number;
+    nombre: string;
+    unidad: string | null;
+    tipo_dato: "str" | "int" | "dec" | "bool";
+};
+
+export type AtributoMaestroPayload = Omit<AtributoMaestro, "id">;
+
 // Payload para crear una Marca
 export type MarcaPayload = Omit<Marca, "id">;
 export type MarcaUpdatePayload = Partial<MarcaPayload>;
@@ -114,6 +123,7 @@ export type CatalogoDispositivo = {
     funciones_soportadas: number[];
     marca_nombre?: string;
     categoria_nombre?: string;
+    especificaciones_set?: { id: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
 };
 
 // Payload para crear un Dispositivo del Catalogo
@@ -123,7 +133,7 @@ export type CatalogoDispositivoPayload = {
     marca: number;
     categoria: number;
     url_ficha_tecnica?: string;
-    especificaciones: string;
+    especificaciones_set?: { atributo: number; valor: string }[];
     funciones_soportadas: number[];
 };
 export type CatalogoDispositivoUpdatePayload = Partial<CatalogoDispositivoPayload> & {
@@ -144,13 +154,14 @@ export type InstanciaDispositivo = {
     categoria_dispositivo?: string;
     subcategoria_dispositivo?: string;
     nombre_proyecto?: string;
+    atributos_set?: { id: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
 };
 
 export type InstanciaPayload = {
     proyecto: number;
     catalogo: number;
     tag_dispositivo?: string;
-    atributos: string;
+    atributos_set?: { atributo: number; valor: string }[];
     funciones_usadas: number[];
 };
 
@@ -865,4 +876,29 @@ export async function crearUrl(payload: UrlExternaPayload): Promise<UrlExterna> 
         throw new Error("No se pudo crear la URL");
     }
     return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Lista todos los Atributos Maestros (diccionario).
+ */
+export async function listarAtributosMaestros(): Promise<AtributoMaestro[]> {
+    const res = await fetchProtegido(`${API_BASE_URL}/atributos/maestro/`);
+    if (!res.ok) {
+        throw new Error("No se pudieron obtener los atributos maestros");
+    }
+    return res.json();
+}
+
+/**
+ * [PROTEGIDO] Crea un nuevo Atributo Maestro.
+ */
+export async function crearAtributoMaestro(data: AtributoMaestroPayload): Promise<AtributoMaestro> {
+    const res = await fetchProtegido(`${API_BASE_URL}/atributos/maestro/`, {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        throw new Error("Error al crear atributo.");
+    }
+    return res.json();
 }
