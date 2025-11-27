@@ -23,6 +23,7 @@ import { CatalogoLayout } from "./pages/CatalogoLayout";
 import { MarcasPage } from "./pages/MarcasPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { FuncionesPage } from "./pages/FuncionesPage";
+import { AtributosPage } from "./pages/AtributosPage";
 import { DispositivosPage } from "./pages/DispositivosPage";
 import { DispositivosListadoPage } from "./pages/DispositivosListadoPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -99,6 +100,11 @@ const router = createBrowserRouter([
                                 path: "funciones",
                                 element: <FuncionesPage />,
                                 handle: { crumb: () => "Funciones" },
+                            },
+                            {
+                                path: "atributos",
+                                element: <AtributosPage />,
+                                handle: { crumb: () => "Atributos" },
                             },
                             {
                                 path: "dispositivos",

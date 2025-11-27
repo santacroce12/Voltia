@@ -32,4 +32,5 @@ urlpatterns = [
     path("servicios/", views.ServiciosProyectoListCreateAPIView.as_view(), name="servicios-proyecto"),
     path("urls-externas/", views.UrlsExternasProyectoListCreateAPIView.as_view(), name="urls-externas"),
     path("atributos/maestro/", views.AtributoMaestroListCreateAPIView.as_view(), name="atributo-maestro-list-create"),
+    path("atributos/maestro/<int:pk>/", views.AtributoMaestroDetailAPIView.as_view(), name="atributo-maestro-detail"),
 ]

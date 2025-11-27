@@ -256,6 +256,14 @@ class AtributoMaestroListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+class AtributoMaestroDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """Vista para LEER, ACTUALIZAR y BORRAR un atributo maestro especifico."""
+
+    queryset = AtributoMaestro.objects.all()
+    serializer_class = AtributoMaestroSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class ClienteListCreateAPIView(generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Clientes.

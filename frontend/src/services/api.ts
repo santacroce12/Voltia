@@ -902,3 +902,20 @@ export async function crearAtributoMaestro(data: AtributoMaestroPayload): Promis
     }
     return res.json();
 }
+
+/**
+ * [PROTEGIDO] Actualiza parcialmente un Atributo Maestro existente.
+ */
+export async function actualizarAtributoMaestro(
+    id: number,
+    data: Partial<AtributoMaestroPayload>,
+): Promise<AtributoMaestro> {
+    const res = await fetchProtegido(`${API_BASE_URL}/atributos/maestro/${id}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        throw new Error("Error al actualizar atributo.");
+    }
+    return res.json();
+}

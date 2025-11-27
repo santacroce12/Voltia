@@ -5,6 +5,7 @@ const subRoutes = [
     { to: "/catalogo/marcas", label: "Marcas" },
     { to: "/catalogo/categorias", label: "Categorias" },
     { to: "/catalogo/funciones", label: "Funciones" },
+    { to: "/catalogo/atributos", label: "Atributos" },
     { to: "/catalogo/dispositivos", label: "Dispositivos" },
     { to: "/catalogo/dispositivos/listar", label: "Listar Dispositivos" },
 ];
