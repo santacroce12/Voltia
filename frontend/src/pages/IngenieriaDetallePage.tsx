@@ -6,11 +6,13 @@ import {
     listarFunciones,
     listarProyectos,
     listarObras,
+    listarAtributosMaestros,
     type InstanciaDispositivo,
     type CatalogoDispositivo,
     type FuncionDispositivo,
     type Proyecto,
     type Obra,
+    type AtributoMaestro,
 } from "../services/api";
 import { InstanciaForm } from "@/components/InstanciaForm";
 import { BatchInstanciaForm } from "@/components/BatchInstanciaForm";
@@ -31,6 +33,7 @@ export function IngenieriaDetallePage() {
     const [instancias, setInstancias] = useState<InstanciaDispositivo[]>([]);
     const [catalogo, setCatalogo] = useState<CatalogoDispositivo[]>([]);
     const [masterFunciones, setMasterFunciones] = useState<FuncionDispositivo[]>([]);
+    const [masterAtributos, setMasterAtributos] = useState<AtributoMaestro[]>([]);
     const [proyectoInfo, setProyectoInfo] = useState<Proyecto | null>(null);
     const [obraInfo, setObraInfo] = useState<Obra | null>(null);
 
@@ -44,11 +47,19 @@ export function IngenieriaDetallePage() {
     const cargarDatos = () => {
         if (!pid) return;
         setCargandoInicial(true);
-        Promise.all([listarInstancias(pid), listarCatalogoDispositivos(), listarFunciones(), listarProyectos(), listarObras()])
-            .then(([i, c, f, proyectos, obras]) => {
+        Promise.all([
+            listarInstancias(pid),
+            listarCatalogoDispositivos(),
+            listarFunciones(),
+            listarAtributosMaestros(),
+            listarProyectos(),
+            listarObras(),
+        ])
+            .then(([i, c, f, attrs, proyectos, obras]) => {
                 setInstancias(i);
                 setCatalogo(c);
                 setMasterFunciones(f);
+                setMasterAtributos(attrs);
                 const proj = proyectos.find((p) => p.id === pid) || null;
                 setProyectoInfo(proj);
                 if (proj) {
@@ -69,6 +80,9 @@ export function IngenieriaDetallePage() {
     const handleRefresh = () => cargarDatos();
     const handleInstanciaCreada = () => cargarDatos();
     const handleLoteCreado = () => cargarDatos();
+    const handleCatalogoActualizado = (actualizado: CatalogoDispositivo) => {
+        setCatalogo((prev) => prev.map((c) => (c.id === actualizado.id ? { ...c, ...actualizado } : c)));
+    };
 
     const handleUpdate = (updatedInstance: InstanciaDispositivo) => {
         setInstancias((prev) => prev.map((i) => (i.id === updatedInstance.id ? updatedInstance : i)));
@@ -83,46 +97,55 @@ export function IngenieriaDetallePage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 pb-10">
             <div className="flex items-center gap-4">
                 <Link to="/ingenieria">
                     <Button variant="outline" size="icon">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-3xl font-bold tracking-tight">
-                    Carga de Dispositivos en Obra "{obraInfo?.nombre_obra || '...'}" proyecto "
-                    {proyectoInfo?.nombre_proyecto || `#${pid}`}"
-                </h1>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Ingeniería: Proyecto #{pid}</h1>
+                    <p className="text-muted-foreground">
+                        Obra: {obraInfo?.nombre_obra || "Sin obra"} · Carga y configuración de dispositivos.
+                    </p>
+                </div>
             </div>
 
-            <Separator />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-semibold">Carga Individual</h2>
+                    <InstanciaForm
+                        proyectoId={pid}
+                        catalogo={catalogo}
+                        masterFunciones={masterFunciones}
+                        masterAtributos={masterAtributos}
+                        onInstanciaCreada={handleInstanciaCreada}
+                        onAbrirModalCatalogo={() => setModalCatOpen(true)}
+                        onAbrirModalEditarFunciones={(id: number) => {
+                            setCatalogoIdSel(id);
+                            setModalFuncOpen(true);
+                        }}
+                    />
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <InstanciaForm
-                            proyectoId={pid}
-                            catalogo={catalogo}
-                            masterFunciones={masterFunciones}
-                            onInstanciaCreada={handleInstanciaCreada}
-                            onAbrirModalCatalogo={() => setModalCatOpen(true)}
-                            onAbrirModalEditarFunciones={(id: number) => {
-                                setCatalogoIdSel(id);
-                                setModalFuncOpen(true);
-                            }}
-                        />
-                        <BatchInstanciaForm
-                            proyectoId={pid}
-                            catalogo={catalogo}
-                            masterFunciones={masterFunciones}
-                            onInstanciasCreadas={handleLoteCreado}
-                        />
-                    </div>
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-semibold">Carga Masiva</h2>
+                    <BatchInstanciaForm
+                        proyectoId={pid}
+                        catalogo={catalogo}
+                        masterFunciones={masterFunciones}
+                        masterAtributos={masterAtributos}
+                        onInstanciasCreadas={handleLoteCreado}
+                    />
+                </div>
+            </div>
 
-                    <Separator />
+            <Separator className="my-4" />
 
-                    <h3 className="text-xl font-semibold mt-8">Inventario del Proyecto</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-4">
+                    <h3 className="text-xl font-semibold">Inventario Cargado</h3>
                     <InstanciaGroupedTable
                         instancias={instancias}
                         onRefresh={handleRefresh}
@@ -133,7 +156,8 @@ export function IngenieriaDetallePage() {
                     />
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
+                    <h3 className="text-xl font-semibold">Resumen</h3>
                     <EstadisticasPanel instancias={instancias} />
                 </div>
             </div>
@@ -152,7 +176,7 @@ export function IngenieriaDetallePage() {
                 onClose={() => setModalFuncOpen(false)}
                 dispositivo={catalogo.find((d) => d.id === catalogoIdSel) || null}
                 masterFunciones={masterFunciones}
-                onUpdateExitoso={handleRefresh}
+                onUpdateExitoso={handleCatalogoActualizado}
             />
 
             <Modal isOpen={modalDetalleOpen} onClose={() => setModalDetalleOpen(false)} title="Detalle de Dispositivo">

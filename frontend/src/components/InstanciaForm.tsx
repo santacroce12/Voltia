@@ -13,14 +13,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Layers } from "lucide-react";
+import { Plus, Edit2, Layers, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DynamicAttributeForm } from "@/components/DynamicAttributeForm";
+import { Modal } from "./Modal";
 
 type Props = {
     proyectoId: number;
     catalogo: CatalogoDispositivo[];
     masterFunciones: FuncionDispositivo[];
+    masterAtributos: AtributoMaestro[];
     onInstanciaCreada: (instancia: InstanciaDispositivo) => void;
     onAbrirModalCatalogo: () => void;
     onAbrirModalEditarFunciones: (id: number) => void;
@@ -30,6 +32,7 @@ export function InstanciaForm({
     proyectoId,
     catalogo,
     masterFunciones,
+    masterAtributos,
     onInstanciaCreada,
     onAbrirModalCatalogo,
     onAbrirModalEditarFunciones,
@@ -43,6 +46,7 @@ export function InstanciaForm({
     const [funcionesDisponibles, setFuncionesDisponibles] = useState<FuncionDispositivo[]>([]);
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
+    const [viewOpen, setViewOpen] = useState(false);
 
     useEffect(() => {
         if (catalogoId) {
@@ -56,15 +60,22 @@ export function InstanciaForm({
     }, [catalogoId, catalogo, masterFunciones]);
 
     useEffect(() => {
-        listarAtributosMaestros().then(setAtributosMaestros).catch(console.error);
-    }, []);
+        if (masterAtributos && masterAtributos.length > 0) {
+            setAtributosMaestros(masterAtributos);
+        } else {
+            listarAtributosMaestros().then(setAtributosMaestros).catch(console.error);
+        }
+    }, [masterAtributos]);
 
-    const definicionesFiltradas = (() => {
-        const disp = catalogo.find((d) => d.id === Number(catalogoId));
-        if (!disp) return [];
-        if (!disp.atributos_sugeridos || disp.atributos_sugeridos.length === 0) return [];
-        return atributosMaestros.filter((a) => disp.atributos_sugeridos.includes(a.id));
-    })();
+    const dispositivoSeleccionado = catalogo.find((d) => d.id === Number(catalogoId));
+    const sugeridos = dispositivoSeleccionado?.atributos_sugeridos || [];
+
+    const selectedCatalogo = catalogo.find((d) => d.id === Number(catalogoId));
+    const funcionesDelCatalogo = selectedCatalogo
+        ? masterFunciones.filter((f) => selectedCatalogo.funciones_soportadas?.includes(f.id))
+        : [];
+    const atributosSugeridos = selectedCatalogo?.atributos_sugeridos || [];
+    const especificacionesSet = (selectedCatalogo as any)?.especificaciones_set || [];
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -133,6 +144,16 @@ export function InstanciaForm({
                                 type="button"
                                 variant="outline"
                                 size="icon"
+                                onClick={() => setViewOpen(true)}
+                                disabled={!selectedCatalogo}
+                                title="Ver detalle del dispositivo"
+                            >
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
                                 onClick={onAbrirModalCatalogo}
                                 title="Crear Nuevo en Catálogo"
                             >
@@ -148,7 +169,12 @@ export function InstanciaForm({
 
                     <div className="grid gap-2">
                         <Label>Atributos Variables</Label>
-                        <DynamicAttributeForm definiciones={definicionesFiltradas} valores={valoresEAV} onChange={setValoresEAV} />
+                        <DynamicAttributeForm
+                            todosLosAtributos={atributosMaestros}
+                            sugeridosIds={sugeridos}
+                            valores={valoresEAV}
+                            onChange={setValoresEAV}
+                        />
                     </div>
 
                     <div className="grid gap-2 md:col-span-2">
@@ -194,6 +220,60 @@ export function InstanciaForm({
                     {cargando ? "Añadiendo..." : "Añadir Instancia"}
                 </Button>
             </CardFooter>
+
+            <Modal isOpen={viewOpen} onClose={() => setViewOpen(false)} title="Detalle de dispositivo">
+                {selectedCatalogo ? (
+                    <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-2 gap-2">
+                            <p><strong>Marca:</strong> {(selectedCatalogo as any).marca_nombre ?? selectedCatalogo.marca}</p>
+                            <p><strong>Modelo:</strong> {selectedCatalogo.modelo}</p>
+                            <p><strong>Nombre:</strong> {selectedCatalogo.nombre_completo_producto}</p>
+                            <p><strong>Categoría:</strong> {(selectedCatalogo as any).categoria_nombre ?? selectedCatalogo.categoria}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">Funciones soportadas</h4>
+                            {funcionesDelCatalogo.length ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {funcionesDelCatalogo.map((f) => (
+                                        <li key={f.id}>{f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}{f.nombre}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-muted-foreground text-xs">Sin funciones configuradas.</p>
+                            )}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">Especificaciones fijas</h4>
+                            {especificacionesSet && especificacionesSet.length ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {especificacionesSet.map((e: any) => (
+                                        <li key={e.id}>
+                                            {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-muted-foreground text-xs">Sin especificaciones cargadas.</p>
+                            )}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">Atributos variables (plantilla)</h4>
+                            {atributosSugeridos.length ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {atributosSugeridos.map((id) => {
+                                        const attr = masterAtributos.find((a) => a.id === id);
+                                        return <li key={id}>{attr ? attr.nombre : `Atributo #${id}`}</li>;
+                                    })}
+                                </ul>
+                            ) : (
+                                <p className="text-muted-foreground text-xs">Sin atributos variables configurados.</p>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-muted-foreground text-sm">Selecciona un dispositivo para ver su detalle.</p>
+                )}
+            </Modal>
         </Card>
     );
 }

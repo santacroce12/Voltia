@@ -5,6 +5,7 @@ import {
     type InstanciaDispositivo,
     type InstanciaPayload,
     type FuncionDispositivo,
+    type AtributoMaestro,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,18 +13,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DynamicAttributeForm } from "./DynamicAttributeForm";
 
 type Props = {
     proyectoId: number;
     catalogo: CatalogoDispositivo[];
     masterFunciones: FuncionDispositivo[];
+    masterAtributos: AtributoMaestro[];
     onInstanciasCreadas: (instancias: InstanciaDispositivo[]) => void;
 };
 
-export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onInstanciasCreadas }: Props) {
+export function BatchInstanciaForm({
+    proyectoId,
+    catalogo,
+    masterFunciones,
+    masterAtributos,
+    onInstanciasCreadas,
+}: Props) {
     const [catalogoId, setCatalogoId] = useState("");
     const [cantidad, setCantidad] = useState(1);
     const [tagBase, setTagBase] = useState("DEV");
+    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +51,7 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
         }
         setFuncionesUsadasIds([]);
         setBusquedaFuncion("");
+        setValoresEAV({});
     }, [catalogoId, catalogo, masterFunciones]);
 
     const funcionesFiltradas = useMemo(() => {
@@ -61,6 +72,11 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
         setCargando(true);
         setError(null);
 
+        const atributosArray = Object.entries(valoresEAV).map(([id, val]) => ({
+            atributo: Number(id),
+            valor: val,
+        }));
+
         const promesas: Promise<InstanciaDispositivo>[] = [];
 
         for (let i = 0; i < cantidad; i++) {
@@ -68,7 +84,7 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
                 proyecto: proyectoId,
                 catalogo: Number(catalogoId),
                 tag_dispositivo: `${tagBase}-${String(i + 1).padStart(3, "0")}`,
-                atributos_set: [],
+                atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
             };
             promesas.push(crearInstancia(payload));
@@ -82,6 +98,7 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
             setCatalogoId("");
             setFuncionesUsadasIds([]);
             setBusquedaFuncion("");
+            setValoresEAV({});
         } catch (err: any) {
             setError("Error en la carga en lote: " + err.message);
         } finally {
@@ -180,6 +197,25 @@ export function BatchInstanciaForm({ proyectoId, catalogo, masterFunciones, onIn
                             </div>
                         </div>
                     </div>
+
+                    {catalogoId && (
+                        <div className="grid gap-2 border rounded-md p-3 bg-muted/30">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Atributos comunes para el lote
+                                </Label>
+                                <span className="text-[11px] text-muted-foreground">
+                                    Solo los sugeridos por el dispositivo
+                                </span>
+                            </div>
+                            <DynamicAttributeForm
+                                todosLosAtributos={masterAtributos}
+                                sugeridosIds={(catalogo.find((d) => d.id === Number(catalogoId))?.atributos_sugeridos) || []}
+                                valores={valoresEAV}
+                                onChange={setValoresEAV}
+                            />
+                        </div>
+                    )}
                 </form>
                 {error && <p className="text-sm text-destructive mt-2">{error}</p>}
             </CardContent>

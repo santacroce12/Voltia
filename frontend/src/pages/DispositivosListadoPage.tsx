@@ -5,16 +5,18 @@ import {
     listarCategorias,
     listarFunciones,
     actualizarCatalogoDispositivo,
+    listarAtributosMaestros,
     type CatalogoDispositivo,
     type Marca,
     type Categoria,
     type FuncionDispositivo,
+    type AtributoMaestro,
 } from "../services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, Eye } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
@@ -33,6 +35,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DynamicAttributeForm } from "@/components/DynamicAttributeForm";
 
 export function DispositivosListadoPage() {
     const [dispositivos, setDispositivos] = useState<CatalogoDispositivo[]>([]);
@@ -40,6 +43,7 @@ export function DispositivosListadoPage() {
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
+    const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [editDispositivo, setEditDispositivo] = useState<CatalogoDispositivo | null>(null);
     const [editOpen, setEditOpen] = useState(false);
     const [editMarcaId, setEditMarcaId] = useState<number | null>(null);
@@ -49,20 +53,25 @@ export function DispositivosListadoPage() {
     const [editUrl, setEditUrl] = useState("");
     const [editDescripcion, setEditDescripcion] = useState("");
     const [editFunciones, setEditFunciones] = useState<number[]>([]);
+    const [editEspecificaciones, setEditEspecificaciones] = useState<Record<number, string>>({});
+    const [editAtributosSugeridos, setEditAtributosSugeridos] = useState<number[]>([]);
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+    const [viewOpen, setViewOpen] = useState(false);
+    const [viewDispositivo, setViewDispositivo] = useState<CatalogoDispositivo | null>(null);
 
     useEffect(() => {
         listarCatalogoDispositivos().then(setDispositivos).catch(console.error);
     }, []);
 
     useEffect(() => {
-        Promise.all([listarMarcas(), listarCategorias(), listarFunciones()])
-            .then(([listaMarcas, listaCategorias, listaFunciones]) => {
+        Promise.all([listarMarcas(), listarCategorias(), listarFunciones(), listarAtributosMaestros()])
+            .then(([listaMarcas, listaCategorias, listaFunciones, attrs]) => {
                 setMarcas(listaMarcas);
                 setCategorias(listaCategorias);
                 setFunciones(listaFunciones);
+                setAtributosMaestros(attrs);
             })
             .catch(console.error);
     }, []);
@@ -81,6 +90,12 @@ export function DispositivosListadoPage() {
         setEditUrl(dispositivo.url_ficha_tecnica || "");
         setEditDescripcion(dispositivo.descripcion_funcional || "");
         setEditFunciones(dispositivo.funciones_soportadas || []);
+        const especMap: Record<number, string> = {};
+        (dispositivo.especificaciones_set || []).forEach((e) => {
+            if (e.atributo) especMap[e.atributo] = e.valor;
+        });
+        setEditEspecificaciones(especMap);
+        setEditAtributosSugeridos(dispositivo.atributos_sugeridos || []);
         setBusquedaFuncion("");
         setEditError(null);
         setEditOpen(true);
@@ -101,6 +116,10 @@ export function DispositivosListadoPage() {
         setEditLoading(true);
         setEditError(null);
         try {
+            const especArray = Object.entries(editEspecificaciones)
+                .filter(([, val]) => (val ?? "").toString().trim() !== "")
+                .map(([attrId, val]) => ({ atributo: Number(attrId), valor: val }));
+
             const actualizado = await actualizarCatalogoDispositivo(editDispositivo.id, {
                 marca: editMarcaId,
                 categoria: editCategoriaId,
@@ -109,6 +128,8 @@ export function DispositivosListadoPage() {
                 url_ficha_tecnica: editUrl || undefined,
                 descripcion_funcional: editDescripcion || undefined,
                 funciones_soportadas: editFunciones,
+                especificaciones_set: especArray,
+                atributos_sugeridos: editAtributosSugeridos,
             });
             const enriched = {
                 ...actualizado,
@@ -159,6 +180,18 @@ export function DispositivosListadoPage() {
                                     <TableCell>{(d as any).categoria_nombre ?? d.categoria}</TableCell>
                                     <TableCell className="text-right">{d.funciones_soportadas.length}</TableCell>
                                     <TableCell className="text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            type="button"
+                                            onClick={() => {
+                                                setViewDispositivo(d);
+                                                setViewOpen(true);
+                                            }}
+                                            title="Ver detalle"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
@@ -309,6 +342,42 @@ export function DispositivosListadoPage() {
                                         ))}
                                 </div>
                             </div>
+                            <div className="grid gap-3 md:col-span-2">
+                                <Label>Especificaciones fijas</Label>
+                                <DynamicAttributeForm
+                                    todosLosAtributos={atributosMaestros}
+                                    sugeridosIds={editAtributosSugeridos}
+                                    valores={editEspecificaciones}
+                                    onChange={setEditEspecificaciones}
+                                />
+                            </div>
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label>Atributos variables (plantilla)</Label>
+                                <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
+                                    {atributosMaestros.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">No hay atributos maestros.</p>
+                                    ) : (
+                                        atributosMaestros.map((attr) => (
+                                            <label key={attr.id} className="flex items-center gap-2 text-sm">
+                                                <Checkbox
+                                                    checked={editAtributosSugeridos.includes(attr.id)}
+                                                    onCheckedChange={() =>
+                                                        setEditAtributosSugeridos((prev) =>
+                                                            prev.includes(attr.id)
+                                                                ? prev.filter((id) => id !== attr.id)
+                                                                : [...prev, attr.id],
+                                                        )
+                                                    }
+                                                />
+                                                <span>
+                                                    {attr.nombre}
+                                                    {attr.unidad ? ` (${attr.unidad})` : ""}
+                                                </span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                             {editError && (
                                 <p className="text-sm text-destructive md:col-span-2">{editError}</p>
                             )}
@@ -326,6 +395,63 @@ export function DispositivosListadoPage() {
                                 </Button>
                             </DialogFooter>
                         </form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={viewOpen} onOpenChange={(open) => (open ? setViewOpen(true) : setViewOpen(false))}>
+                <DialogContent className="sm:max-w-[720px]">
+                    <DialogHeader>
+                        <DialogTitle>Detalle del dispositivo</DialogTitle>
+                        <DialogDescription>
+                            Información completa del dispositivo seleccionado.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {viewDispositivo && (
+                        <div className="space-y-4 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                                <p><strong>Marca:</strong> {(viewDispositivo as any).marca_nombre ?? viewDispositivo.marca}</p>
+                                <p><strong>Modelo:</strong> {viewDispositivo.modelo}</p>
+                                <p><strong>Nombre:</strong> {viewDispositivo.nombre_completo_producto}</p>
+                                <p><strong>Categoria:</strong> {(viewDispositivo as any).categoria_nombre ?? viewDispositivo.categoria}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-sm">Funciones soportadas</h4>
+                                <p className="text-muted-foreground">
+                                    {viewDispositivo.funciones_soportadas.length} seleccionadas
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-sm">Especificaciones fijas</h4>
+                                {viewDispositivo.especificaciones_set && viewDispositivo.especificaciones_set.length > 0 ? (
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {viewDispositivo.especificaciones_set.map((e) => (
+                                            <li key={e.id}>
+                                                {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-muted-foreground text-xs">Sin especificaciones cargadas.</p>
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-sm">Atributos variables (plantilla)</h4>
+                                {viewDispositivo.atributos_sugeridos && viewDispositivo.atributos_sugeridos.length > 0 ? (
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {viewDispositivo.atributos_sugeridos.map((id) => {
+                                            const attr = atributosMaestros.find((a) => a.id === id);
+                                            return <li key={id}>{attr ? attr.nombre : `Atributo #${id}`}</li>;
+                                        })}
+                                    </ul>
+                                ) : (
+                                    <p className="text-muted-foreground text-xs">Sin atributos variables configurados.</p>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setViewOpen(false)}>Cerrar</Button>
+                            </DialogFooter>
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>

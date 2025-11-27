@@ -64,25 +64,71 @@ class ObraSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class EspecificacionCatalogoSerializer(serializers.ModelSerializer):
+    """Valor fijo para un atributo de un dispositivo del catalogo."""
+
+    nombre_atributo = serializers.ReadOnlyField(source="atributo.nombre")
+    unidad_atributo = serializers.ReadOnlyField(source="atributo.unidad")
+
+    class Meta:
+        model = EspecificacionCatalogo
+        fields = ["id", "atributo", "nombre_atributo", "unidad_atributo", "valor"]
+
+
+class AtributoInstanciaSerializer(serializers.ModelSerializer):
+    """Serializa los valores unicos de atributos en cada instancia."""
+
+    nombre_atributo = serializers.ReadOnlyField(source="atributo.nombre")
+    unidad_atributo = serializers.ReadOnlyField(source="atributo.unidad")
+
+    class Meta:
+        model = AtributoInstancia
+        fields = ["id", "atributo", "nombre_atributo", "unidad_atributo", "valor"]
+
+
 class InstanciaDispositivoSerializer(serializers.ModelSerializer):
     """
-    Serializador para el modelo InstanciaDispositivo.
-    Añade datos legibles del dispositivo del catálogo.
+    Serializador para InstanciaDispositivo con soporte de escritura de atributos EAV.
     """
 
+    atributos_set = AtributoInstanciaSerializer(many=True, required=False)
     usuario_creador = serializers.ReadOnlyField(source="usuario_creador.username")
     nombre_dispositivo = serializers.ReadOnlyField(source="catalogo.nombre_completo_producto")
     marca_dispositivo = serializers.ReadOnlyField(source="catalogo.marca.nombre")
-    categoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.categoria_principal")
-    subcategoria_dispositivo = serializers.ReadOnlyField(source="catalogo.categoria.subcategoria")
-    atributos_set = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = InstanciaDispositivo
         fields = "__all__"
 
-    def get_atributos_set(self, obj):
-        return AtributoInstanciaSerializer(obj.atributos_set.all(), many=True).data
+    def create(self, validated_data):
+        atributos_data = validated_data.pop("atributos_set", [])
+        funciones_usadas = validated_data.pop("funciones_usadas", [])
+
+        instancia = InstanciaDispositivo.objects.create(**validated_data)
+        instancia.funciones_usadas.set(funciones_usadas)
+
+        for attr_data in atributos_data:
+            AtributoInstancia.objects.create(instancia=instancia, **attr_data)
+
+        return instancia
+
+    def update(self, instance, validated_data):
+        atributos_data = validated_data.pop("atributos_set", None)
+        funciones_usadas = validated_data.pop("funciones_usadas", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if funciones_usadas is not None:
+            instance.funciones_usadas.set(funciones_usadas)
+
+        if atributos_data is not None:
+            instance.atributos_set.all().delete()
+            for attr_data in atributos_data:
+                AtributoInstancia.objects.create(instancia=instance, **attr_data)
+
+        return instance
 
 
 class CatalogoDispositivoSerializer(serializers.ModelSerializer):

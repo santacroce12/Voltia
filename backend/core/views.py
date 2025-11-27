@@ -23,6 +23,7 @@ from core.models import (
     FuncionDispositivo,
     ServiciosProyecto,
     UrlsExternasProyecto,
+    AtributoInstancia,
 )
 from core.serializers import (
     AtributoMaestroSerializer,
@@ -65,12 +66,23 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_
 
         for source_instance in InstanciaDispositivo.objects.filter(proyecto_id=source_project_id):
             original_funciones_usadas = list(source_instance.funciones_usadas.values_list("id", flat=True))
+            original_atributos = list(
+                AtributoInstancia.objects.filter(instancia=source_instance).values("atributo_id", "valor")
+            )
+
             source_instance.pk = None
             source_instance.id = None
             source_instance.proyecto = new_project
             source_instance.usuario_creador = user
             source_instance.save()
             source_instance.funciones_usadas.set(original_funciones_usadas)
+
+            for attr in original_atributos:
+                AtributoInstancia.objects.create(
+                    instancia=source_instance,
+                    atributo_id=attr["atributo_id"],
+                    valor=attr["valor"],
+                )
 
         for source_servicio in ServiciosProyecto.objects.filter(proyecto_id=source_project_id):
             source_servicio.pk = None

@@ -81,10 +81,10 @@ export function InstanciaDetallePanel({
     }, [masterFunciones, busquedaFuncion]);
 
     const definicionesFiltradas = useMemo(() => {
-        if (!instancia) return [];
+        if (!instancia) return { todos: [], sugeridos: [] as number[] };
         const disp = catalogo.find((d) => d.id === instancia.catalogo);
         const sugeridos = disp?.atributos_sugeridos || [];
-        return atributosMaestros.filter((a) => sugeridos.includes(a.id));
+        return { todos: atributosMaestros, sugeridos };
     }, [instancia, catalogo, atributosMaestros]);
 
     const toggleFuncionSeleccionada = (id: number) => {
@@ -173,7 +173,12 @@ export function InstanciaDetallePanel({
                         <Label htmlFor="inst-tag">TAG del dispositivo</Label>
                         <Input id="inst-tag" value={tag} onChange={(e) => setTag(e.target.value)} />
                     </div>
-                    <DynamicAttributeForm definiciones={definicionesFiltradas} valores={valoresEAV} onChange={setValoresEAV} />
+                        <DynamicAttributeForm
+                            todosLosAtributos={definicionesFiltradas.todos}
+                            sugeridosIds={definicionesFiltradas.sugeridos}
+                            valores={valoresEAV}
+                            onChange={setValoresEAV}
+                        />
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <CardFooter className="p-0 flex justify-end">
                         <Button type="submit" disabled={saving}>

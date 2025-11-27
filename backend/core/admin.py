@@ -7,9 +7,12 @@ from django.http import JsonResponse
 from django.urls import path, reverse
 
 from core.models import (
+    AtributoInstancia,
+    AtributoMaestro,
     CatalogoDispositivo,
     Categoria,
     Cliente,
+    EspecificacionCatalogo,
     FuncionDispositivo,
     InstanciaDispositivo,
     Marca,
@@ -162,7 +165,7 @@ class CatalogoDispositivoAdmin(admin.ModelAdmin):
     list_display = ("__str__", "marca", "categoria")
     search_fields = ("modelo", "nombre_completo_producto", "marca__nombre", "categoria__subcategoria")
     list_filter = ("marca", "categoria")
-    filter_horizontal = ("funciones_soportadas",)
+    filter_horizontal = ("funciones_soportadas", "atributos_sugeridos")
 
 
 @admin.register(InstanciaDispositivo)
@@ -175,6 +178,33 @@ class InstanciaDispositivoAdmin(admin.ModelAdmin):
     search_fields = ("tag_dispositivo", "proyecto__nombre_proyecto", "catalogo__modelo")
     list_filter = ("proyecto__obra", "proyecto")
     filter_horizontal = ("funciones_usadas",)
+
+
+@admin.register(AtributoMaestro)
+class AtributoMaestroAdmin(admin.ModelAdmin):
+    """ABM del diccionario de atributos maestros."""
+
+    list_display = ("nombre", "unidad", "tipo_dato")
+    search_fields = ("nombre",)
+    list_filter = ("tipo_dato",)
+
+
+@admin.register(EspecificacionCatalogo)
+class EspecificacionCatalogoAdmin(admin.ModelAdmin):
+    """Valores fijos por dispositivo en el catalogo."""
+
+    list_display = ("catalogo", "atributo", "valor")
+    search_fields = ("catalogo__modelo", "atributo__nombre", "valor")
+    list_filter = ("catalogo", "atributo")
+
+
+@admin.register(AtributoInstancia)
+class AtributoInstanciaAdmin(admin.ModelAdmin):
+    """Valores unicos por instancia (cargados en obra)."""
+
+    list_display = ("instancia", "atributo", "valor")
+    search_fields = ("instancia__tag_dispositivo", "atributo__nombre", "valor")
+    list_filter = ("instancia__proyecto", "atributo")
 
 
 admin.site.register(Marca)

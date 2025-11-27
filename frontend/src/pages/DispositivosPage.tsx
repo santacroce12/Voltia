@@ -167,7 +167,12 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
                             )}
                         </div>
                     </div>
-                    <DynamicAttributeForm definiciones={atributos} valores={valoresEAV} onChange={setValoresEAV} />
+                    <DynamicAttributeForm
+                        todosLosAtributos={atributos}
+                        sugeridosIds={atributosSugeridosIds}
+                        valores={valoresEAV}
+                        onChange={setValoresEAV}
+                    />
                     <div className="grid gap-2 md:col-span-2">
                         <Label>Atributos Variables (Plantilla para instancias)</Label>
                         <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
