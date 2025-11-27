@@ -101,6 +101,12 @@ class CatalogoDispositivo(models.Model):
         blank=True,
         verbose_name="Funciones Soportadas (de fabrica)",
     )
+    atributos_sugeridos = models.ManyToManyField(
+        "AtributoMaestro",
+        blank=True,
+        verbose_name="Atributos Variables (Plantilla)",
+        related_name="catalogos_sugeridos",
+    )
 
     class Meta:
         verbose_name = "Dispositivo de Catalogo"

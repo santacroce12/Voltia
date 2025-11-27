@@ -5,11 +5,13 @@ import {
     listarCategorias,
     listarFunciones,
     crearCatalogoDispositivo,
+    listarAtributosMaestros,
     type CatalogoDispositivo,
     type CatalogoDispositivoPayload,
     type Marca,
     type Categoria,
     type FuncionDispositivo,
+    type AtributoMaestro,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,16 +26,18 @@ type DispositivoFormProps = {
     marcas: Marca[];
     categorias: Categoria[];
     funciones: FuncionDispositivo[];
+    atributos: AtributoMaestro[];
     onDispositivoCreado: (dispositivo: CatalogoDispositivo) => void;
 };
 
-function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }: DispositivoFormProps) {
+function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositivoCreado }: DispositivoFormProps) {
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [url, setUrl] = useState("");
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
+    const [atributosSugeridosIds, setAtributosSugeridosIds] = useState<number[]>([]);
     const [funcionesIds, setFuncionesIds] = useState<number[]>([]);
     const [busquedaFunciones, setBusquedaFunciones] = useState("");
     const [cargando, setCargando] = useState(false);
@@ -71,6 +75,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
                 valor,
             })),
             funciones_soportadas: funcionesIds,
+            atributos_sugeridos: atributosSugeridosIds,
         };
 
         try {
@@ -83,6 +88,7 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
             setCategoriaId("");
             setFuncionesIds([]);
             setValoresEAV({});
+            setAtributosSugeridosIds([]);
             setExito("Dispositivo guardado correctamente.");
         } catch (err: any) {
             setError(err?.message ?? "Error al guardar.");
@@ -161,7 +167,34 @@ function DispositivoForm({ marcas, categorias, funciones, onDispositivoCreado }:
                             )}
                         </div>
                     </div>
-                    <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
+                    <DynamicAttributeForm definiciones={atributos} valores={valoresEAV} onChange={setValoresEAV} />
+                    <div className="grid gap-2 md:col-span-2">
+                        <Label>Atributos Variables (Plantilla para instancias)</Label>
+                        <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
+                            {atributos.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No hay atributos maestros creados.</p>
+                            ) : (
+                                atributos.map((attr) => (
+                                    <label key={attr.id} className="flex items-center gap-2 text-sm">
+                                        <Checkbox
+                                            checked={atributosSugeridosIds.includes(attr.id)}
+                                            onCheckedChange={() =>
+                                                setAtributosSugeridosIds((prev) =>
+                                                    prev.includes(attr.id)
+                                                        ? prev.filter((id) => id !== attr.id)
+                                                        : [...prev, attr.id],
+                                                )
+                                            }
+                                        />
+                                        <span>
+                                            {attr.nombre}
+                                            {attr.unidad ? ` (${attr.unidad})` : ""}
+                                        </span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </form>
                 {error && <p className="text-destructive text-sm mt-2">{error}</p>}
                 {exito && <p className="text-emerald-600 text-sm mt-2">{exito}</p>}
@@ -179,17 +212,25 @@ export function DispositivosPage() {
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
+    const [atributos, setAtributos] = useState<AtributoMaestro[]>([]);
     const [dispositivos, setDispositivos] = useState<CatalogoDispositivo[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        Promise.all([listarCatalogoDispositivos(), listarMarcas(), listarCategorias(), listarFunciones()])
-            .then(([disp, m, c, f]) => {
+        Promise.all([
+            listarCatalogoDispositivos(),
+            listarMarcas(),
+            listarCategorias(),
+            listarFunciones(),
+            listarAtributosMaestros(),
+        ])
+            .then(([disp, m, c, f, attrs]) => {
                 setDispositivos(disp);
                 setMarcas(m);
                 setCategorias(c);
                 setFunciones(f);
+                setAtributos(attrs);
             })
             .catch(() => setError("No se pudieron cargar los datos del catalogo."))
             .finally(() => setCargando(false));
@@ -209,6 +250,7 @@ export function DispositivosPage() {
                 marcas={marcas}
                 categorias={categorias}
                 funciones={funciones}
+                atributos={atributos}
                 onDispositivoCreado={(d) => setDispositivos((prev) => [d, ...prev])}
             />
             <Separator />

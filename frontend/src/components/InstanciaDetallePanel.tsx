@@ -13,12 +13,16 @@ import {
     type InstanciaDispositivo,
     type InstanciaPayload,
     type FuncionDispositivo,
+    type CatalogoDispositivo,
+    listarAtributosMaestros,
+    type AtributoMaestro,
 } from "../services/api";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
 
 type Props = {
     instanciaId: number;
     masterFunciones: FuncionDispositivo[];
+    catalogo: CatalogoDispositivo[];
     onCerrar: () => void;
     onUpdate: (updatedInstance: InstanciaDispositivo) => void;
     onDelete: (deletedId: number) => void;
@@ -28,6 +32,7 @@ type Props = {
 export function InstanciaDetallePanel({
     instanciaId,
     masterFunciones,
+    catalogo,
     onCerrar,
     onUpdate,
     onDelete,
@@ -41,6 +46,7 @@ export function InstanciaDetallePanel({
     const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
+    const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
 
     useEffect(() => {
         setLoading(true);
@@ -59,6 +65,10 @@ export function InstanciaDetallePanel({
             .finally(() => setLoading(false));
     }, [instanciaId]);
 
+    useEffect(() => {
+        listarAtributosMaestros().then(setAtributosMaestros).catch(console.error);
+    }, []);
+
     const funcionesAsignadas = useMemo(() => {
         return masterFunciones.filter((f) => funcionesSeleccionadas.includes(f.id));
     }, [funcionesSeleccionadas, masterFunciones]);
@@ -69,6 +79,13 @@ export function InstanciaDetallePanel({
             `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(term),
         );
     }, [masterFunciones, busquedaFuncion]);
+
+    const definicionesFiltradas = useMemo(() => {
+        if (!instancia) return [];
+        const disp = catalogo.find((d) => d.id === instancia.catalogo);
+        const sugeridos = disp?.atributos_sugeridos || [];
+        return atributosMaestros.filter((a) => sugeridos.includes(a.id));
+    }, [instancia, catalogo, atributosMaestros]);
 
     const toggleFuncionSeleccionada = (id: number) => {
         setFuncionesSeleccionadas((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
@@ -156,7 +173,7 @@ export function InstanciaDetallePanel({
                         <Label htmlFor="inst-tag">TAG del dispositivo</Label>
                         <Input id="inst-tag" value={tag} onChange={(e) => setTag(e.target.value)} />
                     </div>
-                    <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
+                    <DynamicAttributeForm definiciones={definicionesFiltradas} valores={valoresEAV} onChange={setValoresEAV} />
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <CardFooter className="p-0 flex justify-end">
                         <Button type="submit" disabled={saving}>

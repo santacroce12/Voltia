@@ -4,11 +4,13 @@ import {
     listarMarcas,
     listarCategorias,
     listarFunciones,
+    listarAtributosMaestros,
     type CatalogoDispositivo,
     type CatalogoDispositivoPayload,
     type Marca,
     type Categoria,
     type FuncionDispositivo,
+    type AtributoMaestro,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,17 +25,22 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
+    const [atributosSugeridosIds, setAtributosSugeridosIds] = useState<number[]>([]);
     const [funcionesIds, setFuncionesIds] = useState<number[]>([]);
     const [busquedaFunciones, setBusquedaFunciones] = useState("");
     
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
+    const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [cargando, setCargando] = useState(false);
 
     useEffect(() => {
-        Promise.all([listarMarcas(), listarCategorias(), listarFunciones()])
-            .then(([m, c, f]) => { setMarcas(m); setCategorias(c); setFunciones(f); });
+        Promise.all([listarMarcas(), listarCategorias(), listarFunciones(), listarAtributosMaestros()])
+            .then(([m, c, f, attrs]) => {
+                setMarcas(m); setCategorias(c); setFunciones(f); setAtributosMaestros(attrs);
+            })
+            .catch(console.error);
     }, []);
 
     const funcionesFiltradas = useMemo(() => {
@@ -58,6 +65,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 .filter(([, v]) => v !== undefined)
                 .map(([attrId, valor]) => ({ atributo: Number(attrId), valor })),
             funciones_soportadas: funcionesIds,
+            atributos_sugeridos: atributosSugeridosIds,
         };
         try {
             const nuevo = await crearCatalogoDispositivo(payload);
@@ -69,6 +77,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setValoresEAV({});
             setFuncionesIds([]);
             setBusquedaFunciones("");
+            setAtributosSugeridosIds([]);
         } catch (e) {
             console.error(e);
         } finally {
@@ -114,7 +123,34 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 <Label>Nombre comercial</Label>
                 <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
             </div>
-            <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
+            <DynamicAttributeForm definiciones={atributosMaestros} valores={valoresEAV} onChange={setValoresEAV} />
+            <div className="grid gap-2">
+                <Label>Atributos Variables (Plantilla para instancias)</Label>
+                <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
+                    {atributosMaestros.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No hay atributos maestros creados.</p>
+                    ) : (
+                        atributosMaestros.map((attr) => (
+                            <label key={attr.id} className="flex items-center gap-2 text-sm">
+                                <Checkbox
+                                    checked={atributosSugeridosIds.includes(attr.id)}
+                                    onCheckedChange={() =>
+                                        setAtributosSugeridosIds((prev) =>
+                                            prev.includes(attr.id)
+                                                ? prev.filter((id) => id !== attr.id)
+                                                : [...prev, attr.id],
+                                        )
+                                    }
+                                />
+                                <span>
+                                    {attr.nombre}
+                                    {attr.unidad ? ` (${attr.unidad})` : ""}
+                                </span>
+                            </label>
+                        ))
+                    )}
+                </div>
+            </div>
             <div className="grid gap-2">
                 <Label>Funciones Soportadas</Label>
                 <Input

@@ -5,6 +5,8 @@ import {
     type CatalogoDispositivo,
     type FuncionDispositivo,
     type InstanciaPayload,
+    listarAtributosMaestros,
+    type AtributoMaestro,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,7 @@ export function InstanciaForm({
 
     const [funcionesDisponibles, setFuncionesDisponibles] = useState<FuncionDispositivo[]>([]);
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
+    const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
 
     useEffect(() => {
         if (catalogoId) {
@@ -51,6 +54,17 @@ export function InstanciaForm({
         }
         setFuncionesUsadasIds([]);
     }, [catalogoId, catalogo, masterFunciones]);
+
+    useEffect(() => {
+        listarAtributosMaestros().then(setAtributosMaestros).catch(console.error);
+    }, []);
+
+    const definicionesFiltradas = (() => {
+        const disp = catalogo.find((d) => d.id === Number(catalogoId));
+        if (!disp) return [];
+        if (!disp.atributos_sugeridos || disp.atributos_sugeridos.length === 0) return [];
+        return atributosMaestros.filter((a) => disp.atributos_sugeridos.includes(a.id));
+    })();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -134,7 +148,7 @@ export function InstanciaForm({
 
                     <div className="grid gap-2">
                         <Label>Atributos Variables</Label>
-                        <DynamicAttributeForm valores={valoresEAV} onChange={setValoresEAV} />
+                        <DynamicAttributeForm definiciones={definicionesFiltradas} valores={valoresEAV} onChange={setValoresEAV} />
                     </div>
 
                     <div className="grid gap-2 md:col-span-2">

@@ -160,6 +160,7 @@ export function IngenieriaDetallePage() {
                     <InstanciaDetallePanel
                         instanciaId={instanciaIdDetalle}
                         masterFunciones={masterFunciones}
+                        catalogo={catalogo}
                         onCerrar={() => setModalDetalleOpen(false)}
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
