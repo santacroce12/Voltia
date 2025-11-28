@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
+﻿import { useState, useEffect, type FormEvent } from "react";
 import {
     crearInstancia,
     type InstanciaDispositivo,
@@ -14,9 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Layers, Eye } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { DynamicAttributeForm } from "@/components/DynamicAttributeForm";
 import { Modal } from "./Modal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Props = {
     proyectoId: number;
@@ -47,6 +47,7 @@ export function InstanciaForm({
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [viewOpen, setViewOpen] = useState(false);
+    const [busquedaFuncion, setBusquedaFuncion] = useState("");
 
     useEffect(() => {
         if (catalogoId) {
@@ -67,10 +68,8 @@ export function InstanciaForm({
         }
     }, [masterAtributos]);
 
-    const dispositivoSeleccionado = catalogo.find((d) => d.id === Number(catalogoId));
-    const sugeridos = dispositivoSeleccionado?.atributos_sugeridos || [];
-
     const selectedCatalogo = catalogo.find((d) => d.id === Number(catalogoId));
+    const sugeridos = selectedCatalogo?.atributos_sugeridos || [];
     const funcionesDelCatalogo = selectedCatalogo
         ? masterFunciones.filter((f) => selectedCatalogo.funciones_soportadas?.includes(f.id))
         : [];
@@ -111,9 +110,12 @@ export function InstanciaForm({
         }
     };
 
-    const handleFuncionesChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const opts = Array.from(e.target.selectedOptions, (o) => Number(o.value));
-        setFuncionesUsadasIds(opts);
+    const funcionesFiltradas = funcionesDisponibles.filter((f) =>
+        `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
+    );
+
+    const toggleFuncion = (id: number) => {
+        setFuncionesUsadasIds((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
     };
 
     return (
@@ -168,38 +170,66 @@ export function InstanciaForm({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label>Atributos Variables</Label>
-                        <DynamicAttributeForm
-                            todosLosAtributos={atributosMaestros}
-                            sugeridosIds={sugeridos}
-                            valores={valoresEAV}
-                            onChange={setValoresEAV}
-                        />
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <Label>Atributos Variables (Plantilla para instancias)</Label>
+                                <button
+                                    type="button"
+                                    className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
+                                    title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
+                                    onClick={() =>
+                                        alert(
+                                            "Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox).\nConcepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
+                                        )
+                                    }
+                                >
+                                    ?
+                                </button>
+                            </div>
+                            <DynamicAttributeForm
+                                todosLosAtributos={atributosMaestros}
+                                sugeridosIds={sugeridos}
+                                valores={valoresEAV}
+                                onChange={setValoresEAV}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid gap-2 md:col-span-2">
-                        <Label>Funciones a Habilitar (Usadas)</Label>
-                        <div className="flex gap-2 items-start">
-                            <select
-                                multiple
-                                className={cn(
-                                    "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50",
-                                    !catalogoId && "bg-muted",
-                                )}
-                                value={funcionesUsadasIds.map(String)}
-                                onChange={handleFuncionesChange}
-                                disabled={!catalogoId || funcionesDisponibles.length === 0}
-                            >
-                                {funcionesDisponibles.length === 0 && catalogoId && (
-                                    <option disabled>Este dispositivo no tiene funciones soportadas</option>
-                                )}
-                                {funcionesDisponibles.map((f) => (
-                                    <option key={f.id} value={f.id}>
-                                        {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                        {f.nombre}
-                                    </option>
-                                ))}
-                            </select>
+                        <Label>Funciones a habilitar</Label>
+                        <div className="flex items-start gap-2">
+                            <div className="flex-1 space-y-2 rounded-md border bg-muted/40 p-3">
+                                <Input
+                                    placeholder="Buscar función..."
+                                    value={busquedaFuncion}
+                                    onChange={(e) => setBusquedaFuncion(e.target.value)}
+                                    disabled={!catalogoId || funcionesDisponibles.length === 0}
+                                />
+                                <div className="max-h-48 overflow-y-auto space-y-1">
+                                    {!catalogoId && (
+                                        <p className="text-xs text-muted-foreground px-1">Selecciona un dispositivo.</p>
+                                    )}
+                                    {catalogoId && funcionesDisponibles.length === 0 && (
+                                        <p className="text-xs text-muted-foreground px-1">No hay funciones soportadas.</p>
+                                    )}
+                                    {catalogoId &&
+                                        funcionesFiltradas.map((f) => (
+                                            <label
+                                                key={f.id}
+                                                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
+                                            >
+                                                <Checkbox
+                                                    checked={funcionesUsadasIds.includes(f.id)}
+                                                    onCheckedChange={() => toggleFuncion(f.id)}
+                                                />
+                                                <span>
+                                                    {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                    {f.nombre}
+                                                </span>
+                                            </label>
+                                        ))}
+                                </div>
+                            </div>
                             <Button
                                 type="button"
                                 variant="outline"

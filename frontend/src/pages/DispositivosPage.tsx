@@ -174,7 +174,16 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
                         onChange={setValoresEAV}
                     />
                     <div className="grid gap-2 md:col-span-2">
-                        <Label>Atributos Variables (Plantilla para instancias)</Label>
+                        <div className="flex items-center gap-2">
+                            <Label>Atributos Variables (Plantilla para instancias)</Label>
+                            <button
+                                type="button"
+                                className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
+                                title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
+                            >
+                                ?
+                            </button>
+                        </div>
                         <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
                             {atributos.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No hay atributos maestros creados.</p>

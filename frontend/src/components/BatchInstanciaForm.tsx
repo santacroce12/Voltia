@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
+import { Eye } from "lucide-react";
+import { Modal } from "./Modal";
 
 type Props = {
     proyectoId: number;
@@ -40,6 +42,7 @@ export function BatchInstanciaForm({
     const [funcionesDisponibles, setFuncionesDisponibles] = useState<FuncionDispositivo[]>([]);
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
+    const [viewOpen, setViewOpen] = useState(false);
 
     useEffect(() => {
         if (catalogoId) {
@@ -115,18 +118,30 @@ export function BatchInstanciaForm({
                 <form id="batch-form" className="grid gap-4" onSubmit={handleSubmit}>
                     <div className="grid gap-2">
                         <Label>Dispositivo</Label>
-                        <Select value={catalogoId} onValueChange={setCatalogoId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {catalogo.map((d) => (
-                                    <SelectItem key={d.id} value={String(d.id)}>
-                                        {(d as any).marca_nombre || `Marca #${d.marca}`} {d.modelo}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex gap-2">
+                            <Select value={catalogoId} onValueChange={setCatalogoId}>
+                                <SelectTrigger className="flex-1">
+                                    <SelectValue placeholder="Seleccionar..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {catalogo.map((d) => (
+                                        <SelectItem key={d.id} value={String(d.id)}>
+                                            {(d as any).marca_nombre || `Marca #${d.marca}`} {d.modelo}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setViewOpen(true)}
+                                disabled={!catalogoId}
+                                title="Ver detalle del dispositivo"
+                            >
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -147,7 +162,7 @@ export function BatchInstanciaForm({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label>Funciones a habilitar</Label>
+                        <Label>Funciones a habilitar (checkbox, sin Ctrl)</Label>
                         <div className="grid gap-2 rounded-md border bg-muted/40 p-3">
                             <Input
                                 placeholder="Buscar por nombre o codigo..."
@@ -200,12 +215,19 @@ export function BatchInstanciaForm({
 
                     {catalogoId && (
                         <div className="grid gap-2 border rounded-md p-3 bg-muted/30">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
                                 <Label className="text-xs font-semibold text-muted-foreground">
-                                    Atributos comunes para el lote
+                                    Atributos variables (comunes para el lote)
                                 </Label>
+                                <button
+                                    type="button"
+                                    className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
+                                    title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
+                                >
+                                    ?
+                                </button>
                                 <span className="text-[11px] text-muted-foreground">
-                                    Solo los sugeridos por el dispositivo
+                                    Solo los sugeridos por el dispositivo (puedes agregar extras abajo)
                                 </span>
                             </div>
                             <DynamicAttributeForm
@@ -224,6 +246,69 @@ export function BatchInstanciaForm({
                     {cargando ? `Anadiendo...` : `Generar Lote (${cantidad})`}
                 </Button>
             </CardFooter>
+
+            <Modal isOpen={viewOpen} onClose={() => setViewOpen(false)} title="Detalle de dispositivo">
+                {catalogoId ? (
+                    (() => {
+                        const d = catalogo.find((x) => x.id === Number(catalogoId));
+                        if (!d) return <p className="text-sm text-muted-foreground">No encontrado.</p>;
+                        const funcs = masterFunciones.filter((f) => d.funciones_soportadas?.includes(f.id));
+                        const especs = (d as any).especificaciones_set || [];
+                        const attrs = d.atributos_sugeridos || [];
+                        return (
+                            <div className="space-y-3 text-sm">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <p><strong>Marca:</strong> {(d as any).marca_nombre ?? d.marca}</p>
+                                    <p><strong>Modelo:</strong> {d.modelo}</p>
+                                    <p><strong>Nombre:</strong> {d.nombre_completo_producto}</p>
+                                    <p><strong>Categoría:</strong> {(d as any).categoria_nombre ?? d.categoria}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Funciones soportadas</h4>
+                                    {funcs.length ? (
+                                        <ul className="list-disc pl-4 space-y-1">
+                                            {funcs.map((f) => (
+                                                <li key={f.id}>{f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}{f.nombre}</li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Sin funciones configuradas.</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Especificaciones fijas</h4>
+                                    {especs.length ? (
+                                        <ul className="list-disc pl-4 space-y-1">
+                                            {especs.map((e: any) => (
+                                                <li key={e.id}>
+                                                    {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Sin especificaciones.</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold">Atributos variables (plantilla)</h4>
+                                    {attrs.length ? (
+                                        <ul className="list-disc pl-4 space-y-1">
+                                            {attrs.map((id: number) => {
+                                                const attr = masterAtributos.find((a) => a.id === id);
+                                                return <li key={id}>{attr ? attr.nombre : `Atributo #${id}`}</li>;
+                                            })}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Sin atributos variables.</p>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()
+                ) : (
+                    <p className="text-sm text-muted-foreground">Selecciona un dispositivo.</p>
+                )}
+            </Modal>
         </Card>
     );
 }

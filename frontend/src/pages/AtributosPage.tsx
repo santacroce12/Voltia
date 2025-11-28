@@ -114,7 +114,11 @@ export function AtributosPage() {
         }
     };
 
-    const filtrados = atributos.filter((a) => a.nombre.toLowerCase().includes(filtro.toLowerCase()));
+    const filtrados = atributos.filter(
+        (a) =>
+            a.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+            (a.unidad && a.unidad.toLowerCase().includes(filtro.toLowerCase())),
+    );
 
     return (
         <div className="space-y-6">

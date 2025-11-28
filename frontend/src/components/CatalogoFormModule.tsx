@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+﻿import { useEffect, useState, type FormEvent } from "react";
 import {
     crearCatalogoDispositivo,
     listarMarcas,
@@ -16,28 +16,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-// Usamos pestañas simples manejadas por estado local
 
+// Formulario para crear un dispositivo del catálogo con pestañas de datos fijos/variables
 export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCreado: (d: CatalogoDispositivo) => void }) {
-    // Estados básicos
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
 
-    // Estados de Atributos
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
-
-    // 1. Valores Fijos (mapa ID atributo -> valor)
     const [especificaciones, setEspecificaciones] = useState<Record<number, string>>({});
-
-    // 2. Variables (IDs de atributos que se pedirán en obra)
     const [variablesIds, setVariablesIds] = useState<number[]>([]);
 
-    // Listas de soporte
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
-
     const [cargando, setCargando] = useState(false);
     const [tab, setTab] = useState<"fijos" | "variables">("fijos");
 
@@ -88,6 +80,11 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
         setVariablesIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
     };
 
+    const textoFijos =
+        'Aquí CARGAS UN VALOR. Concepto: Son datos que NUNCA CAMBIAN para este modelo. Ejemplo: Si estás creando el "Relé P5", la Potencia siempre será 100W.';
+    const textoVariables =
+        "Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación).";
+
     return (
         <form className="grid gap-6 py-4" onSubmit={handleSubmit}>
             {/* Datos básicos */}
@@ -118,20 +115,41 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
 
             <Separator />
 
+            {/* Tabs */}
             <div className="grid w-full grid-cols-2 rounded-md border bg-muted/40">
                 <button
                     type="button"
-                    className={`py-2 text-sm font-medium rounded-l-md ${tab === "fijos" ? "bg-background" : "text-muted-foreground"}`}
+                    className={`flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-l-md ${tab === "fijos" ? "bg-background" : "text-muted-foreground"}`}
                     onClick={() => setTab("fijos")}
                 >
                     1. Especificaciones (Fijas)
+                    <span
+                        className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold border border-primary/40 flex items-center justify-center"
+                        title={textoFijos}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            alert(textoFijos);
+                        }}
+                    >
+                        ?
+                    </span>
                 </button>
                 <button
                     type="button"
-                    className={`py-2 text-sm font-medium rounded-r-md ${tab === "variables" ? "bg-background" : "text-muted-foreground"}`}
+                    className={`flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-r-md ${tab === "variables" ? "bg-background" : "text-muted-foreground"}`}
                     onClick={() => setTab("variables")}
                 >
                     2. Variables de Obra
+                    <span
+                        className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold border border-primary/40 flex items-center justify-center"
+                        title={textoVariables}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            alert(textoVariables);
+                        }}
+                    >
+                        ?
+                    </span>
                 </button>
             </div>
 
@@ -181,6 +199,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 </div>
             )}
 
+            {/* Submit */}
             <Button type="submit" disabled={cargando} className="w-full mt-4">
                 Guardar Definición de Dispositivo
             </Button>

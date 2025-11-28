@@ -54,7 +54,21 @@ export function DynamicAttributeForm({ todosLosAtributos, sugeridosIds, valores,
     return (
         <div className="space-y-4 border rounded-md p-4 bg-muted/5">
             <div className="flex justify-between items-center mb-2">
-                <h4 className="text-sm font-semibold text-primary">Datos Técnicos</h4>
+                <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-primary">Datos Técnicos (Especificaciones fijas)</h4>
+                    <button
+                        type="button"
+                        className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
+                        title="AquÃ­ CARGAS UN VALOR. Concepto: Son datos que NUNCA CAMBIAN para este modelo. Ejemplo: Si estÃ¡s creando el 'RelÃ© P5', la Potencia siempre serÃ¡ 100W."
+                        onClick={() =>
+                            alert(
+                                "AquÃ­ CARGAS UN VALOR.\nConcepto: Son datos que NUNCA CAMBIAN para este modelo.\nEjemplo: Si estÃ¡s creando el 'RelÃ© P5', la Potencia siempre serÃ¡ 100W."
+                            )
+                        }
+                    >
+                        ?
+                    </button>
+                </div>
             </div>
 
             <div className="grid gap-4">
@@ -71,7 +85,7 @@ export function DynamicAttributeForm({ todosLosAtributos, sugeridosIds, valores,
                                         checked={valores[attr.id] === "true"}
                                         onCheckedChange={(checked) => handleChange(attr.id, String(checked))}
                                     />
-                                    <span className="ml-2 text-sm">Sí/No</span>
+                                    <span className="ml-2 text-sm">SÃ­/No</span>
                                 </div>
                             ) : (
                                 <Input
@@ -97,9 +111,17 @@ export function DynamicAttributeForm({ todosLosAtributos, sugeridosIds, valores,
             </div>
 
             {opcionesDisponibles.length > 0 && (
-                <div className="mt-4 pt-4 border-t">
-                    <Label className="text-xs mb-2 block text-muted-foreground">¿Falta algún dato? Agregar campo extra:</Label>
-                    <Combobox options={opcionesDisponibles} onChange={handleAgregarCampo} placeholder="Buscar atributo..." />
+                <div className="mt-4 pt-4 border-t bg-muted/20 -mx-4 px-4 pb-2 rounded-b-md">
+                    <Label className="text-xs mb-2 block text-muted-foreground">Agregar otro atributo:</Label>
+                    <div className="flex gap-2 w-full">
+                        <div className="flex-1">
+                            <Combobox
+                                options={opcionesDisponibles}
+                                onChange={handleAgregarCampo}
+                                placeholder="Buscar atributo extra..."
+                            />
+                        </div>
+                    </div>
                 </div>
             )}
 
