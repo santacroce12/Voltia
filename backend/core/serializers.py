@@ -16,7 +16,6 @@ from core.models import (
     FuncionDispositivo,
     ServiciosProyecto,
     UrlsExternasProyecto,
-    AtributoMaestro,
     EspecificacionCatalogo,
     AtributoInstancia,
 )

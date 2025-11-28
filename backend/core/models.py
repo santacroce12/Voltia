@@ -101,12 +101,6 @@ class CatalogoDispositivo(models.Model):
         blank=True,
         verbose_name="Funciones Soportadas (de fabrica)",
     )
-    atributos_sugeridos = models.ManyToManyField(
-        "AtributoMaestro",
-        blank=True,
-        verbose_name="Atributos Variables (Plantilla)",
-        related_name="catalogos_sugeridos",
-    )
 
     class Meta:
         verbose_name = "Dispositivo de Catalogo"
@@ -118,15 +112,6 @@ class CatalogoDispositivo(models.Model):
         return f"{marca_nombre} - {self.modelo}"
 
 
-class TipoDatoAtributo(models.TextChoices):
-    """Tipos de dato permitidos para los atributos maestros."""
-
-    CADENA = "str", "Cadena"
-    ENTERO = "int", "Entero"
-    DECIMAL = "dec", "Decimal"
-    BOOLEANO = "bool", "Booleano"
-
-
 class AtributoMaestro(models.Model):
     """
     Diccionario de atributos disponibles para describir dispositivos.
@@ -134,7 +119,6 @@ class AtributoMaestro(models.Model):
 
     nombre = models.CharField(max_length=150, unique=True, verbose_name="Nombre del Atributo")
     unidad = models.CharField(max_length=50, blank=True, null=True, verbose_name="Unidad de Medida")
-    tipo_dato = models.CharField(max_length=10, choices=TipoDatoAtributo.choices, verbose_name="Tipo de Dato")
 
     class Meta:
         verbose_name = "Atributo Maestro"
@@ -272,6 +256,7 @@ class Obra(models.Model):
         verbose_name="Usuario Creador",
     )
     nombre_obra = models.CharField(max_length=255, verbose_name="Nombre de Obra")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creacion")
     ubicacion = models.CharField(
         max_length=300,
         blank=True,

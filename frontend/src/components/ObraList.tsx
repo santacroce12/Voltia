@@ -56,6 +56,7 @@ export function ObraList({
               <TableHead>Estado</TableHead>
               <TableHead>Ubicacion</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Creada</TableHead>
               {onExportarObra && <TableHead className="text-right w-32">Exportar lista</TableHead>}
               {onEditarObra && <TableHead className="text-right w-16">Editar</TableHead>}
             </TableRow>
@@ -64,7 +65,7 @@ export function ObraList({
             {filtradas.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={(onExportarObra ? 1 : 0) + (onEditarObra ? 1 : 0) + 4}
+                  colSpan={(onExportarObra ? 1 : 0) + (onEditarObra ? 1 : 0) + 5}
                   className="text-center text-muted-foreground"
                 >
                   Sin resultados.
@@ -100,6 +101,9 @@ export function ObraList({
                     <TableCell className="text-muted-foreground">{obra.ubicacion || "N/A"}</TableCell>
                     <TableCell className="text-sm font-medium">
                       {clienteNombres?.[obra.cliente] || `Cliente #${obra.cliente}`}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(obra.fecha_creacion).toLocaleDateString()}
                     </TableCell>
                     {onExportarObra && (
                       <TableCell className="text-right">

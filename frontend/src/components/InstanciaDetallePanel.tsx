@@ -80,13 +80,6 @@ export function InstanciaDetallePanel({
         );
     }, [masterFunciones, busquedaFuncion]);
 
-    const definicionesFiltradas = useMemo(() => {
-        if (!instancia) return { todos: [], sugeridos: [] as number[] };
-        const disp = catalogo.find((d) => d.id === instancia.catalogo);
-        const sugeridos = disp?.atributos_sugeridos || [];
-        return { todos: atributosMaestros, sugeridos };
-    }, [instancia, catalogo, atributosMaestros]);
-
     const toggleFuncionSeleccionada = (id: number) => {
         setFuncionesSeleccionadas((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
     };
@@ -115,7 +108,7 @@ export function InstanciaDetallePanel({
     };
 
     const handleDelete = async () => {
-        if (!confirm("¿Confirma la eliminación de esta instancia?")) return;
+        if (!confirm("Confirma la eliminacion de esta instancia?")) return;
         setSaving(true);
         try {
             await borrarInstancia(instanciaId);
@@ -137,6 +130,8 @@ export function InstanciaDetallePanel({
     if (error) return <p className="text-destructive p-4">{error}</p>;
     if (!instancia) return null;
 
+    const disp = catalogo.find((d) => d.id === instancia.catalogo);
+
     return (
         <Card className="shadow-none border border-border bg-card">
             <CardHeader className="flex flex-row items-start justify-between gap-4 bg-muted/30 rounded-md p-4">
@@ -145,7 +140,7 @@ export function InstanciaDetallePanel({
                         Detalle: {instancia.tag_dispositivo || `ID #${instancia.id}`}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                        {instancia.nombre_dispositivo} • {instancia.marca_dispositivo}
+                        {instancia.nombre_dispositivo} - {instancia.marca_dispositivo}
                     </CardDescription>
                 </div>
                 <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
@@ -160,6 +155,12 @@ export function InstanciaDetallePanel({
                             {proyectoNombre || instancia.nombre_proyecto || "Sin nombre"}
                         </p>
                     </div>
+                    {disp && (
+                        <div>
+                            <p className="text-muted-foreground font-medium">Modelo</p>
+                            <p className="font-semibold">{disp.nombre_completo_producto}</p>
+                        </div>
+                    )}
                 </div>
 
                 <Separator />
@@ -173,12 +174,11 @@ export function InstanciaDetallePanel({
                         <Label htmlFor="inst-tag">TAG del dispositivo</Label>
                         <Input id="inst-tag" value={tag} onChange={(e) => setTag(e.target.value)} />
                     </div>
-                        <DynamicAttributeForm
-                            todosLosAtributos={definicionesFiltradas.todos}
-                            sugeridosIds={definicionesFiltradas.sugeridos}
-                            valores={valoresEAV}
-                            onChange={setValoresEAV}
-                        />
+                    <DynamicAttributeForm
+                        todosLosAtributos={atributosMaestros}
+                        valores={valoresEAV}
+                        onChange={setValoresEAV}
+                    />
                     {error && <p className="text-sm text-destructive">{error}</p>}
                     <CardFooter className="p-0 flex justify-end">
                         <Button type="submit" disabled={saving}>
@@ -196,7 +196,7 @@ export function InstanciaDetallePanel({
                             Funciones Asignadas ({funcionesSeleccionadas.length})
                         </h3>
                         <Input
-                            placeholder="Buscar función..."
+                            placeholder="Buscar funcion..."
                             value={busquedaFuncion}
                             onChange={(e) => setBusquedaFuncion(e.target.value)}
                             className="w-56"
@@ -222,7 +222,7 @@ export function InstanciaDetallePanel({
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {funcionesAsignadas.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Ninguna función marcada para uso.</p>
+                            <p className="text-sm text-muted-foreground">Ninguna funcion marcada para uso.</p>
                         ) : (
                             funcionesAsignadas.map((f) => (
                                 <span

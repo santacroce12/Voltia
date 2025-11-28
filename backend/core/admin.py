@@ -165,7 +165,7 @@ class CatalogoDispositivoAdmin(admin.ModelAdmin):
     list_display = ("__str__", "marca", "categoria")
     search_fields = ("modelo", "nombre_completo_producto", "marca__nombre", "categoria__subcategoria")
     list_filter = ("marca", "categoria")
-    filter_horizontal = ("funciones_soportadas", "atributos_sugeridos")
+    filter_horizontal = ("funciones_soportadas",)
 
 
 @admin.register(InstanciaDispositivo)
@@ -184,9 +184,8 @@ class InstanciaDispositivoAdmin(admin.ModelAdmin):
 class AtributoMaestroAdmin(admin.ModelAdmin):
     """ABM del diccionario de atributos maestros."""
 
-    list_display = ("nombre", "unidad", "tipo_dato")
+    list_display = ("nombre", "unidad")
     search_fields = ("nombre",)
-    list_filter = ("tipo_dato",)
 
 
 @admin.register(EspecificacionCatalogo)

@@ -109,6 +109,12 @@ export function BatchInstanciaForm({
         }
     };
 
+    const selectedCatalogo = catalogo.find((d) => d.id === Number(catalogoId));
+    const funcionesModal = selectedCatalogo
+        ? masterFunciones.filter((f) => selectedCatalogo.funciones_soportadas?.includes(f.id))
+        : [];
+    const especificacionesSet = (selectedCatalogo as any)?.especificaciones_set || [];
+
     return (
         <Card className="shadow-none">
             <CardHeader>
@@ -213,31 +219,16 @@ export function BatchInstanciaForm({
                         </div>
                     </div>
 
-                    {catalogoId && (
-                        <div className="grid gap-2 border rounded-md p-3 bg-muted/30">
-                            <div className="flex items-center gap-2">
-                                <Label className="text-xs font-semibold text-muted-foreground">
-                                    Atributos variables (comunes para el lote)
-                                </Label>
-                                <button
-                                    type="button"
-                                    className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
-                                    title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
-                                >
-                                    ?
-                                </button>
-                                <span className="text-[11px] text-muted-foreground">
-                                    Solo los sugeridos por el dispositivo (puedes agregar extras abajo)
-                                </span>
-                            </div>
-                            <DynamicAttributeForm
-                                todosLosAtributos={masterAtributos}
-                                sugeridosIds={(catalogo.find((d) => d.id === Number(catalogoId))?.atributos_sugeridos) || []}
-                                valores={valoresEAV}
-                                onChange={setValoresEAV}
-                            />
-                        </div>
-                    )}
+                    <div className="grid gap-2 border rounded-md p-3 bg-muted/30">
+                        <Label className="text-xs font-semibold text-muted-foreground">
+                            Atributos comunes para el lote
+                        </Label>
+                        <DynamicAttributeForm
+                            todosLosAtributos={masterAtributos}
+                            valores={valoresEAV}
+                            onChange={setValoresEAV}
+                        />
+                    </div>
                 </form>
                 {error && <p className="text-sm text-destructive mt-2">{error}</p>}
             </CardContent>
@@ -248,63 +239,41 @@ export function BatchInstanciaForm({
             </CardFooter>
 
             <Modal isOpen={viewOpen} onClose={() => setViewOpen(false)} title="Detalle de dispositivo">
-                {catalogoId ? (
-                    (() => {
-                        const d = catalogo.find((x) => x.id === Number(catalogoId));
-                        if (!d) return <p className="text-sm text-muted-foreground">No encontrado.</p>;
-                        const funcs = masterFunciones.filter((f) => d.funciones_soportadas?.includes(f.id));
-                        const especs = (d as any).especificaciones_set || [];
-                        const attrs = d.atributos_sugeridos || [];
-                        return (
-                            <div className="space-y-3 text-sm">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p><strong>Marca:</strong> {(d as any).marca_nombre ?? d.marca}</p>
-                                    <p><strong>Modelo:</strong> {d.modelo}</p>
-                                    <p><strong>Nombre:</strong> {d.nombre_completo_producto}</p>
-                                    <p><strong>Categoría:</strong> {(d as any).categoria_nombre ?? d.categoria}</p>
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">Funciones soportadas</h4>
-                                    {funcs.length ? (
-                                        <ul className="list-disc pl-4 space-y-1">
-                                            {funcs.map((f) => (
-                                                <li key={f.id}>{f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}{f.nombre}</li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground">Sin funciones configuradas.</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">Especificaciones fijas</h4>
-                                    {especs.length ? (
-                                        <ul className="list-disc pl-4 space-y-1">
-                                            {especs.map((e: any) => (
-                                                <li key={e.id}>
-                                                    {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground">Sin especificaciones.</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <h4 className="font-semibold">Atributos variables (plantilla)</h4>
-                                    {attrs.length ? (
-                                        <ul className="list-disc pl-4 space-y-1">
-                                            {attrs.map((id: number) => {
-                                                const attr = masterAtributos.find((a) => a.id === id);
-                                                return <li key={id}>{attr ? attr.nombre : `Atributo #${id}`}</li>;
-                                            })}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground">Sin atributos variables.</p>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })()
+                {selectedCatalogo ? (
+                    <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-2 gap-2">
+                            <p><strong>Marca:</strong> {(selectedCatalogo as any).marca_nombre ?? selectedCatalogo.marca}</p>
+                            <p><strong>Modelo:</strong> {selectedCatalogo.modelo}</p>
+                            <p><strong>Nombre:</strong> {selectedCatalogo.nombre_completo_producto}</p>
+                            <p><strong>Categoria:</strong> {(selectedCatalogo as any).categoria_nombre ?? selectedCatalogo.categoria}</p>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">Funciones soportadas</h4>
+                            {funcionesModal.length ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {funcionesModal.map((f) => (
+                                        <li key={f.id}>{f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}{f.nombre}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Sin funciones configuradas.</p>
+                            )}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold">Especificaciones fijas</h4>
+                            {especificacionesSet && especificacionesSet.length ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {especificacionesSet.map((e: any) => (
+                                        <li key={e.id}>
+                                            {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Sin especificaciones.</p>
+                            )}
+                        </div>
+                    </div>
                 ) : (
                     <p className="text-sm text-muted-foreground">Selecciona un dispositivo.</p>
                 )}

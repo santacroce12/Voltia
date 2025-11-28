@@ -45,6 +45,7 @@ export type Obra = {
     nombre_obra: string;
     ubicacion?: string;
     estado_obra: string;
+    fecha_creacion: string;
 };
 
 // Payload para crear una Obra
@@ -94,7 +95,6 @@ export type AtributoMaestro = {
     id: number;
     nombre: string;
     unidad: string | null;
-    tipo_dato: "str" | "int" | "dec" | "bool";
 };
 
 export type AtributoMaestroPayload = Omit<AtributoMaestro, "id">;
@@ -121,7 +121,6 @@ export type CatalogoDispositivo = {
     url_ficha_tecnica?: string;
     especificaciones: Record<string, any>;
     funciones_soportadas: number[];
-    atributos_sugeridos: number[];
     marca_nombre?: string;
     categoria_nombre?: string;
     especificaciones_set?: { id: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
@@ -136,7 +135,6 @@ export type CatalogoDispositivoPayload = {
     url_ficha_tecnica?: string;
     especificaciones_set?: { atributo: number; valor: string }[];
     funciones_soportadas: number[];
-    atributos_sugeridos: number[];
 };
 export type CatalogoDispositivoUpdatePayload = Partial<CatalogoDispositivoPayload> & {
     descripcion_funcional?: string;

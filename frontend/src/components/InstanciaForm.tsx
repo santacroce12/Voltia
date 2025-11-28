@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import {
     crearInstancia,
     type InstanciaDispositivo,
@@ -6,6 +6,7 @@ import {
     type FuncionDispositivo,
     type InstanciaPayload,
     listarAtributosMaestros,
+    crearAtributoMaestro,
     type AtributoMaestro,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,10 @@ export function InstanciaForm({
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [viewOpen, setViewOpen] = useState(false);
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
+    const [busquedaAtributo, setBusquedaAtributo] = useState("");
+    const [nuevoAttrNombre, setNuevoAttrNombre] = useState("");
+    const [nuevoAttrUnidad, setNuevoAttrUnidad] = useState("");
+    const [creandoAttr, setCreandoAttr] = useState(false);
 
     useEffect(() => {
         if (catalogoId) {
@@ -69,11 +74,9 @@ export function InstanciaForm({
     }, [masterAtributos]);
 
     const selectedCatalogo = catalogo.find((d) => d.id === Number(catalogoId));
-    const sugeridos = selectedCatalogo?.atributos_sugeridos || [];
     const funcionesDelCatalogo = selectedCatalogo
         ? masterFunciones.filter((f) => selectedCatalogo.funciones_soportadas?.includes(f.id))
         : [];
-    const atributosSugeridos = selectedCatalogo?.atributos_sugeridos || [];
     const especificacionesSet = (selectedCatalogo as any)?.especificaciones_set || [];
 
     const handleSubmit = async (e: FormEvent) => {
@@ -104,7 +107,7 @@ export function InstanciaForm({
             setFuncionesUsadasIds([]);
             setCatalogoId("");
         } catch (err: any) {
-            setError(err.message || "Error al añadir instancia.");
+            setError(err.message || "Error al anadir instancia.");
         } finally {
             setCargando(false);
         }
@@ -114,8 +117,42 @@ export function InstanciaForm({
         `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
     );
 
+    const atributosFiltrados = atributosMaestros.filter((a) =>
+        `${a.nombre} ${a.unidad || ""}`.toLowerCase().includes(busquedaAtributo.toLowerCase()),
+    );
+
     const toggleFuncion = (id: number) => {
         setFuncionesUsadasIds((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
+    };
+
+    const toggleAtributoVisible = (id: number) => {
+        setValoresEAV((prev) => {
+            const next = { ...prev };
+            if (id in next) {
+                delete next[id];
+            } else {
+                next[id] = "";
+            }
+            return next;
+        });
+    };
+
+    const crearAtributoRapido = async () => {
+        if (!nuevoAttrNombre.trim()) return;
+        setCreandoAttr(true);
+        try {
+            const creado = await crearAtributoMaestro({
+                nombre: nuevoAttrNombre.trim(),
+                unidad: nuevoAttrUnidad.trim() || null,
+            });
+            setAtributosMaestros((prev) => [...prev, creado].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+            setNuevoAttrNombre("");
+            setNuevoAttrUnidad("");
+        } catch (e) {
+            console.error("No se pudo crear el atributo", e);
+        } finally {
+            setCreandoAttr(false);
+        }
     };
 
     return (
@@ -128,7 +165,7 @@ export function InstanciaForm({
             <CardContent>
                 <form id="single-form" className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
                     <div className="grid gap-2 md:col-span-2">
-                        <Label>Dispositivo del Catálogo</Label>
+                        <Label>Dispositivo del Catalogo</Label>
                         <div className="flex gap-2">
                             <Select value={catalogoId} onValueChange={setCatalogoId}>
                                 <SelectTrigger className="flex-1">
@@ -157,7 +194,7 @@ export function InstanciaForm({
                                 variant="outline"
                                 size="icon"
                                 onClick={onAbrirModalCatalogo}
-                                title="Crear Nuevo en Catálogo"
+                                title="Crear Nuevo en Catalogo"
                             >
                                 <Plus className="h-4 w-4" />
                             </Button>
@@ -170,25 +207,64 @@ export function InstanciaForm({
                     </div>
 
                     <div className="grid gap-2">
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                                <Label>Atributos Variables (Plantilla para instancias)</Label>
-                                <button
-                                    type="button"
-                                    className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
-                                    title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
-                                    onClick={() =>
-                                        alert(
-                                            "Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox).\nConcepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
-                                        )
-                                    }
-                                >
-                                    ?
-                                </button>
+                                <Label>Atributos disponibles</Label>
+                                <Input
+                                    placeholder="Buscar atributo..."
+                                    value={busquedaAtributo}
+                                    onChange={(e) => setBusquedaAtributo(e.target.value)}
+                                />
+                            </div>
+                            <div className="rounded-md border bg-muted/30 p-3 max-h-48 overflow-y-auto space-y-1">
+                                {atributosFiltrados.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground">No hay atributos que coincidan.</p>
+                                ) : (
+                                    atributosFiltrados.map((attr) => (
+                                        <label
+                                            key={attr.id}
+                                            className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
+                                        >
+                                            <Checkbox
+                                                checked={attr.id in valoresEAV}
+                                                onCheckedChange={() => toggleAtributoVisible(attr.id)}
+                                            />
+                                            <span>
+                                                {attr.nombre}
+                                                {attr.unidad ? ` (${attr.unidad})` : ""}
+                                            </span>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
+                            <div className="grid gap-2 border rounded-md p-3 bg-muted/10">
+                                <Label className="text-sm font-semibold">Agregar atributo nuevo</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        placeholder="Nombre"
+                                        value={nuevoAttrNombre}
+                                        onChange={(e) => setNuevoAttrNombre(e.target.value)}
+                                    />
+                                    <Input
+                                        placeholder="Unidad (opcional)"
+                                        value={nuevoAttrUnidad}
+                                        onChange={(e) => setNuevoAttrUnidad(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={crearAtributoRapido}
+                                        disabled={creandoAttr}
+                                    >
+                                        {creandoAttr ? "Creando..." : "Crear atributo"}
+                                    </Button>
+                                </div>
                             </div>
                             <DynamicAttributeForm
                                 todosLosAtributos={atributosMaestros}
-                                sugeridosIds={sugeridos}
                                 valores={valoresEAV}
                                 onChange={setValoresEAV}
                             />
@@ -200,7 +276,7 @@ export function InstanciaForm({
                         <div className="flex items-start gap-2">
                             <div className="flex-1 space-y-2 rounded-md border bg-muted/40 p-3">
                                 <Input
-                                    placeholder="Buscar función..."
+                                    placeholder="Buscar funcion..."
                                     value={busquedaFuncion}
                                     onChange={(e) => setBusquedaFuncion(e.target.value)}
                                     disabled={!catalogoId || funcionesDisponibles.length === 0}
@@ -236,7 +312,7 @@ export function InstanciaForm({
                                 size="icon"
                                 onClick={() => onAbrirModalEditarFunciones(Number(catalogoId))}
                                 disabled={!catalogoId}
-                                title="Editar Soportadas en Catálogo"
+                                title="Editar Soportadas en Catalogo"
                             >
                                 <Edit2 className="h-4 w-4" />
                             </Button>
@@ -247,7 +323,7 @@ export function InstanciaForm({
             </CardContent>
             <CardFooter>
                 <Button form="single-form" type="submit" disabled={cargando} className="w-full">
-                    {cargando ? "Añadiendo..." : "Añadir Instancia"}
+                    {cargando ? "Anadiendo..." : "Anadir Instancia"}
                 </Button>
             </CardFooter>
 
@@ -258,7 +334,7 @@ export function InstanciaForm({
                             <p><strong>Marca:</strong> {(selectedCatalogo as any).marca_nombre ?? selectedCatalogo.marca}</p>
                             <p><strong>Modelo:</strong> {selectedCatalogo.modelo}</p>
                             <p><strong>Nombre:</strong> {selectedCatalogo.nombre_completo_producto}</p>
-                            <p><strong>Categoría:</strong> {(selectedCatalogo as any).categoria_nombre ?? selectedCatalogo.categoria}</p>
+                            <p><strong>Categoria:</strong> {(selectedCatalogo as any).categoria_nombre ?? selectedCatalogo.categoria}</p>
                         </div>
                         <div>
                             <h4 className="font-semibold">Funciones soportadas</h4>
@@ -284,19 +360,6 @@ export function InstanciaForm({
                                 </ul>
                             ) : (
                                 <p className="text-muted-foreground text-xs">Sin especificaciones cargadas.</p>
-                            )}
-                        </div>
-                        <div>
-                            <h4 className="font-semibold">Atributos variables (plantilla)</h4>
-                            {atributosSugeridos.length ? (
-                                <ul className="list-disc pl-4 space-y-1">
-                                    {atributosSugeridos.map((id) => {
-                                        const attr = masterAtributos.find((a) => a.id === id);
-                                        return <li key={id}>{attr ? attr.nombre : `Atributo #${id}`}</li>;
-                                    })}
-                                </ul>
-                            ) : (
-                                <p className="text-muted-foreground text-xs">Sin atributos variables configurados.</p>
                             )}
                         </div>
                     </div>

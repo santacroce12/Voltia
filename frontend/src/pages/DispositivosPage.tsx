@@ -37,7 +37,6 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
-    const [atributosSugeridosIds, setAtributosSugeridosIds] = useState<number[]>([]);
     const [funcionesIds, setFuncionesIds] = useState<number[]>([]);
     const [busquedaFunciones, setBusquedaFunciones] = useState("");
     const [cargando, setCargando] = useState(false);
@@ -75,7 +74,6 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
                 valor,
             })),
             funciones_soportadas: funcionesIds,
-            atributos_sugeridos: atributosSugeridosIds,
         };
 
         try {
@@ -88,7 +86,6 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
             setCategoriaId("");
             setFuncionesIds([]);
             setValoresEAV({});
-            setAtributosSugeridosIds([]);
             setExito("Dispositivo guardado correctamente.");
         } catch (err: any) {
             setError(err?.message ?? "Error al guardar.");
@@ -167,47 +164,13 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
                             )}
                         </div>
                     </div>
-                    <DynamicAttributeForm
-                        todosLosAtributos={atributos}
-                        sugeridosIds={atributosSugeridosIds}
-                        valores={valoresEAV}
-                        onChange={setValoresEAV}
-                    />
                     <div className="grid gap-2 md:col-span-2">
-                        <div className="flex items-center gap-2">
-                            <Label>Atributos Variables (Plantilla para instancias)</Label>
-                            <button
-                                type="button"
-                                className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 border border-primary/40 flex items-center justify-center"
-                                title="Aquí ASIGNAS UNA OBLIGACIÓN (Marcas un checkbox). Concepto: Son datos que CAMBIAN en cada instalación física. No puedes saberlos ahora porque dependen de la obra (la IP, el número de serie, la ubicación)."
-                            >
-                                ?
-                            </button>
-                        </div>
-                        <div className="rounded-md border p-3 space-y-2 max-h-48 overflow-y-auto bg-muted/30">
-                            {atributos.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No hay atributos maestros creados.</p>
-                            ) : (
-                                atributos.map((attr) => (
-                                    <label key={attr.id} className="flex items-center gap-2 text-sm">
-                                        <Checkbox
-                                            checked={atributosSugeridosIds.includes(attr.id)}
-                                            onCheckedChange={() =>
-                                                setAtributosSugeridosIds((prev) =>
-                                                    prev.includes(attr.id)
-                                                        ? prev.filter((id) => id !== attr.id)
-                                                        : [...prev, attr.id],
-                                                )
-                                            }
-                                        />
-                                        <span>
-                                            {attr.nombre}
-                                            {attr.unidad ? ` (${attr.unidad})` : ""}
-                                        </span>
-                                    </label>
-                                ))
-                            )}
-                        </div>
+                        <Label>Datos tecnicos (texto)</Label>
+                        <DynamicAttributeForm
+                            todosLosAtributos={atributos}
+                            valores={valoresEAV}
+                            onChange={setValoresEAV}
+                        />
                     </div>
                 </form>
                 {error && <p className="text-destructive text-sm mt-2">{error}</p>}

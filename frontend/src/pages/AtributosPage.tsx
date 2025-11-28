@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Modal } from "@/components/Modal";
 import { Pencil, Search } from "lucide-react";
@@ -19,18 +18,16 @@ import { Pencil, Search } from "lucide-react";
 function AtributoForm({ onCreado }: { onCreado: (a: AtributoMaestro) => void }) {
     const [nombre, setNombre] = useState("");
     const [unidad, setUnidad] = useState("");
-    const [tipo, setTipo] = useState<"str" | "int" | "dec" | "bool">("str");
     const [cargando, setCargando] = useState(false);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setCargando(true);
         try {
-            const nuevo = await crearAtributoMaestro({ nombre, unidad: unidad || null, tipo_dato: tipo });
+            const nuevo = await crearAtributoMaestro({ nombre, unidad: unidad || null });
             onCreado(nuevo);
             setNombre("");
             setUnidad("");
-            setTipo("str");
         } catch (e) {
             console.error(e);
         } finally {
@@ -53,18 +50,6 @@ function AtributoForm({ onCreado }: { onCreado: (a: AtributoMaestro) => void }) 
                         <Label>Unidad</Label>
                         <Input value={unidad} onChange={(e) => setUnidad(e.target.value)} placeholder="Ej: W" />
                     </div>
-                    <div className="grid gap-2 w-40">
-                        <Label>Tipo</Label>
-                        <Select value={tipo} onValueChange={(v: any) => setTipo(v)}>
-                            <SelectTrigger><SelectValue placeholder="Tipo de dato" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="str">Texto</SelectItem>
-                                <SelectItem value="int">Entero</SelectItem>
-                                <SelectItem value="dec">Decimal</SelectItem>
-                                <SelectItem value="bool">Si/No</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <Button type="submit" disabled={cargando}>{cargando ? "Guardando..." : "Crear"}</Button>
                 </form>
             </CardContent>
@@ -79,7 +64,6 @@ export function AtributosPage() {
     const [atributoAEditar, setAtributoAEditar] = useState<AtributoMaestro | null>(null);
     const [editNombre, setEditNombre] = useState("");
     const [editUnidad, setEditUnidad] = useState("");
-    const [editTipo, setEditTipo] = useState<"str" | "int" | "dec" | "bool">("str");
     const [editLoading, setEditLoading] = useState(false);
 
     useEffect(() => {
@@ -90,7 +74,6 @@ export function AtributosPage() {
         setAtributoAEditar(attr);
         setEditNombre(attr.nombre);
         setEditUnidad(attr.unidad || "");
-        setEditTipo(attr.tipo_dato);
         setEditModalOpen(true);
     };
 
@@ -102,7 +85,6 @@ export function AtributosPage() {
             const payload: Partial<AtributoMaestroPayload> = {
                 nombre: editNombre,
                 unidad: editUnidad || null,
-                tipo_dato: editTipo,
             };
             const actualizado = await actualizarAtributoMaestro(atributoAEditar.id, payload);
             setAtributos((prev) => prev.map((a) => (a.id === actualizado.id ? actualizado : a)));
@@ -140,7 +122,6 @@ export function AtributosPage() {
                         <TableRow>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Unidad</TableHead>
-                            <TableHead>Tipo de Dato</TableHead>
                             <TableHead className="w-12 text-center">Editar</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -149,7 +130,6 @@ export function AtributosPage() {
                             <TableRow key={attr.id}>
                                 <TableCell className="font-medium">{attr.nombre}</TableCell>
                                 <TableCell>{attr.unidad || "-"}</TableCell>
-                                <TableCell className="font-mono text-xs">{attr.tipo_dato}</TableCell>
                                 <TableCell className="text-center">
                                     <Button variant="ghost" size="icon" onClick={() => handleEditClick(attr)}>
                                         <Pencil className="h-4 w-4" />
@@ -159,7 +139,7 @@ export function AtributosPage() {
                         ))}
                         {filtrados.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
                                     No se encontraron atributos.
                                 </TableCell>
                             </TableRow>
@@ -177,18 +157,6 @@ export function AtributosPage() {
                     <div className="grid gap-2">
                         <Label>Unidad</Label>
                         <Input value={editUnidad} onChange={(e) => setEditUnidad(e.target.value)} />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label>Tipo</Label>
-                        <Select value={editTipo} onValueChange={(v: any) => setEditTipo(v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="str">Texto</SelectItem>
-                                <SelectItem value="int">Entero</SelectItem>
-                                <SelectItem value="dec">Decimal</SelectItem>
-                                <SelectItem value="bool">Si/No</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                     <Button type="submit" disabled={editLoading}>{editLoading ? "Guardando..." : "Guardar Cambios"}</Button>
                 </form>
