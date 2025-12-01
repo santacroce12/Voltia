@@ -105,9 +105,9 @@ export function IngenieriaDetallePage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Ingeniería: Proyecto #{pid}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Ingenier?a: Proyecto #{pid}</h1>
                     <p className="text-muted-foreground">
-                        Obra: {obraInfo?.nombre_obra || "Sin obra"} · Carga y configuración de dispositivos.
+                        Obra: {obraInfo?.nombre_obra || "Sin obra"} ? Carga y configuraci?n de dispositivos.
                     </p>
                 </div>
             </div>
@@ -184,11 +184,10 @@ export function IngenieriaDetallePage() {
                     <InstanciaDetallePanel
                         instanciaId={instanciaIdDetalle}
                         masterFunciones={masterFunciones}
-                        catalogo={catalogo}
+                        masterAtributos={masterAtributos}
                         onCerrar={() => setModalDetalleOpen(false)}
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
-                        proyectoNombre={proyectoInfo?.nombre_proyecto}
                     />
                 )}
             </Modal>

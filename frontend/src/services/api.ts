@@ -1,6 +1,6 @@
 /**
  * Capa de servicios que centraliza las llamadas HTTP hacia el backend de Django.
- * Ahora incluye lógica para manejar la autenticación JWT.
+ * Ahora incluye logica para manejar la autenticacion JWT.
  */
 
 // --- Tipos de Datos (Payloads de la API) ---
@@ -216,7 +216,7 @@ export function getAuthToken(): string | null {
 // --- Funciones de API ---
 
 /**
- * Función 'wrapper' para peticiones fetch autenticadas.
+ * Funcion 'wrapper' para peticiones fetch autenticadas.
  * Lee el token de localStorage y lo inyecta en la cabecera 'Authorization'.
  */
 async function fetchProtegido(url: string, options: RequestInit = {}): Promise<Response> {
@@ -233,7 +233,7 @@ async function fetchProtegido(url: string, options: RequestInit = {}): Promise<R
 }
 
 /**
- * [PÚBLICO] Endpoint de salud. No requiere token.
+ * [PUBLICO] Endpoint de salud. No requiere token.
  */
 export async function obtenerSalud(): Promise<SaludAPI> {
     const respuesta = await fetch(`${API_BASE_URL}/salud/`);
@@ -250,9 +250,9 @@ export async function listarProyectos(): Promise<Proyecto[]> {
     const respuesta = await fetchProtegido(`${API_BASE_URL}/proyectos/`);
 
     if (respuesta.status === 401) {
-        // El token expiró o es inválido
+        // El token expiro o es invalido
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -262,7 +262,7 @@ export async function listarProyectos(): Promise<Proyecto[]> {
 }
 
 /**
- * [PÚBLICO] Llama al endpoint de login (/api/token/).
+ * [PUBLICO] Llama al endpoint de login (/api/token/).
  */
 export async function loginUsuario(credenciales: {
     username: string;
@@ -275,7 +275,7 @@ export async function loginUsuario(credenciales: {
     });
 
     if (!respuesta.ok) {
-        throw new Error("Usuario o contraseña incorrectos");
+        throw new Error("Usuario o contrasena incorrectos");
     }
 
     const data: TokenRespuesta = await respuesta.json();
@@ -314,11 +314,11 @@ export async function crearCliente(datosCliente: ClientePayload): Promise<Client
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        // Podríamos leer el body para ver errores de validación
+        // Podriamos leer el body para ver errores de validacion
         throw new Error("No se pudo crear el cliente");
     }
     return respuesta.json();
@@ -338,7 +338,7 @@ export async function actualizarCliente(
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -360,7 +360,7 @@ export async function listarObras(clienteId?: number): Promise<Obra[]> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -380,7 +380,7 @@ export async function crearObra(datosObra: ObraPayload): Promise<Obra> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -423,7 +423,7 @@ export async function crearProyecto(datosProyecto: ProyectoPayload): Promise<Pro
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -480,7 +480,7 @@ export async function listarMarcas(): Promise<Marca[]> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -497,11 +497,11 @@ export async function listarCategorias(): Promise<Categoria[]> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        throw new Error("No se pudo obtener la lista de categorías");
+        throw new Error("No se pudo obtener la lista de categorias");
     }
     return respuesta.json();
 }
@@ -514,7 +514,7 @@ export async function listarFunciones(): Promise<FuncionDispositivo[]> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -534,11 +534,11 @@ export async function crearCategoria(datosCategoria: CategoriaPayload): Promise<
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        throw new Error("No se pudo crear la categoría");
+        throw new Error("No se pudo crear la categoria");
     }
     return respuesta.json();
 }
@@ -577,11 +577,11 @@ export async function crearFuncion(datosFuncion: FuncionPayload): Promise<Funcio
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        throw new Error("No se pudo crear la función");
+        throw new Error("No se pudo crear la funcion");
     }
     return respuesta.json();
 }
@@ -620,7 +620,7 @@ export async function crearMarca(datosMarca: MarcaPayload): Promise<Marca> {
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -654,11 +654,11 @@ export async function listarCatalogoDispositivos(): Promise<CatalogoDispositivo[
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        throw new Error("No se pudo obtener el catálogo de dispositivos");
+        throw new Error("No se pudo obtener el catalogo de dispositivos");
     }
     return respuesta.json();
 }
@@ -676,7 +676,7 @@ export async function crearCatalogoDispositivo(
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -718,7 +718,7 @@ export async function listarInstancias(proyectoId: number): Promise<InstanciaDis
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -740,7 +740,7 @@ export async function crearInstancia(
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
@@ -765,11 +765,11 @@ export async function updateCatalogoFunciones(
 
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
 
     if (!respuesta.ok) {
-        throw new Error("No se pudo actualizar el dispositivo del catálogo");
+        throw new Error("No se pudo actualizar el dispositivo del catalogo");
     }
     return respuesta.json();
 }
@@ -781,6 +781,17 @@ export async function getInstanciaDetalle(instanciaId: number): Promise<Instanci
     const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/${instanciaId}/`);
     if (!respuesta.ok) {
         throw new Error("No se pudo obtener el detalle de la instancia.");
+    }
+    return respuesta.json();
+}
+
+/**
+ * [PROTEGIDO] Obtiene el detalle de un dispositivo del catalogo por ID.
+ */
+export async function getCatalogoDetalle(id: number): Promise<CatalogoDispositivo> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/catalogo/${id}/`);
+    if (!respuesta.ok) {
+        throw new Error("No se pudo obtener el detalle del catalogo.");
     }
     return respuesta.json();
 }
@@ -825,7 +836,7 @@ export async function listarServicios(proyectoId: number): Promise<ServicioProye
     const respuesta = await fetchProtegido(`${API_BASE_URL}/servicios/?proyecto=${proyectoId}`);
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
     if (!respuesta.ok) {
         throw new Error("No se pudieron cargar los servicios");
@@ -841,7 +852,7 @@ export async function crearServicio(payload: ServicioPayload): Promise<ServicioP
     });
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
     if (!respuesta.ok) {
         throw new Error("No se pudo crear el servicio");
@@ -854,7 +865,7 @@ export async function listarUrls(proyectoId: number): Promise<UrlExterna[]> {
     const respuesta = await fetchProtegido(`${API_BASE_URL}/urls-externas/?proyecto=${proyectoId}`);
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
     if (!respuesta.ok) {
         throw new Error("No se pudieron cargar las URLs");
@@ -870,7 +881,7 @@ export async function crearUrl(payload: UrlExternaPayload): Promise<UrlExterna> 
     });
     if (respuesta.status === 401) {
         limpiarToken();
-        throw new Error("Sesión expirada");
+        throw new Error("Sesion expirada");
     }
     if (!respuesta.ok) {
         throw new Error("No se pudo crear la URL");

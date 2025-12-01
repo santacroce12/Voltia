@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { type InstanciaDispositivo, borrarInstancia } from "../services/api";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
     };
 
     const handleBorradoLote = async () => {
-        if (!seleccionados.length || !confirm(`¿Seguro que quieres borrar ${seleccionados.length} dispositivos?`)) return;
+        if (!seleccionados.length || !confirm(`?Seguro que quieres borrar ${seleccionados.length} dispositivos?`)) return;
         for (const id of seleccionados) {
             try {
                 await borrarInstancia(id);
@@ -95,9 +95,9 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                 />
                             </TableHead>
                             <TableHead>Marca / Modelo</TableHead>
-                            <TableHead className="text-center">Configuración de Funciones</TableHead>
+                            <TableHead className="text-center">Configuraci?n de Funciones</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
-                            <TableHead className="w-12 text-center">Acción</TableHead>
+                            <TableHead className="w-12 text-center">Acci?n</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -124,12 +124,17 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                         <div className="text-xs text-muted-foreground">{grupo.marca}</div>
                                     </TableCell>
                                     <TableCell className="text-center text-sm">
-                                        {grupo.funcionesCount === 0 ? "Sin configuración" : `${grupo.funcionesCount} funciones`}
+                                        {grupo.funcionesCount === 0 ? "Sin configuraci?n" : `${grupo.funcionesCount} funciones`}
                                     </TableCell>
                                     <TableCell className="text-right text-xl font-bold text-primary">{grupo.count}</TableCell>
                                     <TableCell className="text-center">
-                                        <Button variant="ghost" size="icon" onClick={() => onVerDetalle(grupo.instanciaIds[0])}>
-                                            <MoreVertical className="h-4 w-4" />
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => onVerDetalle(grupo.instanciaIds[0])}
+                                            title="Ver Detalle Completo"
+                                        >
+                                            <Eye className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>

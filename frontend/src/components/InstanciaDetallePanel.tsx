@@ -1,242 +1,216 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Loader2, Save, Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Loader2, Save, Box, Settings2 } from "lucide-react";
 import {
     getInstanciaDetalle,
     updateInstancia,
     borrarInstancia,
+    getCatalogoDetalle,
     type InstanciaDispositivo,
     type InstanciaPayload,
     type FuncionDispositivo,
-    type CatalogoDispositivo,
-    listarAtributosMaestros,
     type AtributoMaestro,
+    type CatalogoDispositivo,
 } from "../services/api";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
 
 type Props = {
     instanciaId: number;
     masterFunciones: FuncionDispositivo[];
-    catalogo: CatalogoDispositivo[];
+    masterAtributos: AtributoMaestro[];
     onCerrar: () => void;
     onUpdate: (updatedInstance: InstanciaDispositivo) => void;
     onDelete: (deletedId: number) => void;
-    proyectoNombre?: string;
 };
 
-export function InstanciaDetallePanel({
-    instanciaId,
-    masterFunciones,
-    catalogo,
-    onCerrar,
-    onUpdate,
-    onDelete,
-    proyectoNombre,
-}: Props) {
+export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtributos, onCerrar, onUpdate, onDelete }: Props) {
     const [instancia, setInstancia] = useState<InstanciaDispositivo | null>(null);
+    const [catalogoItem, setCatalogoItem] = useState<CatalogoDispositivo | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [tag, setTag] = useState("");
-    const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
-    const [busquedaFuncion, setBusquedaFuncion] = useState("");
-    const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
-    const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
+    const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
 
     useEffect(() => {
         setLoading(true);
         getInstanciaDetalle(instanciaId)
-            .then((data) => {
-                setInstancia(data);
-                setTag(data.tag_dispositivo || "");
-                const inicial: Record<number, string> = {};
-                (data.atributos_set || []).forEach((a) => {
-                    if (a.atributo) inicial[a.atributo] = a.valor;
+            .then(async (inst) => {
+                setInstancia(inst);
+                setTag(inst.tag_dispositivo || "");
+
+                const mapaValores: Record<number, string> = {};
+                (inst.atributos_set || []).forEach((attr: any) => {
+                    if (attr.atributo) mapaValores[attr.atributo] = attr.valor;
                 });
-                setValoresEAV(inicial);
-                setFuncionesSeleccionadas(data.funciones_usadas || []);
+                setValoresVariables(mapaValores);
+
+                try {
+                    const cat = await getCatalogoDetalle(inst.catalogo);
+                    setCatalogoItem(cat);
+                } catch (e) {
+                    console.error("Error cargando catalogo", e);
+                }
             })
-            .catch(() => setError("No se pudo cargar el detalle."))
             .finally(() => setLoading(false));
     }, [instanciaId]);
-
-    useEffect(() => {
-        listarAtributosMaestros().then(setAtributosMaestros).catch(console.error);
-    }, []);
-
-    const funcionesAsignadas = useMemo(() => {
-        return masterFunciones.filter((f) => funcionesSeleccionadas.includes(f.id));
-    }, [funcionesSeleccionadas, masterFunciones]);
-
-    const funcionesFiltradas = useMemo(() => {
-        const term = busquedaFuncion.toLowerCase();
-        return masterFunciones.filter((f) =>
-            `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(term),
-        );
-    }, [masterFunciones, busquedaFuncion]);
-
-    const toggleFuncionSeleccionada = (id: number) => {
-        setFuncionesSeleccionadas((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
-    };
 
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        setError(null);
         try {
+            const atributosArray = Object.entries(valoresVariables).map(([idAttr, val]) => ({
+                atributo: Number(idAttr),
+                valor: val,
+            }));
+
             const payload: Partial<InstanciaPayload> = {
                 tag_dispositivo: tag,
-                atributos_set: Object.entries(valoresEAV).map(([attrId, valor]) => ({
-                    atributo: Number(attrId),
-                    valor,
-                })),
-                funciones_usadas: funcionesSeleccionadas,
+                atributos_set: atributosArray,
             };
+
             const updated = await updateInstancia(instanciaId, payload);
-            setInstancia(updated);
             onUpdate(updated);
-        } catch (e: any) {
-            setError(e.message || "Error al guardar cambios.");
+        } catch (e) {
+            console.error(e);
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm("Confirma la eliminacion de esta instancia?")) return;
+        if (!confirm("Eliminar esta instancia?")) return;
         setSaving(true);
         try {
             await borrarInstancia(instanciaId);
             onDelete(instanciaId);
             onCerrar();
-        } catch (e: any) {
-            setError(e.message || "Error al borrar.");
+        } catch (e) {
+            console.error(e);
             setSaving(false);
         }
     };
 
-    if (loading) {
+    if (loading || !instancia) {
         return (
-            <div className="p-4 text-center flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Cargando...
+            <div className="p-8 text-center">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
             </div>
         );
     }
-    if (error) return <p className="text-destructive p-4">{error}</p>;
-    if (!instancia) return null;
 
-    const disp = catalogo.find((d) => d.id === instancia.catalogo);
+    const funcionesActivas = useMemo(
+        () => masterFunciones.filter((f) => instancia.funciones_usadas.includes(f.id)),
+        [instancia.funciones_usadas, masterFunciones],
+    );
 
     return (
-        <Card className="shadow-none border border-border bg-card">
-            <CardHeader className="flex flex-row items-start justify-between gap-4 bg-muted/30 rounded-md p-4">
+        <div className="space-y-6">
+            <div className="flex justify-between items-start">
                 <div>
-                    <CardTitle className="text-2xl font-bold">
-                        Detalle: {instancia.tag_dispositivo || `ID #${instancia.id}`}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                        {instancia.nombre_dispositivo} - {instancia.marca_dispositivo}
-                    </CardDescription>
+                    <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                        {instancia.nombre_dispositivo}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                        {instancia.marca_dispositivo} - {catalogoItem?.modelo}
+                    </p>
                 </div>
                 <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                     <Trash2 className="h-4 w-4 mr-2" /> Borrar
                 </Button>
-            </CardHeader>
-            <CardContent className="p-4 space-y-6">
-                <div className="grid grid-cols-1 gap-2 text-sm">
-                    <div>
-                        <p className="text-muted-foreground font-medium">Nombre del proyecto</p>
-                        <p className="font-semibold text-primary">
-                            {proyectoNombre || instancia.nombre_proyecto || "Sin nombre"}
-                        </p>
-                    </div>
-                    {disp && (
-                        <div>
-                            <p className="text-muted-foreground font-medium">Modelo</p>
-                            <p className="font-semibold">{disp.nombre_completo_producto}</p>
-                        </div>
-                    )}
-                </div>
+            </div>
 
-                <Separator />
-
-                <form onSubmit={handleSave} className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Edit className="h-4 w-4 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold">Editar atributos</h3>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="inst-tag">TAG del dispositivo</Label>
-                        <Input id="inst-tag" value={tag} onChange={(e) => setTag(e.target.value)} />
-                    </div>
-                    <DynamicAttributeForm
-                        todosLosAtributos={atributosMaestros}
-                        valores={valoresEAV}
-                        onChange={setValoresEAV}
-                    />
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <CardFooter className="p-0 flex justify-end">
-                        <Button type="submit" disabled={saving}>
-                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                            Guardar Cambios
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-l-4 border-l-primary h-fit">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Settings2 className="h-4 w-4" /> Configuracion de Instalacion
+                        </CardTitle>
+                        <CardDescription>Datos unicos de este equipo fisico.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form id="edit-form" onSubmit={handleSave} className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label>TAG / Identificador</Label>
+                                <Input value={tag} onChange={(e) => setTag(e.target.value)} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Atributos Variables</Label>
+                                <DynamicAttributeForm
+                                    todosLosAtributos={masterAtributos}
+                                    valores={valoresVariables}
+                                    onChange={setValoresVariables}
+                                />
+                            </div>
+                        </form>
+                    </CardContent>
+                    <CardContent className="pt-0">
+                        <Button form="edit-form" type="submit" disabled={saving} className="w-full">
+                            {saving ? "Guardando..." : "Guardar Cambios"}
                         </Button>
-                    </CardFooter>
-                </form>
+                    </CardContent>
+                </Card>
 
-                <Separator />
+                <div className="space-y-6">
+                    <Card className="bg-muted/30">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Box className="h-4 w-4" /> Especificaciones de Fabrica
+                            </CardTitle>
+                            <CardDescription>Valores fijos del modelo (Solo lectura).</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
+                                <div className="grid gap-2">
+                                    {catalogoItem.especificaciones_set.map((spec: any) => (
+                                        <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                                            <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
+                                            <span className="font-medium">
+                                                {spec.valor} {spec.unidad_atributo}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">
+                                    No hay especificaciones tecnicas cargadas en el catalogo.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">
-                            Funciones Asignadas ({funcionesSeleccionadas.length})
-                        </h3>
-                        <Input
-                            placeholder="Buscar funcion..."
-                            value={busquedaFuncion}
-                            onChange={(e) => setBusquedaFuncion(e.target.value)}
-                            className="w-56"
-                        />
-                    </div>
-                    <div className="max-h-48 overflow-y-auto rounded-md border border-border p-3 space-y-2 bg-background">
-                        {funcionesFiltradas.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No hay funciones que coincidan.</p>
-                        ) : (
-                            funcionesFiltradas.map((f) => (
-                                <label key={f.id} className="flex items-center gap-2 text-sm">
-                                    <Checkbox
-                                        checked={funcionesSeleccionadas.includes(f.id)}
-                                        onCheckedChange={() => toggleFuncionSeleccionada(f.id)}
-                                    />
-                                    <span>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Funciones Habilitadas</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                                {funcionesActivas.map((f) => (
+                                    <Badge key={f.id} variant="secondary">
                                         {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
                                         {f.nombre}
-                                    </span>
-                                </label>
-                            ))
-                        )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {funcionesAsignadas.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Ninguna funcion marcada para uso.</p>
-                        ) : (
-                            funcionesAsignadas.map((f) => (
-                                <span
-                                    key={f.id}
-                                    className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                                >
-                                    {f.codigo_funcion ? `${f.codigo_funcion} ` : ""}
-                                    {f.nombre}
-                                </span>
-                            ))
-                        )}
-                    </div>
+                                    </Badge>
+                                ))}
+                                {funcionesActivas.length === 0 && (
+                                    <span className="text-xs text-muted-foreground">Ninguna</span>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            <Separator />
+
+            <div className="flex justify-end">
+                <Button variant="outline" onClick={onCerrar}>
+                    Cerrar
+                </Button>
+            </div>
+        </div>
     );
 }
