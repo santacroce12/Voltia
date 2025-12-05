@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Combobox } from "@/components/ui/combobox";
 import { type AtributoMaestro } from "../services/api";
+import { useMemo, useState } from "react";
 
 type Props = {
     todosLosAtributos: AtributoMaestro[];
@@ -15,7 +15,8 @@ type Props = {
 export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: Props) {
     // Los campos visibles son simplemente los que tienen algun valor o los que el usuario agregue
     // (Se maneja externamente o se asume que 'valores' trae lo que hay que mostrar)
-    
+    const [busqueda, setBusqueda] = useState("");
+
     const handleChange = (id: number, valor: string) => {
         onChange({ ...valores, [id]: valor });
     };
@@ -35,57 +36,81 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
     };
 
     // Atributos que ya tienen un campo visible (porque tienen clave en 'valores')
-    const atributosVisibles = todosLosAtributos.filter(a => valores.hasOwnProperty(a.id));
-    
-    // Opciones para el Combobox (los que NO estan visibles)
-    const opcionesDisponibles = todosLosAtributos
-        .filter(a => !valores.hasOwnProperty(a.id))
-        .map(a => ({ value: String(a.id), label: a.nombre }));
+    const atributosVisibles = todosLosAtributos.filter((a) => valores.hasOwnProperty(a.id));
 
+    const disponiblesFiltrados = useMemo(() => {
+        const term = busqueda.toLowerCase();
+        return todosLosAtributos
+            .filter((a) => !valores.hasOwnProperty(a.id))
+            .filter((a) => a.nombre.toLowerCase().includes(term) || (a.unidad || "").toLowerCase().includes(term));
+    }, [todosLosAtributos, valores, busqueda]);
+    
     return (
         <div className="space-y-4 border rounded-md p-4 bg-muted/5">
-            <div className="grid gap-4">
-                {atributosVisibles.map((attr) => (
-                    <div key={attr.id} className="flex items-end gap-2 animate-in fade-in slide-in-from-top-1">
-                        <div className="grid gap-1.5 flex-1">
-                            <Label className="text-xs font-medium text-muted-foreground">
-                                {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ''}
-                            </Label>
-                            <Input 
-                                className="h-8 bg-background"
-                                type="text" // SIEMPRE TEXTO
-                                value={valores[attr.id] || ''}
-                                onChange={(e) => handleChange(attr.id, e.target.value)}
-                            />
-                        </div>
-                        <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleQuitarCampo(attr.id)}
-                            title="Quitar campo"
+            <div className="space-y-2">
+                <Label className="text-sm font-semibold">Agregar atributo</Label>
+                <Input
+                    placeholder="Buscar atributo..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="max-w-md"
+                />
+                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 max-h-64 overflow-y-auto pr-1">
+                    {disponiblesFiltrados.map((attr) => (
+                        <Button
+                            key={attr.id}
+                            type="button"
+                            variant="outline"
+                            className="justify-start text-sm"
+                            onClick={() => handleAgregarCampo(String(attr.id))}
                         >
-                            <X className="h-4 w-4" />
+                            {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
                         </Button>
-                    </div>
-                ))}
-            </div>
-
-            {/* Selector para Agregar Mas */}
-            <div className="mt-4 pt-4 border-t bg-muted/20 -mx-4 px-4 pb-2 rounded-b-md">
-                <Label className="text-xs mb-2 block text-muted-foreground">Agregar atributo:</Label>
-                <div className="flex gap-2 w-full">
-                    <div className="flex-1">
-                        <Combobox 
-                            options={opcionesDisponibles} 
-                            onChange={handleAgregarCampo} 
-                            placeholder="Buscar atributo..."
-                            emptyText="No hay mas atributos disponibles."
-                        />
-                    </div>
+                    ))}
+                    {disponiblesFiltrados.length === 0 && (
+                        <p className="text-xs text-muted-foreground sm:col-span-2 md:col-span-3">
+                            No hay atributos que coincidan con la busqueda.
+                        </p>
+                    )}
                 </div>
             </div>
+
+            {atributosVisibles.length === 0 ? (
+                <div className="rounded-md border border-dashed bg-background p-4 text-center text-sm text-muted-foreground">
+                    Aun no hay atributos seleccionados. Usa el buscador de arriba para agregar alguno.
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    <p className="text-sm font-semibold">Atributos seleccionados</p>
+                    <div className="grid gap-3 md:grid-cols-2">
+                    {atributosVisibles.map((attr) => (
+                        <div key={attr.id} className="flex items-end gap-2 rounded-md border bg-background p-3 shadow-sm">
+                            <div className="grid gap-1.5 flex-1">
+                                <Label className="text-xs font-medium text-muted-foreground">
+                                    {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
+                                </Label>
+                                <Input
+                                    className="h-9"
+                                    type="text"
+                                    value={valores[attr.id] || ""}
+                                    onChange={(e) => handleChange(attr.id, e.target.value)}
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleQuitarCampo(attr.id)}
+                                title="Quitar campo"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

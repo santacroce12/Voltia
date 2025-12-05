@@ -45,8 +45,10 @@ export function Layout() {
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     {/* Logo */}
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                        <span className="flex items-center gap-2 font-bold text-xl">
-                            <Bolt className="h-6 w-6 text-primary fill-primary" />
+                        <span className="flex items-center gap-3 font-bold text-xl">
+                            <span className="rounded-full bg-yellow-400/20 p-2 text-yellow-500 flex items-center justify-center">
+                                <Bolt className="h-6 w-6" />
+                            </span>
                             <span className="tracking-tight">VOLTIA</span>
                         </span>
                     </div>

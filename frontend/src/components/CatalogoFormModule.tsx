@@ -42,9 +42,10 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
         e.preventDefault();
         setCargando(true);
 
-        const especificacionesSet = Object.entries(especificaciones)
-            .filter(([, val]) => val.trim() !== "")
-            .map(([id, val]) => ({ atributo: Number(id), valor: val }));
+        const especificacionesSet = Object.entries(especificaciones).map(([id, val]) => ({
+            atributo: Number(id),
+            valor: val,
+        }));
 
         const payload: CatalogoDispositivoPayload = {
             modelo,
@@ -100,8 +101,8 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             </div>
 
             <div className="border rounded-md p-4 bg-muted/10">
-                <p className="text-sm text-muted-foreground mb-4">
-                    Especificaciones fijas del modelo (texto libre).
+                <p className="text-sm text-muted-foreground mb-2">
+                    Agrega los atributos que aplican a este modelo. Si dejas el valor vacio se pedira en obra; si cargas un valor sera el defecto heredado.
                 </p>
                 <DynamicAttributeForm
                     todosLosAtributos={atributosMaestros}

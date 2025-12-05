@@ -105,39 +105,43 @@ export function IngenieriaDetallePage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Ingenier?a: Proyecto #{pid}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Ingeniera: Proyecto #{pid}</h1>
                     <p className="text-muted-foreground">
-                        Obra: {obraInfo?.nombre_obra || "Sin obra"} ? Carga y configuraci?n de dispositivos.
+                        Obra: {obraInfo?.nombre_obra || "Sin obra"} Carga y configuracin de dispositivos.
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-2">
+            <div className="space-y-8">
+                <div className="flex flex-col gap-3">
                     <h2 className="text-xl font-semibold">Carga Individual</h2>
-                    <InstanciaForm
-                        proyectoId={pid}
-                        catalogo={catalogo}
-                        masterFunciones={masterFunciones}
-                        masterAtributos={masterAtributos}
-                        onInstanciaCreada={handleInstanciaCreada}
-                        onAbrirModalCatalogo={() => setModalCatOpen(true)}
-                        onAbrirModalEditarFunciones={(id: number) => {
-                            setCatalogoIdSel(id);
-                            setModalFuncOpen(true);
-                        }}
-                    />
+                    <div className="max-w-6xl">
+                        <InstanciaForm
+                            proyectoId={pid}
+                            catalogo={catalogo}
+                            masterFunciones={masterFunciones}
+                            masterAtributos={masterAtributos}
+                            onInstanciaCreada={handleInstanciaCreada}
+                            onAbrirModalCatalogo={() => setModalCatOpen(true)}
+                            onAbrirModalEditarFunciones={(id: number) => {
+                                setCatalogoIdSel(id);
+                                setModalFuncOpen(true);
+                            }}
+                        />
+                    </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                     <h2 className="text-xl font-semibold">Carga Masiva</h2>
-                    <BatchInstanciaForm
-                        proyectoId={pid}
-                        catalogo={catalogo}
-                        masterFunciones={masterFunciones}
-                        masterAtributos={masterAtributos}
-                        onInstanciasCreadas={handleLoteCreado}
-                    />
+                    <div className="max-w-6xl">
+                        <BatchInstanciaForm
+                            proyectoId={pid}
+                            catalogo={catalogo}
+                            masterFunciones={masterFunciones}
+                            masterAtributos={masterAtributos}
+                            onInstanciasCreadas={handleLoteCreado}
+                        />
+                    </div>
                 </div>
             </div>
 

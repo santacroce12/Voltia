@@ -97,7 +97,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                             <TableHead>Marca / Modelo</TableHead>
                             <TableHead className="text-center">Configuraci?n de Funciones</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
-                            <TableHead className="w-12 text-center">Acci?n</TableHead>
+                            <TableHead className="w-12 text-center">Acción</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

@@ -121,9 +121,9 @@ export type CatalogoDispositivo = {
     url_ficha_tecnica?: string;
     especificaciones: Record<string, any>;
     funciones_soportadas: number[];
+    especificaciones_set: { id?: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
     marca_nombre?: string;
     categoria_nombre?: string;
-    especificaciones_set?: { id: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
 };
 
 // Payload para crear un Dispositivo del Catalogo
@@ -133,7 +133,7 @@ export type CatalogoDispositivoPayload = {
     marca: number;
     categoria: number;
     url_ficha_tecnica?: string;
-    especificaciones_set?: { atributo: number; valor: string }[];
+    especificaciones_set: { atributo: number; valor: string }[];
     funciones_soportadas: number[];
 };
 export type CatalogoDispositivoUpdatePayload = Partial<CatalogoDispositivoPayload> & {

@@ -6,6 +6,7 @@ import {
     listarFunciones,
     actualizarCatalogoDispositivo,
     listarAtributosMaestros,
+    getCatalogoDetalle,
     type CatalogoDispositivo,
     type Marca,
     type Categoria,
@@ -59,6 +60,9 @@ export function DispositivosListadoPage() {
     const [editError, setEditError] = useState<string | null>(null);
     const [viewOpen, setViewOpen] = useState(false);
     const [viewDispositivo, setViewDispositivo] = useState<CatalogoDispositivo | null>(null);
+    const [viewDetalle, setViewDetalle] = useState<CatalogoDispositivo | null>(null);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [viewError, setViewError] = useState<string | null>(null);
 
     useEffect(() => {
         listarCatalogoDispositivos().then(setDispositivos).catch(console.error);
@@ -185,7 +189,17 @@ export function DispositivosListadoPage() {
                                             type="button"
                                             onClick={() => {
                                                 setViewDispositivo(d);
+                                                setViewDetalle(null);
+                                                setViewError(null);
+                                                setViewLoading(true);
                                                 setViewOpen(true);
+                                                getCatalogoDetalle(d.id)
+                                                    .then((detalle) => {
+                                                        setViewDetalle(detalle);
+                                                        setViewDispositivo(detalle);
+                                                    })
+                                                    .catch(() => setViewError("No se pudo cargar el detalle."))
+                                                    .finally(() => setViewLoading(false));
                                             }}
                                             title="Ver detalle"
                                         >
@@ -390,22 +404,44 @@ export function DispositivosListadoPage() {
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm">Funciones soportadas</h4>
-                                <p className="text-muted-foreground">
-                                    {viewDispositivo.funciones_soportadas.length} seleccionadas
-                                </p>
+                                {viewLoading && <p className="text-xs text-muted-foreground">Cargando funciones...</p>}
+                                {viewError && <p className="text-xs text-destructive">{viewError}</p>}
+                                {!viewLoading && !viewError && (
+                                    viewDispositivo.funciones_soportadas && viewDispositivo.funciones_soportadas.length > 0 ? (
+                                        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                                            {viewDispositivo.funciones_soportadas.map((fid) => {
+                                                const f = funciones.find((fun) => fun.id === fid);
+                                                if (!f) return <li key={fid}>{`Funcion #${fid}`}</li>;
+                                                return (
+                                                    <li key={fid}>
+                                                        {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                        {f.nombre}
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Sin funciones configuradas.</p>
+                                    )
+                                )}
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm">Especificaciones fijas</h4>
-                                {viewDispositivo.especificaciones_set && viewDispositivo.especificaciones_set.length > 0 ? (
-                                    <ul className="list-disc pl-4 space-y-1">
-                                        {viewDispositivo.especificaciones_set.map((e) => (
-                                            <li key={e.id}>
-                                                {e.nombre_atributo || `Atributo #${e.atributo}`}: {e.valor} {e.unidad_atributo || ""}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-muted-foreground text-xs">Sin especificaciones cargadas.</p>
+                                {viewLoading && <p className="text-xs text-muted-foreground">Cargando especificaciones...</p>}
+                                {viewError && <p className="text-xs text-destructive">{viewError}</p>}
+                                {!viewLoading && !viewError && viewDispositivo && (
+                                    viewDispositivo.especificaciones_set && viewDispositivo.especificaciones_set.length > 0 ? (
+                                        <ul className="list-disc pl-4 space-y-1">
+                                            {viewDispositivo.especificaciones_set.map((e) => (
+                                                <li key={e.id || e.atributo}>
+                                                    {e.nombre_atributo || `Atributo #${e.atributo}`}:{" "}
+                                                    {e.valor && e.valor.trim() !== "" ? e.valor : "-"} {e.unidad_atributo || ""}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-muted-foreground text-xs">Sin especificaciones cargadas.</p>
+                                    )
                                 )}
                             </div>
                             <DialogFooter>

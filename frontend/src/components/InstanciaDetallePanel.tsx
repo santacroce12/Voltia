@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Trash2, Loader2, Save, Box, Settings2 } from "lucide-react";
 import {
     getInstanciaDetalle,
@@ -190,10 +189,13 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                         <CardContent>
                             <div className="flex flex-wrap gap-2">
                                 {funcionesActivas.map((f) => (
-                                    <Badge key={f.id} variant="secondary">
+                                    <span
+                                        key={f.id}
+                                        className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
+                                    >
                                         {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
                                         {f.nombre}
-                                    </Badge>
+                                    </span>
                                 ))}
                                 {funcionesActivas.length === 0 && (
                                     <span className="text-xs text-muted-foreground">Ninguna</span>
