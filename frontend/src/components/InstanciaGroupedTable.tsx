@@ -95,7 +95,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                 />
                             </TableHead>
                             <TableHead>Marca / Modelo</TableHead>
-                            <TableHead className="text-center">Configuraci?n de Funciones</TableHead>
+                            <TableHead className="text-center">Configuración de Funciones</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
                             <TableHead className="w-12 text-center">Acción</TableHead>
                         </TableRow>
@@ -124,7 +124,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                         <div className="text-xs text-muted-foreground">{grupo.marca}</div>
                                     </TableCell>
                                     <TableCell className="text-center text-sm">
-                                        {grupo.funcionesCount === 0 ? "Sin configuraci?n" : `${grupo.funcionesCount} funciones`}
+                                        {grupo.funcionesCount === 0 ? "Sin configuración" : `${grupo.funcionesCount} funciones`}
                                     </TableCell>
                                     <TableCell className="text-right text-xl font-bold text-primary">{grupo.count}</TableCell>
                                     <TableCell className="text-center">

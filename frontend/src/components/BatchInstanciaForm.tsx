@@ -159,7 +159,7 @@ export function BatchInstanciaForm({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label>Funciones a habilitar (checkbox, sin Ctrl)</Label>
+                        <Label>Funciones a habilitar</Label>
                         <div className="grid gap-2 rounded-md border bg-muted/40 p-3">
                             <Input
                                 placeholder="Buscar por nombre o codigo..."
@@ -251,7 +251,7 @@ export function BatchInstanciaForm({
                             )}
                         </div>
                         <div>
-                            <h4 className="font-semibold">Especificaciones fijas</h4>
+                            <h4 className="font-semibold">Especificaciones</h4>
                             {especificacionesSet && especificacionesSet.length ? (
                                 <ul className="list-disc pl-4 space-y-1">
                                     {especificacionesSet.map((e: any) => (

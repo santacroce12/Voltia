@@ -2,6 +2,7 @@
 Vistas REST responsables de entregar datos al frontend de React.
 """
 import csv
+from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models, transaction
@@ -474,6 +475,75 @@ class ExportarMaterialesAPIView(APIView):
                     item["modelo"],
                     "N/A",
                     "",
+                ]
+            )
+
+        return response
+
+
+class ExportarMaterialesAPIView(APIView):
+    """
+    Genera una Lista de Materiales (BOM) en formato CSV para una Obra.
+    Compatible con Excel (usa ; como separador y BOM).
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, obra_id):
+        try:
+            obra = Obra.objects.get(pk=obra_id)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        instancias = InstanciaDispositivo.objects.filter(proyecto__obra=obra).select_related(
+            "catalogo", "catalogo__marca"
+        )
+
+        agregado: dict[tuple[int, str, str], dict[str, object]] = {}
+        for inst in instancias:
+            key = (
+                inst.catalogo.id,
+                inst.catalogo.nombre_completo_producto,
+                inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
+            )
+
+            if key not in agregado:
+                agregado[key] = {
+                    "cantidad": 0,
+                    "modelo": inst.catalogo.modelo,
+                    "nombre_completo": inst.catalogo.nombre_completo_producto,
+                    "marca": inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
+                    # Sin TAG en modelo: usamos modelo como referencia amigable
+                    "tag_ref": inst.catalogo.modelo or f"CAT-{inst.catalogo.id}",
+                }
+            agregado[key]["cantidad"] += 1
+
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="Lista_Materiales_{obra.nombre_obra.replace(" ", "_")}.csv"'
+
+        writer = csv.writer(response, delimiter=";")
+        response.write("\ufeff".encode("utf-8"))
+
+        writer.writerow(["VOLTIA LISTA DE MATERIALES", "", "", "", "", f"OBRA: {obra.nombre_obra}", "", ""])
+        writer.writerow(["", "", "", "", "GENERADO POR VOLTIA", "", f"FECHA: {datetime.now().strftime('%d-%m-%Y')}", ""])
+        writer.writerow([])
+        writer.writerow(
+            ["TABLERO", "CAMPOS", "REFERENCIA", "CANTIDAD", "DESCRIPCIÓN", "FABRICANTE/MARCA", "MODELO/TIPO", "CÓD. FAB."]
+        )
+
+        for item in agregado.values():
+            writer.writerow(
+                [
+                    "OBRA_REF",
+                    item["tag_ref"],
+                    item["tag_ref"],
+                    item["cantidad"],
+                    item["nombre_completo"],
+                    item["marca"],
+                    item["modelo"],
+                    "N/A",
                 ]
             )
 

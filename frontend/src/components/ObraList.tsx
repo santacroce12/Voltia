@@ -3,7 +3,7 @@ import type { Obra } from "../services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
 
 type ObraListProps = {
   obras: Obra[];
@@ -20,6 +20,7 @@ export function ObraList({
   onEditarObra,
   onExportarObra,
 }: ObraListProps) {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
   if (obras.length === 0) {
     return <div className="py-8 text-center text-muted-foreground">No hay obras cargadas.</div>;
   }
@@ -113,22 +114,15 @@ export function ObraList({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onExportarObra(obra);
+                            if (onExportarObra) {
+                              onExportarObra(obra);
+                            } else {
+                              window.location.href = `${API_BASE_URL}/obras/${obra.id}/exportar-materiales/`;
+                            }
                           }}
                           className="inline-flex items-center gap-1"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l-2.5-2.5L9 9.25" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 11.75v-.5A2.25 2.25 0 016.25 9h5.5A2.25 2.25 0 0114 11.25v7a2.25 2.25 0 01-2.25 2.25h-5.5A2.25 2.25 0 014 18.25z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 9V4.75A1.75 1.75 0 0111.75 3h5A1.75 1.75 0 0118.5 4.75v7a1.75 1.75 0 01-1.75 1.75H14" />
-                          </svg>
+                          <Download className="h-4 w-4" />
                           CSV
                         </Button>
                       </TableCell>

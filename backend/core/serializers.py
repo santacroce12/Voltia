@@ -145,14 +145,41 @@ class CatalogoDispositivoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(
         source="categoria.categoria_principal", read_only=True
     )
-    especificaciones_set = serializers.SerializerMethodField(read_only=True)
+    especificaciones_set = EspecificacionCatalogoSerializer(many=True, required=False)
 
     class Meta:
         model = CatalogoDispositivo
         fields = "__all__"
 
-    def get_especificaciones_set(self, obj):
-        return EspecificacionCatalogoSerializer(obj.especificaciones_set.all(), many=True).data
+    def create(self, validated_data):
+        especificaciones_data = validated_data.pop("especificaciones_set", [])
+        funciones_data = validated_data.pop("funciones_soportadas", [])
+
+        dispositivo = CatalogoDispositivo.objects.create(**validated_data)
+        dispositivo.funciones_soportadas.set(funciones_data)
+
+        for espec in especificaciones_data:
+            EspecificacionCatalogo.objects.create(catalogo=dispositivo, **espec)
+
+        return dispositivo
+
+    def update(self, instance, validated_data):
+        especificaciones_data = validated_data.pop("especificaciones_set", None)
+        funciones_data = validated_data.pop("funciones_soportadas", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if funciones_data is not None:
+            instance.funciones_soportadas.set(funciones_data)
+
+        if especificaciones_data is not None:
+            instance.especificaciones_set.all().delete()
+            for espec in especificaciones_data:
+                EspecificacionCatalogo.objects.create(catalogo=instance, **espec)
+
+        return instance
 
 
 class ServiciosProyectoSerializer(serializers.ModelSerializer):

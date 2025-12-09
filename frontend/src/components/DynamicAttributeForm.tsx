@@ -61,10 +61,12 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                             key={attr.id}
                             type="button"
                             variant="outline"
-                            className="w-full min-w-0 justify-start text-sm text-left !whitespace-normal break-words leading-tight min-h-11 flex-wrap"
+                            className="w-full min-w-0 justify-start text-sm text-left whitespace-normal break-words leading-tight min-h-11 flex-wrap"
                             onClick={() => handleAgregarCampo(String(attr.id))}
                         >
-                            {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
+                            <span className="inline-block text-left break-words leading-tight">
+                                {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
+                            </span>
                         </Button>
                     ))}
                     {disponiblesFiltrados.length === 0 && (
@@ -85,7 +87,7 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                     <div className="grid gap-3 md:grid-cols-2">
                     {atributosVisibles.map((attr) => (
                         <div key={attr.id} className="flex items-end gap-2 rounded-md border bg-background p-3 shadow-sm">
-                            <div className="grid gap-1.5 flex-1">
+                            <div className="grid gap-1.5 flex-1 min-w-0">
                                 <Label className="text-xs font-medium text-muted-foreground break-words leading-tight">
                                     {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
                                 </Label>

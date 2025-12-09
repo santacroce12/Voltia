@@ -45,6 +45,7 @@ export function DispositivosListadoPage() {
     const [categorias, setCategorias] = useState<Categoria[]>([]);
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
+
     const [editDispositivo, setEditDispositivo] = useState<CatalogoDispositivo | null>(null);
     const [editOpen, setEditOpen] = useState(false);
     const [editMarcaId, setEditMarcaId] = useState<number | null>(null);
@@ -58,9 +59,9 @@ export function DispositivosListadoPage() {
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+
     const [viewOpen, setViewOpen] = useState(false);
     const [viewDispositivo, setViewDispositivo] = useState<CatalogoDispositivo | null>(null);
-    const [viewDetalle, setViewDetalle] = useState<CatalogoDispositivo | null>(null);
     const [viewLoading, setViewLoading] = useState(false);
     const [viewError, setViewError] = useState<string | null>(null);
 
@@ -79,9 +80,10 @@ export function DispositivosListadoPage() {
             .catch(console.error);
     }, []);
 
-    const filtrados = dispositivos.filter((d) =>
-        d.nombre_completo_producto.toLowerCase().includes(filtro.toLowerCase()) ||
-        d.modelo.toLowerCase().includes(filtro.toLowerCase())
+    const filtrados = dispositivos.filter(
+        (d) =>
+            d.nombre_completo_producto.toLowerCase().includes(filtro.toLowerCase()) ||
+            d.modelo.toLowerCase().includes(filtro.toLowerCase()),
     );
 
     const abrirEditorDispositivo = (dispositivo: CatalogoDispositivo) => {
@@ -118,9 +120,11 @@ export function DispositivosListadoPage() {
         setEditLoading(true);
         setEditError(null);
         try {
-            const especArray = Object.entries(editEspecificaciones)
-                .filter(([, val]) => (val ?? "").toString().trim() !== "")
-                .map(([attrId, val]) => ({ atributo: Number(attrId), valor: val }));
+            // Enviamos TODOS los atributos visibles, incluso si el valor está vacío, para mantener plantilla/valores
+            const especArray = Object.entries(editEspecificaciones).map(([attrId, val]) => ({
+                atributo: Number(attrId),
+                valor: val,
+            }));
 
             const actualizado = await actualizarCatalogoDispositivo(editDispositivo.id, {
                 marca: editMarcaId,
@@ -182,22 +186,18 @@ export function DispositivosListadoPage() {
                                     <TableCell>{(d as any).categoria_nombre ?? d.categoria}</TableCell>
                                     <TableCell className="text-right">{d.funciones_soportadas.length}</TableCell>
                                     <TableCell className="text-right">{(d as any).especificaciones_set?.length ?? 0}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right space-x-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             type="button"
                                             onClick={() => {
-                                                setViewDispositivo(d);
-                                                setViewDetalle(null);
+                                                setViewDispositivo(null);
                                                 setViewError(null);
                                                 setViewLoading(true);
                                                 setViewOpen(true);
                                                 getCatalogoDetalle(d.id)
-                                                    .then((detalle) => {
-                                                        setViewDetalle(detalle);
-                                                        setViewDispositivo(detalle);
-                                                    })
+                                                    .then((detalle) => setViewDispositivo(detalle))
                                                     .catch(() => setViewError("No se pudo cargar el detalle."))
                                                     .finally(() => setViewLoading(false));
                                             }}
@@ -205,12 +205,7 @@ export function DispositivosListadoPage() {
                                         >
                                             <Eye className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            type="button"
-                                            onClick={() => abrirEditorDispositivo(d)}
-                                        >
+                                        <Button variant="ghost" size="icon" type="button" onClick={() => abrirEditorDispositivo(d)}>
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
@@ -227,7 +222,7 @@ export function DispositivosListadoPage() {
                         <DialogTitle className="text-xl">
                             {editDispositivo ? `Editar: ${editDispositivo.nombre_completo_producto}` : "Editar dispositivo"}
                         </DialogTitle>
-                        <DialogDescription>Actualiza datos generales, funciones y especificaciones fijas.</DialogDescription>
+                        <DialogDescription>Actualiza datos generales, funciones y especificaciones.</DialogDescription>
                     </DialogHeader>
                     {editDispositivo && (
                         <form className="space-y-6" onSubmit={handleActualizarDispositivo}>
@@ -359,22 +354,17 @@ export function DispositivosListadoPage() {
                                 <div className="grid gap-2 rounded-md border p-3 bg-muted/20">
                                     <Label>Especificaciones fijas</Label>
                                     <DynamicAttributeForm
-                                        todosLosAtributos={atributosMaestros}
-                                        valores={editEspecificaciones}
-                                        onChange={setEditEspecificaciones}
-                                    />
+                                    todosLosAtributos={atributosMaestros}
+                                    valores={editEspecificaciones}
+                                    onChange={setEditEspecificaciones}
+                                />
                                 </div>
                             </div>
 
                             {editError && <p className="text-sm text-destructive">{editError}</p>}
 
                             <div className="flex justify-end gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={cerrarEditorDispositivo}
-                                    disabled={editLoading}
-                                >
+                                <Button type="button" variant="outline" onClick={cerrarEditorDispositivo} disabled={editLoading}>
                                     Cancelar
                                 </Button>
                                 <Button type="submit" disabled={editLoading || !editMarcaId || !editCategoriaId}>
@@ -390,17 +380,24 @@ export function DispositivosListadoPage() {
                 <DialogContent className="sm:max-w-[720px]">
                     <DialogHeader>
                         <DialogTitle>Detalle del dispositivo</DialogTitle>
-                        <DialogDescription>
-                            Informacin completa del dispositivo seleccionado.
-                        </DialogDescription>
+                        <DialogDescription>Información completa del dispositivo seleccionado.</DialogDescription>
                     </DialogHeader>
                     {viewDispositivo && (
                         <div className="space-y-4 text-sm">
                             <div className="grid grid-cols-2 gap-2">
-                                <p><strong>Marca:</strong> {(viewDispositivo as any).marca_nombre ?? viewDispositivo.marca}</p>
-                                <p><strong>Modelo:</strong> {viewDispositivo.modelo}</p>
-                                <p><strong>Nombre:</strong> {viewDispositivo.nombre_completo_producto}</p>
-                                <p><strong>Categoria:</strong> {(viewDispositivo as any).categoria_nombre ?? viewDispositivo.categoria}</p>
+                                <p>
+                                    <strong>Marca:</strong> {(viewDispositivo as any).marca_nombre ?? viewDispositivo.marca}
+                                </p>
+                                <p>
+                                    <strong>Modelo:</strong> {viewDispositivo.modelo}
+                                </p>
+                                <p>
+                                    <strong>Nombre:</strong> {viewDispositivo.nombre_completo_producto}
+                                </p>
+                                <p>
+                                    <strong>Categoria:</strong>{" "}
+                                    {(viewDispositivo as any).categoria_nombre ?? viewDispositivo.categoria}
+                                </p>
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm">Funciones soportadas</h4>
@@ -426,7 +423,7 @@ export function DispositivosListadoPage() {
                                 )}
                             </div>
                             <div>
-                                <h4 className="font-semibold text-sm">Especificaciones fijas</h4>
+                                <h4 className="font-semibold text-sm">Especificaciones</h4>
                                 {viewLoading && <p className="text-xs text-muted-foreground">Cargando especificaciones...</p>}
                                 {viewError && <p className="text-xs text-destructive">{viewError}</p>}
                                 {!viewLoading && !viewError && viewDispositivo && (
@@ -445,7 +442,9 @@ export function DispositivosListadoPage() {
                                 )}
                             </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setViewOpen(false)}>Cerrar</Button>
+                                <Button variant="outline" onClick={() => setViewOpen(false)}>
+                                    Cerrar
+                                </Button>
                             </DialogFooter>
                         </div>
                     )}
