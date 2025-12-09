@@ -32,6 +32,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
     const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
     const [cargando, setCargando] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         Promise.all([listarMarcas(), listarCategorias(), listarAtributosMaestros(), listarFunciones()])
@@ -46,7 +47,12 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (!marcaId || !categoriaId || !modelo.trim() || !nombre.trim()) {
+            setError("Completa marca, categoría, modelo y nombre.");
+            return;
+        }
         setCargando(true);
+        setError(null);
 
         const especificacionesSet = Object.entries(especificaciones).map(([id, val]) => ({
             atributo: Number(id),
@@ -60,7 +66,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             categoria: Number(categoriaId),
             especificaciones_set: especificacionesSet,
             funciones_soportadas: funcionesSeleccionadas,
-            url_ficha_tecnica: "",
+            url_ficha_tecnica: undefined,
         };
 
         try {
@@ -72,8 +78,10 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setCategoriaId("");
             setEspecificaciones({});
             setFuncionesSeleccionadas([]);
+            setError(null);
         } catch (e) {
             console.error(e);
+            setError("No se pudo crear el dispositivo. Verifica los datos.");
         } finally {
             setCargando(false);
         }
@@ -82,11 +90,11 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     return (
         <form className="grid gap-6 py-4" onSubmit={handleSubmit}>
             {/* Datos basicos */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                    <Label>Marca</Label>
-                    <Select value={marcaId} onValueChange={setMarcaId}>
-                        <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label>Marca</Label>
+                        <Select value={marcaId} onValueChange={setMarcaId}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                         <SelectContent>{marcas.map((m) => <SelectItem key={m.id} value={String(m.id)}>{m.nombre}</SelectItem>)}</SelectContent>
                     </Select>
                 </div>
@@ -104,11 +112,11 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 <div className="grid gap-2">
                     <Label>Nombre Completo</Label>
                     <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+                    </div>
                 </div>
-            </div>
 
-            <div className="border rounded-md p-4 bg-muted/10">
-                <p className="text-sm text-muted-foreground mb-2">
+                <div className="border rounded-md p-4 bg-muted/10">
+                    <p className="text-sm text-muted-foreground mb-2">
                     Agrega los atributos que aplican a este modelo. Si dejas el valor vacio se pedira en obra; si cargas un valor sera el defecto heredado.
                 </p>
                 <DynamicAttributeForm
@@ -143,11 +151,13 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                         ))
                     )}
                 </div>
-            </div>
+                </div>
 
-            <Button type="submit" disabled={cargando} className="w-full mt-4">
-                Guardar Definicion de Dispositivo
-            </Button>
-        </form>
-    );
+                {error && <p className="text-sm text-destructive">{error}</p>}
+
+                <Button type="submit" disabled={cargando} className="w-full mt-4">
+                    Guardar Definicion de Dispositivo
+                </Button>
+            </form>
+        );
 }

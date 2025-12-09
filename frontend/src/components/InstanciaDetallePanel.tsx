@@ -42,6 +42,14 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
         [funcionesSeleccionadas, masterFunciones],
     );
 
+    const funcionesFiltradas = useMemo(
+        () =>
+            masterFunciones.filter((f) =>
+                `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
+            ),
+        [masterFunciones, busquedaFuncion],
+    );
+
     useEffect(() => {
         setLoading(true);
         getInstanciaDetalle(instanciaId)
@@ -108,14 +116,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
             </div>
         );
     }
-
-    const funcionesFiltradas = useMemo(
-        () =>
-            masterFunciones.filter((f) =>
-                `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
-            ),
-        [masterFunciones, busquedaFuncion],
-    );
 
     return (
         <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">

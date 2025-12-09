@@ -189,6 +189,7 @@ export function IngenieriaDetallePage() {
                         catalogo={catalogo}
                         masterFunciones={masterFunciones}
                         masterAtributos={masterAtributos}
+                        onAbrirModalCatalogo={() => setModalCatOpen(true)}
                         onInstanciasCreadas={() => {
                             handleLoteCreado();
                             setModalLoteOpen(false);

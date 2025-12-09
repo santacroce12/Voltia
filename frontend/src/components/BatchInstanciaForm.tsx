@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { Modal } from "./Modal";
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
     masterFunciones: FuncionDispositivo[];
     masterAtributos: AtributoMaestro[];
     onInstanciasCreadas: (instancias: InstanciaDispositivo[]) => void;
+    onAbrirModalCatalogo?: () => void;
 };
 
 export function BatchInstanciaForm({
@@ -31,6 +32,7 @@ export function BatchInstanciaForm({
     masterFunciones,
     masterAtributos,
     onInstanciasCreadas,
+    onAbrirModalCatalogo,
 }: Props) {
     const [catalogoId, setCatalogoId] = useState("");
     const [cantidad, setCantidad] = useState(1);
@@ -144,6 +146,17 @@ export function BatchInstanciaForm({
                             >
                                 <Eye className="h-4 w-4" />
                             </Button>
+                            {onAbrirModalCatalogo && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={onAbrirModalCatalogo}
+                                    title="Crear dispositivo en catálogo"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
                     </div>
 
