@@ -251,12 +251,9 @@ class Obra(models.Model):
     )
     nombre_obra = models.CharField(max_length=255, verbose_name="Nombre de Obra")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creacion")
-    ubicacion = models.CharField(
-        max_length=300,
-        blank=True,
-        null=True,
-        verbose_name="Ubicacion",
-    )
+    pais = models.CharField(max_length=50, blank=True, null=True, verbose_name="País")
+    provincia = models.CharField(max_length=100, blank=True, null=True, verbose_name="Provincia/Estado")
+    ubicacion = models.CharField(max_length=300, blank=True, null=True, verbose_name="Dirección / Calle")
     estado_obra = models.CharField(
         max_length=50,
         choices=EstadoObra.choices,

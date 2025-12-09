@@ -43,17 +43,21 @@ export type Obra = {
     cliente: number;
     usuario_creador: string;
     nombre_obra: string;
-    ubicacion?: string;
     estado_obra: string;
     fecha_creacion: string;
+    pais?: string;
+    provincia?: string;
+    ubicacion?: string;
 };
 
 // Payload para crear una Obra
 export type ObraPayload = {
     nombre_obra: string;
     cliente: number;
-    ubicacion?: string;
     estado_obra: string;
+    pais: string;
+    provincia: string;
+    ubicacion?: string;
 };
 export type ObraUpdatePayload = Partial<ObraPayload>;
 

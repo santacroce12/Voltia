@@ -55,7 +55,7 @@ export function ObraList({
             <TableRow>
               <TableHead className="w-1/4">Obra</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Ubicacion</TableHead>
+                  <TableHead>Ubicación</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Creada</TableHead>
               {onExportarObra && <TableHead className="text-right w-32">Exportar lista</TableHead>}
@@ -99,7 +99,13 @@ export function ObraList({
                         {obra.estado_obra}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{obra.ubicacion || "N/A"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <span className="text-sm font-medium">
+                        {obra.ubicacion ? `${obra.ubicacion}, ` : ""}
+                        {obra.provincia ? `${obra.provincia}, ` : ""}
+                        {obra.pais || "N/A"}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-sm font-medium">
                       {clienteNombres?.[obra.cliente] || `Cliente #${obra.cliente}`}
                     </TableCell>
