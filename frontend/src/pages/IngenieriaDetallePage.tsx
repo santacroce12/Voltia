@@ -40,6 +40,7 @@ export function IngenieriaDetallePage() {
     const [modalCatOpen, setModalCatOpen] = useState(false);
     const [modalFuncOpen, setModalFuncOpen] = useState(false);
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+    const [modalLoteOpen, setModalLoteOpen] = useState(false);
     const [instanciaIdDetalle, setInstanciaIdDetalle] = useState<number | null>(null);
     const [catalogoIdSel, setCatalogoIdSel] = useState<number | null>(null);
     const [cargandoInicial, setCargandoInicial] = useState(true);
@@ -132,15 +133,11 @@ export function IngenieriaDetallePage() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <h2 className="text-xl font-semibold">Carga Masiva</h2>
-                    <div className="max-w-6xl">
-                        <BatchInstanciaForm
-                            proyectoId={pid}
-                            catalogo={catalogo}
-                            masterFunciones={masterFunciones}
-                            masterAtributos={masterAtributos}
-                            onInstanciasCreadas={handleLoteCreado}
-                        />
+                    <div className="flex items-center justify-between max-w-6xl">
+                        <h2 className="text-xl font-semibold">Carga Masiva</h2>
+                        <Button variant="default" onClick={() => setModalLoteOpen(true)}>
+                            Cargar por lote
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -182,6 +179,21 @@ export function IngenieriaDetallePage() {
                 masterFunciones={masterFunciones}
                 onUpdateExitoso={handleCatalogoActualizado}
             />
+
+            <Modal isOpen={modalLoteOpen} onClose={() => setModalLoteOpen(false)} title="Carga en Lote">
+                <div className="w-full max-w-screen-2xl">
+                    <BatchInstanciaForm
+                        proyectoId={pid}
+                        catalogo={catalogo}
+                        masterFunciones={masterFunciones}
+                        masterAtributos={masterAtributos}
+                        onInstanciasCreadas={() => {
+                            handleLoteCreado();
+                            setModalLoteOpen(false);
+                        }}
+                    />
+                </div>
+            </Modal>
 
             <Modal isOpen={modalDetalleOpen} onClose={() => setModalDetalleOpen(false)} title="Detalle de Dispositivo">
                 {instanciaIdDetalle && (

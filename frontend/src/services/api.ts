@@ -146,7 +146,6 @@ export type InstanciaDispositivo = {
     proyecto: number;
     catalogo: number;
     usuario_creador: string;
-    tag_dispositivo?: string;
     atributos: Record<string, any>;
     funciones_usadas: number[];
     nombre_dispositivo?: string;
@@ -160,7 +159,6 @@ export type InstanciaDispositivo = {
 export type InstanciaPayload = {
     proyecto: number;
     catalogo: number;
-    tag_dispositivo?: string;
     atributos_set?: { atributo: number; valor: string }[];
     funciones_usadas: number[];
 };

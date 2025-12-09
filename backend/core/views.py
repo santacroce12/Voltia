@@ -438,7 +438,7 @@ class ExportarMaterialesAPIView(APIView):
                     "modelo": inst.catalogo.modelo,
                     "nombre_completo": inst.catalogo.nombre_completo_producto,
                     "marca": inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
-                    "tag_ref": inst.tag_dispositivo or "VARIO",
+                    "tag_ref": inst.catalogo.modelo or "ITEM",
                 }
             agregado[modelo_id]["cantidad"] += 1
 

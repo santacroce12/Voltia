@@ -209,12 +209,6 @@ class InstanciaDispositivo(models.Model):
         blank=True,
         verbose_name="Agregado por",
     )
-    tag_dispositivo = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name="TAG (Ej: REL-TAB-01)",  # Puede cargarse antes de tener un TAG fisico
-    )
     funciones_usadas = models.ManyToManyField(
         "FuncionDispositivo",
         blank=True,

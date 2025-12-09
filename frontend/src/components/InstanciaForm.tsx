@@ -39,7 +39,6 @@ export function InstanciaForm({
     onAbrirModalEditarFunciones,
 }: Props) {
     const [catalogoId, setCatalogoId] = useState("");
-    const [tag, setTag] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -106,7 +105,6 @@ export function InstanciaForm({
             const payload: InstanciaPayload = {
                 proyecto: proyectoId,
                 catalogo: Number(catalogoId),
-                tag_dispositivo: tag,
                 atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
             };
@@ -114,7 +112,6 @@ export function InstanciaForm({
             const nueva = await crearInstancia(payload);
             onInstanciaCreada(nueva);
 
-            setTag("");
             setValoresEAV({});
             setFuncionesUsadasIds([]);
             setCatalogoId("");
@@ -178,8 +175,8 @@ export function InstanciaForm({
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <form id="single-form" className="grid gap-6 lg:grid-cols-3" onSubmit={handleSubmit}>
-                    <div className="grid gap-2 lg:col-span-3">
+                <form id="single-form" className="space-y-6" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
                         <Label>Dispositivo del Catalogo</Label>
                         <div className="flex gap-2">
                             <Select value={catalogoId} onValueChange={setCatalogoId}>
@@ -216,77 +213,44 @@ export function InstanciaForm({
                         </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label>TAG del Dispositivo</Label>
-                        <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Ej: REL-001" />
-                    </div>
-
-                    <div className="lg:col-span-2">
-                        <div className="border rounded-lg bg-muted/20 p-4 space-y-3">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <Label className="flex-1 text-sm font-semibold">Atributos disponibles</Label>
-                                <Input
-                                    placeholder="Buscar atributo..."
-                                    value={busquedaAtributo}
-                                    onChange={(e) => setBusquedaAtributo(e.target.value)}
-                                    className="sm:max-w-xs"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    title="Crear nuevo atributo"
-                                    onClick={() => setModalNuevoAttrOpen(true)}
-                                >
-                                    <Plus className="h-4 w-4" />
-                                </Button>
+                    <div className="grid gap-2 rounded-lg border bg-muted/20 p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <Label className="text-sm font-semibold">Atributos de la instancia</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Agrega atributos y carga sus valores (hereda vacios/valores del catalogo).
+                                </p>
                             </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="rounded-md border bg-muted/40 p-3 max-h-64 overflow-y-auto space-y-1">
-                                    {atributosFiltrados.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground">No hay atributos que coincidan.</p>
-                                    ) : (
-                                        atributosFiltrados.map((attr) => (
-                                            <label
-                                                key={attr.id}
-                                                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
-                                            >
-                                                <Checkbox
-                                                    checked={attr.id in valoresEAV}
-                                                    onCheckedChange={() => toggleAtributoVisible(attr.id)}
-                                                />
-                                                <span>
-                                                    {attr.nombre}
-                                                    {attr.unidad ? ` (${attr.unidad})` : ""}
-                                                </span>
-                                            </label>
-                                        ))
-                                    )}
-                                </div>
-
-                                <div className="grid gap-2 border rounded-md p-3 bg-background shadow-sm">
-                                    <Label className="text-sm font-semibold">Valores seleccionados</Label>
-                                    <DynamicAttributeForm
-                                        todosLosAtributos={atributosMaestros}
-                                        valores={valoresEAV}
-                                        onChange={setValoresEAV}
-                                    />
-                                </div>
-                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setModalNuevoAttrOpen(true)}
+                                title="Crear nuevo atributo"
+                            >
+                                <Plus className="h-4 w-4 mr-1" /> Nuevo
+                            </Button>
                         </div>
+                        <DynamicAttributeForm
+                            todosLosAtributos={atributosMaestros}
+                            valores={valoresEAV}
+                            onChange={setValoresEAV}
+                        />
                     </div>
 
-                    <div className="grid gap-2 lg:col-span-3">
-                        <Label>Funciones a habilitar</Label>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Label>Funciones a habilitar</Label>
+                            <Input
+                                placeholder="Buscar funcion..."
+                                value={busquedaFuncion}
+                                onChange={(e) => setBusquedaFuncion(e.target.value)}
+                                className="max-w-xs"
+                                disabled={!catalogoId || funcionesDisponibles.length === 0}
+                            />
+                        </div>
                         <div className="flex items-start gap-2">
                             <div className="flex-1 space-y-2 rounded-md border bg-muted/40 p-3">
-                                <Input
-                                    placeholder="Buscar funcion..."
-                                    value={busquedaFuncion}
-                                    onChange={(e) => setBusquedaFuncion(e.target.value)}
-                                    disabled={!catalogoId || funcionesDisponibles.length === 0}
-                                />
                                 <div className="max-h-48 overflow-y-auto space-y-1">
                                     {!catalogoId && (
                                         <p className="text-xs text-muted-foreground px-1">Selecciona un dispositivo.</p>

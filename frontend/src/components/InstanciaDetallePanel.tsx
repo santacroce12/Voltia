@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, Loader2, Save, Box, Settings2 } from "lucide-react";
+import { Trash2, Loader2, Box, Settings2 } from "lucide-react";
 import {
     getInstanciaDetalle,
     updateInstancia,
@@ -32,7 +31,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
     const [catalogoItem, setCatalogoItem] = useState<CatalogoDispositivo | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [tag, setTag] = useState("");
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
 
     useEffect(() => {
@@ -40,7 +38,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
         getInstanciaDetalle(instanciaId)
             .then(async (inst) => {
                 setInstancia(inst);
-                setTag(inst.tag_dispositivo || "");
 
                 const mapaValores: Record<number, string> = {};
                 (inst.atributos_set || []).forEach((attr: any) => {
@@ -68,7 +65,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
             }));
 
             const payload: Partial<InstanciaPayload> = {
-                tag_dispositivo: tag,
                 atributos_set: atributosArray,
             };
 
@@ -115,7 +111,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                         {instancia.nombre_dispositivo}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        {instancia.marca_dispositivo} - {catalogoItem?.modelo}
+                        ID #{instancia.id} · {instancia.marca_dispositivo} - {catalogoItem?.modelo}
                     </p>
                 </div>
                 <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
@@ -133,10 +129,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                     </CardHeader>
                     <CardContent>
                         <form id="edit-form" onSubmit={handleSave} className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label>TAG / Identificador</Label>
-                                <Input value={tag} onChange={(e) => setTag(e.target.value)} />
-                            </div>
                             <div className="grid gap-2">
                                 <Label>Atributos Variables</Label>
                                 <DynamicAttributeForm

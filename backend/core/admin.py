@@ -174,8 +174,8 @@ class InstanciaDispositivoAdmin(admin.ModelAdmin):
     Admin de instancias que permite seleccionar funciones usadas en cada proyecto.
     """
 
-    list_display = ("id", "tag_dispositivo", "proyecto", "catalogo", "usuario_creador")
-    search_fields = ("tag_dispositivo", "proyecto__nombre_proyecto", "catalogo__modelo")
+    list_display = ("id", "proyecto", "catalogo", "usuario_creador")
+    search_fields = ("proyecto__nombre_proyecto", "catalogo__modelo")
     list_filter = ("proyecto__obra", "proyecto")
     filter_horizontal = ("funciones_usadas",)
 
@@ -202,7 +202,7 @@ class AtributoInstanciaAdmin(admin.ModelAdmin):
     """Valores unicos por instancia (cargados en obra)."""
 
     list_display = ("instancia", "atributo", "valor")
-    search_fields = ("instancia__tag_dispositivo", "atributo__nombre", "valor")
+    search_fields = ("instancia__id", "instancia__catalogo__modelo", "atributo__nombre", "valor")
     list_filter = ("instancia__proyecto", "atributo")
 
 

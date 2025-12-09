@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { type AtributoMaestro } from "../services/api";
 import { useMemo, useState } from "react";
@@ -61,7 +61,7 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                             key={attr.id}
                             type="button"
                             variant="outline"
-                            className="justify-start text-sm"
+                            className="w-full min-w-0 justify-start text-sm text-left !whitespace-normal break-words leading-tight min-h-11 flex-wrap"
                             onClick={() => handleAgregarCampo(String(attr.id))}
                         >
                             {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
@@ -86,7 +86,7 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                     {atributosVisibles.map((attr) => (
                         <div key={attr.id} className="flex items-end gap-2 rounded-md border bg-background p-3 shadow-sm">
                             <div className="grid gap-1.5 flex-1">
-                                <Label className="text-xs font-medium text-muted-foreground">
+                                <Label className="text-xs font-medium text-muted-foreground break-words leading-tight">
                                     {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
                                 </Label>
                                 <Input

@@ -4,17 +4,20 @@ import {
     listarMarcas,
     listarCategorias,
     listarAtributosMaestros,
+    listarFunciones,
     type CatalogoDispositivo,
     type CatalogoDispositivoPayload,
     type Marca,
     type Categoria,
     type AtributoMaestro,
+    type FuncionDispositivo,
 } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Formulario para crear un dispositivo del catalogo con valores fijos
 export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCreado: (d: CatalogoDispositivo) => void }) {
@@ -26,14 +29,17 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [especificaciones, setEspecificaciones] = useState<Record<number, string>>({});
     const [marcas, setMarcas] = useState<Marca[]>([]);
     const [categorias, setCategorias] = useState<Categoria[]>([]);
+    const [funciones, setFunciones] = useState<FuncionDispositivo[]>([]);
+    const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
     const [cargando, setCargando] = useState(false);
 
     useEffect(() => {
-        Promise.all([listarMarcas(), listarCategorias(), listarAtributosMaestros()])
-            .then(([m, c, a]) => {
+        Promise.all([listarMarcas(), listarCategorias(), listarAtributosMaestros(), listarFunciones()])
+            .then(([m, c, a, f]) => {
                 setMarcas(m);
                 setCategorias(c);
                 setAtributosMaestros(a);
+                setFunciones(f);
             })
             .catch(console.error);
     }, []);
@@ -53,7 +59,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             marca: Number(marcaId),
             categoria: Number(categoriaId),
             especificaciones_set: especificacionesSet,
-            funciones_soportadas: [],
+            funciones_soportadas: funcionesSeleccionadas,
             url_ficha_tecnica: "",
         };
 
@@ -65,6 +71,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setMarcaId("");
             setCategoriaId("");
             setEspecificaciones({});
+            setFuncionesSeleccionadas([]);
         } catch (e) {
             console.error(e);
         } finally {
@@ -109,6 +116,33 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                     valores={especificaciones}
                     onChange={setEspecificaciones}
                 />
+            </div>
+
+            <div className="border rounded-md p-4 bg-muted/10 space-y-2">
+                <Label className="text-sm font-semibold">Funciones soportadas</Label>
+                <p className="text-xs text-muted-foreground">Selecciona las funciones que este modelo trae de fabrica.</p>
+                <div className="grid gap-2 max-h-48 overflow-y-auto">
+                    {funciones.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No hay funciones disponibles.</p>
+                    ) : (
+                        funciones.map((f) => (
+                            <label key={f.id} className="flex items-center gap-2 text-sm rounded px-2 py-1 hover:bg-muted">
+                                <Checkbox
+                                    checked={funcionesSeleccionadas.includes(f.id)}
+                                    onCheckedChange={() =>
+                                        setFuncionesSeleccionadas((prev) =>
+                                            prev.includes(f.id) ? prev.filter((id) => id !== f.id) : [...prev, f.id],
+                                        )
+                                    }
+                                />
+                                <span>
+                                    {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                    {f.nombre}
+                                </span>
+                            </label>
+                        ))
+                    )}
+                </div>
             </div>
 
             <Button type="submit" disabled={cargando} className="w-full mt-4">

@@ -216,7 +216,7 @@ export function ProyectosPage() {
                                 <table className="w-full text-sm">
                                     <thead className="bg-muted/50 text-left">
                                         <tr>
-                                            <th className="px-3 py-2">TAG</th>
+                                            <th className="px-3 py-2">ID</th>
                                             <th className="px-3 py-2">Modelo</th>
                                             <th className="px-3 py-2">Marca</th>
                                         </tr>
@@ -224,7 +224,7 @@ export function ProyectosPage() {
                                     <tbody>
                                         {instanciasDetalle.map((inst) => (
                                             <tr key={inst.id} className="hover:bg-muted/30">
-                                                <td className="px-3 py-2 font-mono text-xs">{inst.tag_dispositivo || `ID-${inst.id}`}</td>
+                                                <td className="px-3 py-2 font-mono text-xs">{`ID-${inst.id}`}</td>
                                                 <td className="px-3 py-2">{inst.nombre_dispositivo || "Sin modelo"}</td>
                                                 <td className="px-3 py-2 text-muted-foreground">{inst.marca_dispositivo || "Sin marca"}</td>
                                             </tr>

@@ -34,7 +34,6 @@ export function BatchInstanciaForm({
 }: Props) {
     const [catalogoId, setCatalogoId] = useState("");
     const [cantidad, setCantidad] = useState(1);
-    const [tagBase, setTagBase] = useState("DEV");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -86,7 +85,6 @@ export function BatchInstanciaForm({
             const payload: InstanciaPayload = {
                 proyecto: proyectoId,
                 catalogo: Number(catalogoId),
-                tag_dispositivo: `${tagBase}-${String(i + 1).padStart(3, "0")}`,
                 atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
             };
@@ -96,7 +94,6 @@ export function BatchInstanciaForm({
         try {
             const nuevasInstancias = await Promise.all(promesas);
             onInstanciasCreadas(nuevasInstancias);
-            setTagBase("DEV");
             setCantidad(1);
             setCatalogoId("");
             setFuncionesUsadasIds([]);
@@ -150,21 +147,15 @@ export function BatchInstanciaForm({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label>Cantidad</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                max="50"
-                                value={cantidad}
-                                onChange={(e) => setCantidad(Number(e.target.value))}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>TAG Base</Label>
-                            <Input value={tagBase} onChange={(e) => setTagBase(e.target.value)} placeholder="Ej: REL" />
-                        </div>
+                    <div className="grid gap-2">
+                        <Label>Cantidad</Label>
+                        <Input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={cantidad}
+                            onChange={(e) => setCantidad(Number(e.target.value))}
+                        />
                     </div>
 
                     <div className="grid gap-2">
