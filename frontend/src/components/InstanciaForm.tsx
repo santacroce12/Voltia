@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import {
     crearInstancia,
     type InstanciaDispositivo,
@@ -47,6 +47,7 @@ export function InstanciaForm({
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [viewOpen, setViewOpen] = useState(false);
+    const [busquedaCatalogo, setBusquedaCatalogo] = useState("");
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [busquedaAtributo, setBusquedaAtributo] = useState("");
     const [nuevoAttrNombre, setNuevoAttrNombre] = useState("");
@@ -122,6 +123,16 @@ export function InstanciaForm({
         }
     };
 
+    const catalogoFiltrado = useMemo(() => {
+        const term = busquedaCatalogo.toLowerCase();
+        if (!term) return catalogo;
+        return catalogo.filter((d) =>
+            `${d.nombre_completo_producto} ${d.modelo} ${(d as any).marca_nombre || ""} ${(d as any).categoria_nombre || ""}`
+                .toLowerCase()
+                .includes(term),
+        );
+    }, [busquedaCatalogo, catalogo]);
+
     const funcionesFiltradas = funcionesDisponibles.filter((f) =>
         `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
     );
@@ -178,20 +189,27 @@ export function InstanciaForm({
                 <form id="single-form" className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid gap-2">
                         <Label>Dispositivo del Catalogo</Label>
-                        <div className="flex gap-2">
-                            <Select value={catalogoId} onValueChange={setCatalogoId}>
-                                <SelectTrigger className="flex-1">
-                                    <SelectValue placeholder="Seleccionar Dispositivo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {catalogo.map((d) => (
-                                        <SelectItem key={d.id} value={String(d.id)}>
-                                            {d.marca_nombre ? `${d.marca_nombre} - ` : ""} {d.modelo}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button
+                        <div className="flex flex-col gap-2">
+                            <Input
+                                placeholder="Buscar dispositivo por nombre, modelo o marca..."
+                                value={busquedaCatalogo}
+                                onChange={(e) => setBusquedaCatalogo(e.target.value)}
+                                className="max-w-xl"
+                            />
+                            <div className="flex gap-2">
+                                <Select value={catalogoId} onValueChange={setCatalogoId}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="Seleccionar Dispositivo..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {catalogoFiltrado.map((d) => (
+                                            <SelectItem key={d.id} value={String(d.id)}>
+                                                {(d as any).marca_nombre ? `${(d as any).marca_nombre} - ` : ""} {d.modelo}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
                                 type="button"
                                 variant="outline"
                                 size="icon"
@@ -207,11 +225,11 @@ export function InstanciaForm({
                                 size="icon"
                                 onClick={onAbrirModalCatalogo}
                                 title="Crear Nuevo en Catalogo"
-                            >
-                                <Plus className="h-4 w-4" />
-                            </Button>
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-                    </div>
 
                     <div className="grid gap-2 rounded-lg border bg-muted/20 p-4">
                         <div className="flex items-center justify-between">
