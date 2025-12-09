@@ -135,9 +135,9 @@ export function IngenieriaDetallePage() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between max-w-6xl">
+                    <div className="flex items-center gap-3 max-w-6xl">
                         <h2 className="text-xl font-semibold">Carga Masiva</h2>
-                        <Button variant="default" onClick={() => setModalLoteOpen(true)}>
+                        <Button variant="default" size="sm" onClick={() => setModalLoteOpen(true)}>
                             Cargar por lote
                         </Button>
                     </div>
