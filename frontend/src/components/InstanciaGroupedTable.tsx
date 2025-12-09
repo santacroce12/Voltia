@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, Pencil } from "lucide-react";
 import { type InstanciaDispositivo, borrarInstancia } from "../services/api";
 import { cn } from "@/lib/utils";
 
@@ -132,9 +132,9 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => onVerDetalle(grupo.instanciaIds[0])}
-                                            title="Ver Detalle Completo"
+                                            title="Editar / Ver detalle"
                                         >
-                                            <Eye className="h-4 w-4" />
+                                            <Pencil className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>

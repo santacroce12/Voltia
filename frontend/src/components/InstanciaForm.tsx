@@ -48,6 +48,8 @@ export function InstanciaForm({
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
     const [viewOpen, setViewOpen] = useState(false);
     const [busquedaCatalogo, setBusquedaCatalogo] = useState("");
+    const [filtroMarca, setFiltroMarca] = useState<string>("all");
+    const [filtroCategoria, setFiltroCategoria] = useState<string>("all");
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
     const [busquedaAtributo, setBusquedaAtributo] = useState("");
     const [nuevoAttrNombre, setNuevoAttrNombre] = useState("");
@@ -125,13 +127,14 @@ export function InstanciaForm({
 
     const catalogoFiltrado = useMemo(() => {
         const term = busquedaCatalogo.toLowerCase();
-        if (!term) return catalogo;
-        return catalogo.filter((d) =>
-            `${d.nombre_completo_producto} ${d.modelo} ${(d as any).marca_nombre || ""} ${(d as any).categoria_nombre || ""}`
-                .toLowerCase()
-                .includes(term),
-        );
-    }, [busquedaCatalogo, catalogo]);
+        return catalogo.filter((d) => {
+            const texto = `${d.nombre_completo_producto} ${d.modelo} ${(d as any).marca_nombre || ""} ${(d as any).categoria_nombre || ""}`.toLowerCase();
+            const coincideTexto = term ? texto.includes(term) : true;
+            const coincideMarca = filtroMarca !== "all" ? String(d.marca) === filtroMarca : true;
+            const coincideCategoria = filtroCategoria !== "all" ? String(d.categoria) === filtroCategoria : true;
+            return coincideTexto && coincideMarca && coincideCategoria;
+        });
+    }, [busquedaCatalogo, filtroMarca, filtroCategoria, catalogo]);
 
     const funcionesFiltradas = funcionesDisponibles.filter((f) =>
         `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
@@ -189,42 +192,87 @@ export function InstanciaForm({
                 <form id="single-form" className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid gap-2">
                         <Label>Dispositivo del Catalogo</Label>
-                        <div className="flex flex-col gap-2">
-                            <Input
-                                placeholder="Buscar dispositivo por nombre, modelo o marca..."
-                                value={busquedaCatalogo}
-                                onChange={(e) => setBusquedaCatalogo(e.target.value)}
-                                className="max-w-xl"
-                            />
-                            <div className="flex gap-2">
+                        <div className="grid gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <Input
+                                    placeholder="Filtrar por nombre o modelo..."
+                                    value={busquedaCatalogo}
+                                    onChange={(e) => setBusquedaCatalogo(e.target.value)}
+                                    className="h-9"
+                                />
+                                <Select value={filtroMarca} onValueChange={setFiltroMarca}>
+                                    <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Filtrar por marca" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas las marcas</SelectItem>
+                                        {[...new Set(catalogo.map((d) => (d.marca ? String(d.marca) : null)).filter(Boolean))].map(
+                                            (id) => {
+                                                const nombre =
+                                                    (catalogo.find((c) => c.marca && String(c.marca) === id) as any)
+                                                        ?.marca_nombre || `Marca #${id}`;
+                                                return (
+                                                    <SelectItem key={id as string} value={id as string}>
+                                                        {nombre}
+                                                    </SelectItem>
+                                                );
+                                            },
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
+                                    <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Filtrar por categoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas las categorías</SelectItem>
+                                        {[
+                                            ...new Set(catalogo.map((d) => (d.categoria ? String(d.categoria) : null)).filter(Boolean)),
+                                        ].map((id) => {
+                                            const nombre =
+                                                (catalogo.find((c) => c.categoria && String(c.categoria) === id) as any)
+                                                    ?.categoria_nombre || `Categoría #${id}`;
+                                            return (
+                                                <SelectItem key={id as string} value={id as string}>
+                                                    {nombre}
+                                                </SelectItem>
+                                            );
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex gap-2 items-center">
                                 <Select value={catalogoId} onValueChange={setCatalogoId}>
                                     <SelectTrigger className="flex-1">
                                         <SelectValue placeholder="Seleccionar Dispositivo..." />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-72">
                                         {catalogoFiltrado.map((d) => (
                                             <SelectItem key={d.id} value={String(d.id)}>
                                                 {(d as any).marca_nombre ? `${(d as any).marca_nombre} - ` : ""} {d.modelo}
                                             </SelectItem>
                                         ))}
+                                        {catalogoFiltrado.length === 0 && (
+                                            <div className="px-3 py-2 text-xs text-muted-foreground">Sin resultados.</div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setViewOpen(true)}
-                                disabled={!selectedCatalogo}
-                                title="Ver detalle del dispositivo"
-                            >
-                                <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                onClick={onAbrirModalCatalogo}
-                                title="Crear Nuevo en Catalogo"
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setViewOpen(true)}
+                                    disabled={!selectedCatalogo}
+                                    title="Ver detalle del dispositivo"
+                                >
+                                    <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={onAbrirModalCatalogo}
+                                    title="Crear Nuevo en Catalogo"
                                 >
                                     <Plus className="h-4 w-4" />
                                 </Button>

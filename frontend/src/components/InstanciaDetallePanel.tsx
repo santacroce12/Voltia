@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Loader2, Box, Settings2 } from "lucide-react";
 import {
     getInstanciaDetalle,
@@ -32,10 +34,12 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
+    const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
+    const [busquedaFuncion, setBusquedaFuncion] = useState("");
 
     const funcionesActivas = useMemo(
-        () => (instancia ? masterFunciones.filter((f) => instancia.funciones_usadas.includes(f.id)) : []),
-        [instancia, masterFunciones],
+        () => masterFunciones.filter((f) => funcionesSeleccionadas.includes(f.id)),
+        [funcionesSeleccionadas, masterFunciones],
     );
 
     useEffect(() => {
@@ -49,6 +53,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                     if (attr.atributo) mapaValores[attr.atributo] = attr.valor;
                 });
                 setValoresVariables(mapaValores);
+                setFuncionesSeleccionadas(inst.funciones_usadas || []);
 
                 try {
                     const cat = await getCatalogoDetalle(inst.catalogo);
@@ -71,6 +76,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
 
             const payload: Partial<InstanciaPayload> = {
                 atributos_set: atributosArray,
+                funciones_usadas: funcionesSeleccionadas,
             };
 
             const updated = await updateInstancia(instanciaId, payload);
@@ -103,6 +109,14 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
         );
     }
 
+    const funcionesFiltradas = useMemo(
+        () =>
+            masterFunciones.filter((f) =>
+                `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
+            ),
+        [masterFunciones, busquedaFuncion],
+    );
+
     return (
         <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
@@ -119,7 +133,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                 </div>
                 <div className="flex gap-2">
                     <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Borrar
+                        <Trash2 className="h-4 w-4 mr-2" /> Borrar este dispositivo
                     </Button>
                     <Button variant="outline" size="sm" onClick={onCerrar}>
                         Cerrar
@@ -145,6 +159,47 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                                 valores={valoresVariables}
                                 onChange={setValoresVariables}
                             />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-semibold">Funciones habilitadas</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    placeholder="Buscar funcion..."
+                                    value={busquedaFuncion}
+                                    onChange={(e) => setBusquedaFuncion(e.target.value)}
+                                    className="max-w-xs"
+                                    disabled={masterFunciones.length === 0}
+                                />
+                            </div>
+                            <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 space-y-1">
+                                {masterFunciones.length === 0 && (
+                                    <p className="text-xs text-muted-foreground px-1">No hay funciones disponibles.</p>
+                                )}
+                                {masterFunciones.length > 0 && funcionesFiltradas.length === 0 && (
+                                    <p className="text-xs text-muted-foreground px-1">Sin coincidencias.</p>
+                                )}
+                                {funcionesFiltradas.map((f) => (
+                                    <label
+                                        key={f.id}
+                                        className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={funcionesSeleccionadas.includes(f.id)}
+                                            onCheckedChange={() =>
+                                                setFuncionesSeleccionadas((prev) =>
+                                                    prev.includes(f.id)
+                                                        ? prev.filter((id) => id !== f.id)
+                                                        : [...prev, f.id],
+                                                )
+                                            }
+                                        />
+                                        <span>
+                                            {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                            {f.nombre}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </form>
                 </CardContent>
