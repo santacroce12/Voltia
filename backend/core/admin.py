@@ -37,10 +37,10 @@ class ProyectoAdmin(admin.ModelAdmin):
 class ObraAdmin(admin.ModelAdmin):
     """Permite filtrar rapidamente por estado de obra."""
 
-    list_display = ("id", "nombre_obra", "cliente", "estado_obra")
+    list_display = ("id", "nombre_obra", "cliente", "estado_obra", "pais", "provincia", "ubicacion")
     list_display_links = ("nombre_obra",)
-    list_filter = ("estado_obra", "cliente")
-    search_fields = ("nombre_obra", "cliente__nombre")
+    list_filter = ("estado_obra", "cliente", "pais", "provincia")
+    search_fields = ("nombre_obra", "cliente__nombre", "pais", "provincia", "ubicacion")
 
 
 @admin.register(Cliente)
