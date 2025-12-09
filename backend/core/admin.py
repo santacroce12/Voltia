@@ -166,6 +166,20 @@ class CatalogoDispositivoAdmin(admin.ModelAdmin):
     search_fields = ("modelo", "nombre_completo_producto", "marca__nombre", "categoria__subcategoria")
     list_filter = ("marca", "categoria")
     filter_horizontal = ("funciones_soportadas",)
+    inlines = []
+
+
+class EspecificacionCatalogoInline(admin.TabularInline):
+    """Permite editar atributos fijos del catálogo desde el propio dispositivo."""
+
+    model = EspecificacionCatalogo
+    extra = 1
+    fields = ("atributo", "valor")
+    autocomplete_fields = ("atributo",)
+
+
+# Añadimos el inline al admin del catálogo
+CatalogoDispositivoAdmin.inlines = [EspecificacionCatalogoInline]
 
 
 @admin.register(InstanciaDispositivo)
@@ -178,6 +192,20 @@ class InstanciaDispositivoAdmin(admin.ModelAdmin):
     search_fields = ("proyecto__nombre_proyecto", "catalogo__modelo")
     list_filter = ("proyecto__obra", "proyecto")
     filter_horizontal = ("funciones_usadas",)
+    inlines = []
+
+
+class AtributoInstanciaInline(admin.TabularInline):
+    """Permite gestionar atributos cargados en obra directamente desde la instancia."""
+
+    model = AtributoInstancia
+    extra = 1
+    fields = ("atributo", "valor")
+    autocomplete_fields = ("atributo",)
+
+
+# Añadimos el inline al admin de instancias
+InstanciaDispositivoAdmin.inlines = [AtributoInstanciaInline]
 
 
 @admin.register(AtributoMaestro)

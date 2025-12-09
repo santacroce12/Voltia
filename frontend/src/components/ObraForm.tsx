@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 
 // --- DATOS GEOGRÁFICOS ---
 const PAISES = ["Argentina", "Chile", "Perú", "Otro"];
@@ -132,6 +133,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
     };
 
     const provinciasPais = PROVINCIAS[pais] || [];
+    const provinciasOptions = PROVINCIAS[pais]?.map((p) => ({ value: p, label: p })) || [];
 
     return (
         <Card>
@@ -164,18 +166,13 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                     <div className="grid gap-2">
                         <Label>Provincia / Estado</Label>
                         {provinciasPais.length > 0 ? (
-                            <Select value={provincia} onValueChange={setProvincia}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar Provincia" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {provinciasPais.map((p) => (
-                                        <SelectItem key={p} value={p}>
-                                            {p}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Combobox
+                                options={provinciasOptions}
+                                value={provincia}
+                                onChange={setProvincia}
+                                placeholder="Buscar provincia..."
+                                emptyText="No se encontró la provincia."
+                            />
                         ) : (
                             <Input
                                 placeholder="Escriba la provincia..."
