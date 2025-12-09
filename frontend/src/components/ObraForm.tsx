@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // --- DATOS GEOGRÁFICOS ---
-const PAISES = ["Argentina", "Perú", "Otro"];
+const PAISES = ["Argentina", "Chile", "Perú", "Otro"];
 
 const PROVINCIAS: Record<string, string[]> = {
     Argentina: [
@@ -35,6 +35,24 @@ const PROVINCIAS: Record<string, string[]> = {
         "Santiago del Estero",
         "Tierra del Fuego",
         "Tucumán",
+    ],
+    Chile: [
+        "Arica y Parinacota",
+        "Tarapacá",
+        "Antofagasta",
+        "Atacama",
+        "Coquimbo",
+        "Valparaíso",
+        "Metropolitana",
+        "O'Higgins",
+        "Maule",
+        "Ñuble",
+        "Biobío",
+        "Araucanía",
+        "Los Ríos",
+        "Los Lagos",
+        "Aysén",
+        "Magallanes",
     ],
     Perú: [
         "Amazonas",
