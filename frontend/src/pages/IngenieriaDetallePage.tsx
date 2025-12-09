@@ -98,7 +98,7 @@ export function IngenieriaDetallePage() {
     }
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="space-y-8 pb-10 min-h-screen overflow-x-hidden">
             <div className="flex items-center gap-4">
                 <Link to="/ingenieria">
                     <Button variant="outline" size="icon">
@@ -106,9 +106,11 @@ export function IngenieriaDetallePage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Ingeniera: Proyecto #{pid}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        Ingeniería: {proyectoInfo?.nombre_proyecto || `Proyecto #${pid}`}
+                    </h1>
                     <p className="text-muted-foreground">
-                        Obra: {obraInfo?.nombre_obra || "Sin obra"} Carga y configuracin de dispositivos.
+                        Obra: {obraInfo?.nombre_obra || "Sin obra"} · Configuración de dispositivos.
                     </p>
                 </div>
             </div>
