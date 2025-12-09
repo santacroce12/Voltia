@@ -230,6 +230,7 @@ export function InstanciaForm({
                                 </Button>
                             </div>
                         </div>
+                    </div>
 
                     <div className="grid gap-2 rounded-lg border bg-muted/20 p-4">
                         <div className="flex items-center justify-between">
