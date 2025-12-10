@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, type FormEvent, type ChangeEvent } from "react";
+﻿import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Loader2, Save, Settings2, Edit2 } from "lucide-react";
@@ -18,6 +17,7 @@ import {
 } from "../services/api";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
 import { EditarFuncionesModal } from "./EditarFuncionesModal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Props = {
     instanciaId: number;
@@ -36,7 +36,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const [tag, setTag] = useState("");
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
     const [modalFuncionesOpen, setModalFuncionesOpen] = useState(false);
@@ -46,7 +45,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
         getInstanciaDetalle(instanciaId)
             .then(async (inst) => {
                 setInstancia(inst);
-                setTag(inst.tag_dispositivo || "");
                 setFuncionesUsadasIds(inst.funciones_usadas || []);
 
                 const mapaValores: Record<number, string> = {};
@@ -61,7 +59,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                     const cat = await getCatalogoDetalle(inst.catalogo);
                     setCatalogoItem(cat);
                 } catch (e) {
-                    console.error("Error cargando catálogo", e);
+                    console.error("Error cargando catalogo", e);
                 }
             })
             .catch(() => setError("Error cargando detalles."))
@@ -85,7 +83,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
             }));
 
             const payload: Partial<InstanciaPayload> = {
-                tag_dispositivo: tag,
                 atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
             };
@@ -111,11 +108,6 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
             console.error(e);
             setSaving(false);
         }
-    };
-
-    const handleFuncionesChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const opts = Array.from(e.target.selectedOptions, (o) => Number(o.value));
-        setFuncionesUsadasIds(opts);
     };
 
     const handleCatalogoUpdated = (catActualizado: CatalogoDispositivo) => {
@@ -146,7 +138,7 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
 
             {error && <p className="text-destructive text-sm bg-destructive/10 p-2 rounded">{error}</p>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
                 <Card className="border-l-4 border-l-primary h-fit">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2">
@@ -156,42 +148,47 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                     </CardHeader>
                     <CardContent>
                         <form id="edit-form" onSubmit={handleSave} className="space-y-4">
+                            {/* --- SECCIÓN DE FUNCIONES (CHECKBOXES) --- */}
                             <div className="grid gap-2">
-                                <Label>TAG / Identificador</Label>
-                                <Input value={tag} onChange={(e) => setTag(e.target.value)} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label>Funciones Habilitadas (Ctrl+Click)</Label>
-                                <div className="flex gap-2 items-start">
-                                    <select
-                                        multiple
-                                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        value={funcionesUsadasIds.map(String)}
-                                        onChange={handleFuncionesChange}
-                                    >
-                                        {funcionesDisponibles.length === 0 && <option disabled>No hay funciones soportadas.</option>}
-                                        {funcionesDisponibles.map((f) => (
-                                            <option key={f.id} value={f.id}>
-                                                {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                                {f.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="flex items-center justify-between">
+                                    <Label>Funciones Habilitadas</Label>
                                     <Button
                                         type="button"
-                                        variant="outline"
-                                        size="icon"
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setModalFuncionesOpen(true)}
-                                        title="Modificar funciones soportadas (Catálogo)"
-                                        className="shrink-0"
+                                        className="h-6 text-xs text-muted-foreground hover:text-primary"
                                     >
-                                        <Edit2 className="h-4 w-4" />
+                                        <Edit2 className="h-3 w-3 mr-1" /> Editar Funciones Soportadas
                                     </Button>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">
-                                    * Modificar las soportadas afecta a todos los dispositivos de este modelo.
-                                </p>
+
+                                <div className="rounded-md border p-3 h-40 overflow-y-auto bg-background space-y-2">
+                                    {funcionesDisponibles.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground text-center py-4">
+                                            No hay funciones soportadas en el catálogo.
+                                        </p>
+                                    ) : (
+                                        funcionesDisponibles.map((f) => (
+                                            <div key={f.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`func-edit-${f.id}`}
+                                                    checked={funcionesUsadasIds.includes(f.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        setFuncionesUsadasIds((prev) =>
+                                                            checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                                                        );
+                                                    }}
+                                                />
+                                                <Label htmlFor={`func-edit-${f.id}`} className="text-sm cursor-pointer font-normal">
+                                                    {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                    {f.nombre}
+                                                </Label>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">* Selecciona las funciones activas para esta instancia.</p>
                             </div>
 
                             <Separator />
@@ -214,30 +211,28 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
                     </CardFooter>
                 </Card>
 
-                <div className="space-y-6">
-                    <Card className="bg-muted/30">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Especificaciones de Fábrica</CardTitle>
-                            <CardDescription>Valores fijos del modelo {catalogoItem?.modelo}.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
-                                <div className="grid gap-2">
-                                    {catalogoItem.especificaciones_set.map((spec: any) => (
-                                        <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
-                                            <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
-                                            <span className="font-medium">
-                                                {spec.valor} {spec.unidad_atributo}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-xs text-muted-foreground italic">No hay especificaciones técnicas cargadas.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                <Card className="bg-muted/30">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Especificaciones de Fábrica</CardTitle>
+                        <CardDescription>Valores fijos del modelo {catalogoItem?.modelo}.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
+                            <div className="grid gap-2">
+                                {catalogoItem.especificaciones_set.map((spec: any) => (
+                                    <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                                        <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
+                                        <span className="font-medium">
+                                            {spec.valor} {spec.unidad_atributo}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground italic">No hay especificaciones técnicas cargadas.</p>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <EditarFuncionesModal

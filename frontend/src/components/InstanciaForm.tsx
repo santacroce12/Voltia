@@ -18,6 +18,7 @@ import { Plus, Edit2, Layers, Eye } from "lucide-react";
 import { DynamicAttributeForm } from "@/components/DynamicAttributeForm";
 import { Modal } from "./Modal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 type Props = {
     proyectoId: number;
@@ -50,8 +51,6 @@ export function InstanciaForm({
     const [busquedaCatalogo, setBusquedaCatalogo] = useState("");
     const [filtroMarca, setFiltroMarca] = useState<string>("all");
     const [filtroCategoria, setFiltroCategoria] = useState<string>("all");
-    const [busquedaFuncion, setBusquedaFuncion] = useState("");
-    const [busquedaAtributo, setBusquedaAtributo] = useState("");
     const [nuevoAttrNombre, setNuevoAttrNombre] = useState("");
     const [nuevoAttrUnidad, setNuevoAttrUnidad] = useState("");
     const [creandoAttr, setCreandoAttr] = useState(false);
@@ -136,30 +135,6 @@ export function InstanciaForm({
             return coincideTexto && coincideMarca && coincideCategoria;
         });
     }, [busquedaCatalogo, filtroMarca, filtroCategoria, catalogo]);
-
-    const funcionesFiltradas = funcionesDisponibles.filter((f) =>
-        `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
-    );
-
-    const atributosFiltrados = atributosMaestros.filter((a) =>
-        `${a.nombre} ${a.unidad || ""}`.toLowerCase().includes(busquedaAtributo.toLowerCase()),
-    );
-
-    const toggleFuncion = (id: number) => {
-        setFuncionesUsadasIds((prev) => (prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]));
-    };
-
-    const toggleAtributoVisible = (id: number) => {
-        setValoresEAV((prev) => {
-            const next = { ...prev };
-            if (id in next) {
-                delete next[id];
-            } else {
-                next[id] = "";
-            }
-            return next;
-        });
-    };
 
     const crearAtributoRapido = async () => {
         if (!nuevoAttrNombre.trim()) return;
@@ -306,54 +281,59 @@ export function InstanciaForm({
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Label>Funciones a habilitar</Label>
-                            <Input
-                                placeholder="Buscar funcion..."
-                                value={busquedaFuncion}
-                                onChange={(e) => setBusquedaFuncion(e.target.value)}
-                                className="max-w-xs"
-                                disabled={!catalogoId || funcionesDisponibles.length === 0}
-                            />
-                        </div>
-                        <div className="flex items-start gap-2">
-                            <div className="flex-1 space-y-2 rounded-md border bg-muted/40 p-3">
-                                <div className="max-h-48 overflow-y-auto space-y-1">
-                                    {!catalogoId && (
-                                        <p className="text-xs text-muted-foreground px-1">Selecciona un dispositivo.</p>
-                                    )}
-                                    {catalogoId && funcionesDisponibles.length === 0 && (
-                                        <p className="text-xs text-muted-foreground px-1">No hay funciones soportadas.</p>
-                                    )}
-                                    {catalogoId &&
-                                        funcionesFiltradas.map((f) => (
-                                            <label
-                                                key={f.id}
-                                                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
-                                            >
-                                                <Checkbox
-                                                    checked={funcionesUsadasIds.includes(f.id)}
-                                                    onCheckedChange={() => toggleFuncion(f.id)}
-                                                />
-                                                <span>
-                                                    {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                                    {f.nombre}
-                                                </span>
-                                            </label>
-                                        ))}
-                                </div>
-                            </div>
+                    {/* --- NUEVA LISTA DE CHECKBOXES (Reemplaza al Select) --- */}
+                    <div className="grid gap-2 md:col-span-2">
+                        <div className="flex items-center justify-between">
+                            <Label>Funciones a Habilitar</Label>
                             <Button
                                 type="button"
-                                variant="outline"
-                                size="icon"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => onAbrirModalEditarFunciones(Number(catalogoId))}
                                 disabled={!catalogoId}
-                                title="Editar Soportadas en Catalogo"
+                                className="h-6 text-xs text-muted-foreground hover:text-primary"
                             >
-                                <Edit2 className="h-4 w-4" />
+                                <Edit2 className="h-3 w-3 mr-1" /> Editar Funciones Soportadas
                             </Button>
+                        </div>
+
+                        <div
+                            className={cn(
+                                "rounded-md border p-4 h-48 overflow-y-auto bg-background space-y-3",
+                                !catalogoId && "opacity-50 pointer-events-none bg-muted",
+                            )}
+                        >
+                            {funcionesDisponibles.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-8">
+                                    {catalogoId ? "Este dispositivo no tiene funciones configuradas." : "Seleccione un dispositivo primero."}
+                                </p>
+                            ) : (
+                                funcionesDisponibles.map((f) => (
+                                    <div
+                                        key={f.id}
+                                        className="flex items-start space-x-3 p-2 hover:bg-muted/50 rounded-md transition-colors"
+                                    >
+                                        <Checkbox
+                                            id={`func-inst-${f.id}`}
+                                            checked={funcionesUsadasIds.includes(f.id)}
+                                            onCheckedChange={(checked) => {
+                                                setFuncionesUsadasIds((prev) =>
+                                                    checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                                                );
+                                            }}
+                                        />
+                                        <div className="grid gap-1.5 leading-none">
+                                            <Label
+                                                htmlFor={`func-inst-${f.id}`}
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                            >
+                                                {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                {f.nombre}
+                                            </Label>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </form>
