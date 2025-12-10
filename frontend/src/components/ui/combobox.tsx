@@ -4,6 +4,7 @@ import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Command,
   CommandGroup,
@@ -27,13 +28,35 @@ type Props = {
   onChange: (value: string) => void
   placeholder?: string
   emptyText?: string
+  className?: string
+  contentClassName?: string
+  sideOffset?: number
+  align?: "start" | "center" | "end"
 }
 
-export function Combobox({ options, value, onChange, placeholder = "Seleccionar...", emptyText = "No encontrado." }: Props) {
+export function Combobox({
+  options,
+  value,
+  onChange,
+  placeholder = "Seleccionar...",
+  emptyText = "No encontrado.",
+  className,
+  contentClassName,
+  sideOffset = 4,
+  align = "start",
+}: Props) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
   const selectedLabel = options.find((option) => option.value === value)?.label
   const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const [triggerWidth, setTriggerWidth] = React.useState<number>()
+
+  React.useEffect(() => {
+    if (triggerRef.current) {
+      setTriggerWidth(triggerRef.current.getBoundingClientRect().width)
+    }
+  }, [open])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -43,23 +66,32 @@ export function Combobox({ options, value, onChange, placeholder = "Seleccionar.
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between font-normal"
+          className={cn("w-full justify-between font-normal", className)}
+          ref={triggerRef}
         >
           {value ? selectedLabel : <span className="text-muted-foreground">{placeholder}</span>}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "p-0 min-w-[320px] max-w-[640px] w-full shadow-lg border border-border",
+          contentClassName,
+        )}
+        style={triggerWidth ? { width: triggerWidth } : undefined}
+      >
         <Command>
           <div className="px-2 py-2">
-            <input
-              className="w-full rounded-md border px-2 py-1 text-sm outline-none"
+            <Input
               placeholder={placeholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="h-8"
             />
           </div>
-          <CommandList>
+          <CommandList className="max-h-56 overflow-auto">
             <CommandGroup>
               {filtered.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-muted-foreground">{emptyText}</div>

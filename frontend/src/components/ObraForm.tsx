@@ -141,8 +141,8 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                 <CardTitle>Crear Nueva Obra para: {cliente.nombre}</CardTitle>
             </CardHeader>
             <CardContent>
-                <form id="obra-form" className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
-                    <div className="grid gap-2 md:col-span-2">
+                <form id="obra-form" className="grid grid-cols-1 gap-4" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
                         <Label htmlFor="obra-nombre">Nombre de la Obra</Label>
                         <Input id="obra-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
                     </div>
@@ -150,7 +150,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                     <div className="grid gap-2">
                         <Label>País</Label>
                         <Select value={pais} onValueChange={handlePaisChange}>
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Seleccionar País" />
                             </SelectTrigger>
                             <SelectContent>
@@ -172,6 +172,9 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                                 onChange={setProvincia}
                                 placeholder="Buscar provincia..."
                                 emptyText="No se encontró la provincia."
+                                className="w-full"
+                                contentClassName="w-full max-w-full"
+                                sideOffset={4}
                             />
                         ) : (
                             <Input
@@ -182,7 +185,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                         )}
                     </div>
 
-                    <div className="grid gap-2 md:col-span-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="obra-dir">Dirección / Calle</Label>
                         <Input
                             id="obra-dir"
@@ -192,7 +195,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                         />
                     </div>
 
-                    <div className="grid gap-2 md:col-span-2">
+                    <div className="grid gap-2">
                         <Label htmlFor="obra-estado">Estado Inicial</Label>
                         <Select value={estado} onValueChange={setEstado}>
                             <SelectTrigger>
