@@ -61,7 +61,7 @@ export function InstanciaForm({
         if (catalogoId) {
             const disp = catalogo.find((d) => d.id === Number(catalogoId));
 
-            // Herencia desde especificaciones_set (EAV)
+            // --- SNAPSHOT de especificaciones ---
             const defaults: Record<number, string> = {};
             if (disp?.especificaciones_set) {
                 disp.especificaciones_set.forEach((spec: any) => {
@@ -69,6 +69,7 @@ export function InstanciaForm({
                 });
             }
             setValoresEAV(defaults);
+            // ------------------------------------
 
             const idsSoportados = disp?.funciones_soportadas || [];
             setFuncionesDisponibles(masterFunciones.filter((f) => idsSoportados.includes(f.id)));

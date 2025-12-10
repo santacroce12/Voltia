@@ -122,6 +122,7 @@ class InstanciaDispositivoSerializer(serializers.ModelSerializer):
         if funciones_usadas is not None:
             instance.funciones_usadas.set(funciones_usadas)
 
+        # Reemplazamos atributos para asegurar snapshot independiente del catálogo
         if atributos_data is not None:
             instance.atributos_set.all().delete()
             for attr_data in atributos_data:
