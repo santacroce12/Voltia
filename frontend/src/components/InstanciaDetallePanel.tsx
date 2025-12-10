@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent, type ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Loader2, Box, Settings2 } from "lucide-react";
+import { Trash2, Loader2, Save, Settings2, Edit2 } from "lucide-react";
 import {
     getInstanciaDetalle,
     updateInstancia,
@@ -18,6 +17,7 @@ import {
     type CatalogoDispositivo,
 } from "../services/api";
 import { DynamicAttributeForm } from "./DynamicAttributeForm";
+import { EditarFuncionesModal } from "./EditarFuncionesModal";
 
 type Props = {
     instanciaId: number;
@@ -31,51 +31,53 @@ type Props = {
 export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtributos, onCerrar, onUpdate, onDelete }: Props) {
     const [instancia, setInstancia] = useState<InstanciaDispositivo | null>(null);
     const [catalogoItem, setCatalogoItem] = useState<CatalogoDispositivo | null>(null);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [tag, setTag] = useState("");
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
-    const [funcionesSeleccionadas, setFuncionesSeleccionadas] = useState<number[]>([]);
-    const [busquedaFuncion, setBusquedaFuncion] = useState("");
-
-    const funcionesActivas = useMemo(
-        () => masterFunciones.filter((f) => funcionesSeleccionadas.includes(f.id)),
-        [funcionesSeleccionadas, masterFunciones],
-    );
-
-    const funcionesFiltradas = useMemo(
-        () =>
-            masterFunciones.filter((f) =>
-                `${f.codigo_funcion || ""} ${f.nombre}`.toLowerCase().includes(busquedaFuncion.toLowerCase()),
-            ),
-        [masterFunciones, busquedaFuncion],
-    );
+    const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
+    const [modalFuncionesOpen, setModalFuncionesOpen] = useState(false);
 
     useEffect(() => {
         setLoading(true);
         getInstanciaDetalle(instanciaId)
             .then(async (inst) => {
                 setInstancia(inst);
+                setTag(inst.tag_dispositivo || "");
+                setFuncionesUsadasIds(inst.funciones_usadas || []);
 
                 const mapaValores: Record<number, string> = {};
-                (inst.atributos_set || []).forEach((attr: any) => {
-                    if (attr.atributo) mapaValores[attr.atributo] = attr.valor;
-                });
+                if (inst.atributos_set) {
+                    inst.atributos_set.forEach((attr: any) => {
+                        mapaValores[attr.atributo] = attr.valor;
+                    });
+                }
                 setValoresVariables(mapaValores);
-                setFuncionesSeleccionadas(inst.funciones_usadas || []);
 
                 try {
                     const cat = await getCatalogoDetalle(inst.catalogo);
                     setCatalogoItem(cat);
                 } catch (e) {
-                    console.error("Error cargando catalogo", e);
+                    console.error("Error cargando catálogo", e);
                 }
             })
+            .catch(() => setError("Error cargando detalles."))
             .finally(() => setLoading(false));
     }, [instanciaId]);
+
+    const funcionesDisponibles = useMemo(() => {
+        if (!catalogoItem) return [];
+        const soportadas = catalogoItem.funciones_soportadas || [];
+        return masterFunciones.filter((f) => soportadas.includes(f.id));
+    }, [catalogoItem, masterFunciones]);
 
     const handleSave = async (e: FormEvent) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
         try {
             const atributosArray = Object.entries(valoresVariables).map(([idAttr, val]) => ({
                 atributo: Number(idAttr),
@@ -83,21 +85,23 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
             }));
 
             const payload: Partial<InstanciaPayload> = {
+                tag_dispositivo: tag,
                 atributos_set: atributosArray,
-                funciones_usadas: funcionesSeleccionadas,
+                funciones_usadas: funcionesUsadasIds,
             };
 
             const updated = await updateInstancia(instanciaId, payload);
             onUpdate(updated);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            setError(e.message || "Error al guardar.");
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm("Eliminar esta instancia?")) return;
+        if (!confirm("¿Eliminar esta instancia?")) return;
         setSaving(true);
         try {
             await borrarInstancia(instanciaId);
@@ -109,6 +113,15 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
         }
     };
 
+    const handleFuncionesChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        const opts = Array.from(e.target.selectedOptions, (o) => Number(o.value));
+        setFuncionesUsadasIds(opts);
+    };
+
+    const handleCatalogoUpdated = (catActualizado: CatalogoDispositivo) => {
+        setCatalogoItem(catActualizado);
+    };
+
     if (loading || !instancia) {
         return (
             <div className="p-8 text-center">
@@ -118,119 +131,122 @@ export function InstanciaDetallePanel({ instanciaId, masterFunciones, masterAtri
     }
 
     return (
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                <div className="space-y-1">
-                    <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-                        {instancia.nombre_dispositivo || "Detalle de dispositivo"}
-                    </h2>
-                    <div className="text-sm text-muted-foreground space-y-0.5">
-                        <p>ID #{instancia.id} · {instancia.marca_dispositivo} · Modelo {catalogoItem?.modelo}</p>
-                        <p className="text-xs">
-                            Proyecto: {instancia.nombre_proyecto ?? "N/D"}
-                        </p>
-                    </div>
+        <div className="space-y-6">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h2 className="text-xl font-bold text-primary flex items-center gap-2">{instancia.nombre_dispositivo}</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {instancia.marca_dispositivo} • {catalogoItem?.modelo}
+                    </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Borrar este dispositivo
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={onCerrar}>
-                        Cerrar
-                    </Button>
+                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Borrar
+                </Button>
+            </div>
+
+            {error && <p className="text-destructive text-sm bg-destructive/10 p-2 rounded">{error}</p>}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-l-4 border-l-primary h-fit">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Settings2 className="h-4 w-4" /> Configuración
+                        </CardTitle>
+                        <CardDescription>Datos técnicos y funciones de esta instancia.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form id="edit-form" onSubmit={handleSave} className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label>TAG / Identificador</Label>
+                                <Input value={tag} onChange={(e) => setTag(e.target.value)} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label>Funciones Habilitadas (Ctrl+Click)</Label>
+                                <div className="flex gap-2 items-start">
+                                    <select
+                                        multiple
+                                        className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        value={funcionesUsadasIds.map(String)}
+                                        onChange={handleFuncionesChange}
+                                    >
+                                        {funcionesDisponibles.length === 0 && <option disabled>No hay funciones soportadas.</option>}
+                                        {funcionesDisponibles.map((f) => (
+                                            <option key={f.id} value={f.id}>
+                                                {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
+                                                {f.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setModalFuncionesOpen(true)}
+                                        title="Modificar funciones soportadas (Catálogo)"
+                                        className="shrink-0"
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">
+                                    * Modificar las soportadas afecta a todos los dispositivos de este modelo.
+                                </p>
+                            </div>
+
+                            <Separator />
+
+                            <div className="grid gap-2">
+                                <Label>Atributos Variables</Label>
+                                <DynamicAttributeForm
+                                    todosLosAtributos={masterAtributos}
+                                    valores={valoresVariables}
+                                    onChange={setValoresVariables}
+                                />
+                            </div>
+                        </form>
+                    </CardContent>
+                    <CardFooter>
+                        <Button form="edit-form" type="submit" disabled={saving} className="w-full">
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                            {saving ? "Guardando..." : "Guardar Cambios"}
+                        </Button>
+                    </CardFooter>
+                </Card>
+
+                <div className="space-y-6">
+                    <Card className="bg-muted/30">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Especificaciones de Fábrica</CardTitle>
+                            <CardDescription>Valores fijos del modelo {catalogoItem?.modelo}.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
+                                <div className="grid gap-2">
+                                    {catalogoItem.especificaciones_set.map((spec: any) => (
+                                        <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                                            <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
+                                            <span className="font-medium">
+                                                {spec.valor} {spec.unidad_atributo}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No hay especificaciones técnicas cargadas.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
-            <Separator />
-
-            <Card className="border-l-4 border-l-primary bg-card/60">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <Settings2 className="h-4 w-4" /> Configuración de Instalación
-                    </CardTitle>
-                    <CardDescription>Datos editables de este equipo físico.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form id="edit-form" onSubmit={handleSave} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label className="text-sm font-semibold">Atributos Variables</Label>
-                            <DynamicAttributeForm
-                                todosLosAtributos={masterAtributos}
-                                valores={valoresVariables}
-                                onChange={setValoresVariables}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label className="text-sm font-semibold">Funciones habilitadas</Label>
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    placeholder="Buscar funcion..."
-                                    value={busquedaFuncion}
-                                    onChange={(e) => setBusquedaFuncion(e.target.value)}
-                                    className="max-w-xs"
-                                    disabled={masterFunciones.length === 0}
-                                />
-                            </div>
-                            <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 space-y-1">
-                                {masterFunciones.length === 0 && (
-                                    <p className="text-xs text-muted-foreground px-1">No hay funciones disponibles.</p>
-                                )}
-                                {masterFunciones.length > 0 && funcionesFiltradas.length === 0 && (
-                                    <p className="text-xs text-muted-foreground px-1">Sin coincidencias.</p>
-                                )}
-                                {funcionesFiltradas.map((f) => (
-                                    <label
-                                        key={f.id}
-                                        className="flex items-center gap-2 rounded px-2 py-1 hover:bg-background text-sm"
-                                    >
-                                        <Checkbox
-                                            checked={funcionesSeleccionadas.includes(f.id)}
-                                            onCheckedChange={() =>
-                                                setFuncionesSeleccionadas((prev) =>
-                                                    prev.includes(f.id)
-                                                        ? prev.filter((id) => id !== f.id)
-                                                        : [...prev, f.id],
-                                                )
-                                            }
-                                        />
-                                        <span>
-                                            {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                            {f.nombre}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </form>
-                </CardContent>
-                <CardContent className="pt-0">
-                    <Button form="edit-form" type="submit" disabled={saving} className="w-full">
-                        {saving ? "Guardando..." : "Guardar Cambios"}
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Funciones Habilitadas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                        {funcionesActivas.map((f) => (
-                            <span
-                                key={f.id}
-                                className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                            >
-                                {f.codigo_funcion ? `[${f.codigo_funcion}] ` : ""}
-                                {f.nombre}
-                            </span>
-                        ))}
-                        {funcionesActivas.length === 0 && (
-                            <span className="text-xs text-muted-foreground">Ninguna</span>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+            <EditarFuncionesModal
+                isOpen={modalFuncionesOpen}
+                onClose={() => setModalFuncionesOpen(false)}
+                dispositivo={catalogoItem}
+                masterFunciones={masterFunciones}
+                onUpdateExitoso={handleCatalogoUpdated}
+            />
         </div>
     );
 }
