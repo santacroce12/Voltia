@@ -4,7 +4,7 @@
  */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import App from "./App";
 import "./style.css";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -86,6 +86,10 @@ const router = createBrowserRouter([
                         element: <CatalogoLayout />,
                         handle: { crumb: () => "Catalogo" },
                         children: [
+                            {
+                                index: true,
+                                element: <Navigate to="/catalogo/dispositivos/listar" replace />,
+                            },
                             {
                                 path: "marcas",
                                 element: <MarcasPage />,

@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Layout.tsx
  * Dashboard profesional con barra lateral expandida.
- * CORRECCIÓN: Íconos importados correctamente para evitar el "?"
+ * CORRECCIÓN: íconos importados correctamente para evitar el "?"
  */
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
@@ -26,8 +26,8 @@ const navLinks = [
     { to: "/clientes", label: "Clientes", icon: Building },
     { to: "/obras", label: "Obras", icon: HardHat },
     { to: "/proyectos", label: "Proyectos", icon: ClipboardList },
-    { to: "/ingenieria", label: "Ingeniería", icon: Factory },
     { to: "/catalogo", label: "Dispositivos", icon: Package }, // Catálogo
+    { to: "/ingenieria", label: "Ingeniería", icon: Factory },
 ];
 
 export function Layout() {
@@ -46,7 +46,7 @@ export function Layout() {
                     {/* Logo */}
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <span className="flex items-center gap-3 font-bold text-xl">
-                            <span className="rounded-full bg-yellow-400/20 p-2 text-yellow-500 flex items-center justify-center">
+                            <span className="rounded-full p-2 flex items-center justify-center bg-amber-500 text-white shadow-sm dark:bg-amber-400 dark:text-amber-900">
                                 <Bolt className="h-6 w-6" />
                             </span>
                             <span className="tracking-tight">VOLTIA</span>
@@ -63,7 +63,8 @@ export function Layout() {
                                     className={({ isActive }) =>
                                         cn(
                                             "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted",
-                                            isActive && "bg-muted text-primary font-semibold"
+                                            isActive &&
+                                                "bg-amber-50 text-amber-900 font-semibold border border-amber-200 shadow-[0_2px_6px_rgba(245,158,11,0.25)] hover:bg-amber-100/70 dark:bg-muted dark:text-primary dark:border-transparent"
                                         )
                                     }
                                 >
@@ -107,4 +108,3 @@ export function Layout() {
         </div>
     );
 }
-
