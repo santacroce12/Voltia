@@ -39,9 +39,8 @@ export function IngenieriaDetallePage() {
 
     const [modalCatOpen, setModalCatOpen] = useState(false);
     const [modalFuncOpen, setModalFuncOpen] = useState(false);
-    const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
     const [modalLoteOpen, setModalLoteOpen] = useState(false);
-    const [instanciaIdDetalle, setInstanciaIdDetalle] = useState<number | null>(null);
+    const [instanciasSeleccionadas, setInstanciasSeleccionadas] = useState<InstanciaDispositivo[]>([]);
     const [catalogoIdSel, setCatalogoIdSel] = useState<number | null>(null);
     const [cargandoInicial, setCargandoInicial] = useState(true);
 
@@ -152,10 +151,7 @@ export function IngenieriaDetallePage() {
                     <InstanciaGroupedTable
                         instancias={instancias}
                         onRefresh={handleRefresh}
-                        onVerDetalle={(id) => {
-                            setInstanciaIdDetalle(id);
-                            setModalDetalleOpen(true);
-                        }}
+                        onEdit={(grupo) => setInstanciasSeleccionadas(grupo)}
                     />
                 </div>
 
@@ -198,13 +194,17 @@ export function IngenieriaDetallePage() {
                 </div>
             </Modal>
 
-            <Modal isOpen={modalDetalleOpen} onClose={() => setModalDetalleOpen(false)} title="Detalle de Dispositivo">
-                {instanciaIdDetalle && (
+            <Modal
+                isOpen={instanciasSeleccionadas.length > 0}
+                onClose={() => setInstanciasSeleccionadas([])}
+                title="Detalle de Dispositivo"
+            >
+                {instanciasSeleccionadas.length > 0 && (
                     <InstanciaDetallePanel
-                        instanciaId={instanciaIdDetalle}
+                        instancias={instanciasSeleccionadas}
                         masterFunciones={masterFunciones}
                         masterAtributos={masterAtributos}
-                        onCerrar={() => setModalDetalleOpen(false)}
+                        onCerrar={() => setInstanciasSeleccionadas([])}
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
                     />

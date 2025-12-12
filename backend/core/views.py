@@ -70,9 +70,23 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_
 
         for source_instance in InstanciaDispositivo.objects.filter(proyecto_id=source_project_id):
             original_funciones_usadas = list(source_instance.funciones_usadas.values_list("id", flat=True))
+
+            # 1) Snapshot: atributos propios de la instancia (nuevo sistema)
             original_atributos = list(
                 AtributoInstancia.objects.filter(instancia=source_instance).values("atributo_id", "valor")
             )
+
+            # 2) Fallback legacy: si no hay atributos locales, copiar especificaciones del catálogo
+            if not original_atributos:
+                specs = source_instance.catalogo.especificaciones_set.all()
+                for spec in specs:
+                    if spec.valor is not None:
+                        original_atributos.append(
+                            {
+                                "atributo_id": spec.atributo.id,
+                                "valor": spec.valor,
+                            }
+                        )
 
             source_instance.pk = None
             source_instance.id = None

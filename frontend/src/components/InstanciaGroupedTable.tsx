@@ -13,6 +13,7 @@ type GroupedInstance = {
     marca: string;
     nombre: string;
     instanciaIds: number[];
+    instancias: InstanciaDispositivo[];
     funcionesKey: string;
     funcionesCount: number;
 };
@@ -20,10 +21,10 @@ type GroupedInstance = {
 type Props = {
     instancias: InstanciaDispositivo[];
     onRefresh: () => void;
-    onVerDetalle: (instanciaId: number) => void;
+    onEdit: (instancias: InstanciaDispositivo[]) => void;
 };
 
-export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: Props) {
+export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) {
     const [seleccionados, setSeleccionados] = useState<number[]>([]);
 
     const grupos = useMemo(() => {
@@ -38,6 +39,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                     marca: inst.marca_dispositivo || "Sin Marca",
                     nombre: inst.nombre_dispositivo || "Desconocido",
                     instanciaIds: [],
+                    instancias: [],
                     funcionesKey: sortedFuncs,
                     funcionesCount: inst.funciones_usadas.length,
                 });
@@ -45,6 +47,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
             const grupo = groups.get(key)!;
             grupo.count += 1;
             grupo.instanciaIds.push(inst.id);
+            grupo.instancias.push(inst);
         });
         return Array.from(groups.values());
     }, [instancias]);
@@ -131,7 +134,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onVerDetalle }: P
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => onVerDetalle(grupo.instanciaIds[0])}
+                                            onClick={() => onEdit(grupo.instancias)}
                                             title="Editar / Ver detalle"
                                         >
                                             <Pencil className="h-4 w-4" />
