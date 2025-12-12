@@ -932,3 +932,6 @@ export async function actualizarAtributoMaestro(
     }
     return res.json();
 }
+
+// Utilidades
+export { fetchProtegido };

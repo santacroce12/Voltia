@@ -4,6 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, Pencil } from "lucide-react";
+import { fetchProtegido } from "../services/api";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 
 type ObraListProps = {
   obras: Obra[];
@@ -20,7 +23,6 @@ export function ObraList({
   onEditarObra,
   onExportarObra,
 }: ObraListProps) {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
   if (obras.length === 0) {
     return <div className="py-8 text-center text-muted-foreground">No hay obras cargadas.</div>;
   }
@@ -28,6 +30,27 @@ export function ObraList({
   const filtradas = obras.filter((obra) =>
     obra.nombre_obra.toLowerCase().includes(filtro.toLowerCase()),
   );
+
+  const handleExportar = async (obraId: number, nombreObra: string) => {
+    try {
+      const response = await fetchProtegido(`${API_BASE_URL}/obras/${obraId}/exportar-materiales/`);
+      if (!response.ok) throw new Error("Error al generar el reporte");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Materiales_${nombreObra.replace(/\s+/g, "_")}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo descargar el archivo. Verifique su sesión.");
+    }
+  };
 
   return (
     <div className="space-y-3 rounded-2xl border bg-card/60 shadow-sm p-3 sm:p-4">
@@ -120,16 +143,12 @@ export function ObraList({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (onExportarObra) {
-                              onExportarObra(obra);
-                            } else {
-                              window.location.href = `${API_BASE_URL}/obras/${obra.id}/exportar-materiales/`;
-                            }
+                            handleExportar(obra.id, obra.nombre_obra);
                           }}
                           className="inline-flex items-center gap-1"
                         >
                           <Download className="h-4 w-4" />
-                          CSV
+                          Exportar Materiales
                         </Button>
                       </TableCell>
                     )}

@@ -174,7 +174,7 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
                                 emptyText="No se encontró la provincia."
                                 className="w-full"
                                 contentClassName="w-full max-w-full"
-                                sideOffset={4}
+                                
                             />
                         ) : (
                             <Input
@@ -219,3 +219,4 @@ export function ObraForm({ cliente, onObraCreada }: ObraFormProps) {
         </Card>
     );
 }
+

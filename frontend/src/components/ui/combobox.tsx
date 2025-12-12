@@ -30,8 +30,6 @@ type Props = {
   emptyText?: string
   className?: string
   contentClassName?: string
-  sideOffset?: number
-  align?: "start" | "center" | "end"
 }
 
 export function Combobox({
@@ -42,8 +40,6 @@ export function Combobox({
   emptyText = "No encontrado.",
   className,
   contentClassName,
-  sideOffset = 4,
-  align = "start",
 }: Props) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
@@ -74,8 +70,6 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        align={align}
-        sideOffset={sideOffset}
         className={cn(
           "p-0 w-full max-h-[320px] overflow-hidden shadow-lg border border-border z-50 bg-popover",
           contentClassName,
