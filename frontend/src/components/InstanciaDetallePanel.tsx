@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -28,46 +28,32 @@ type Props = {
     onDelete: (deletedId: number) => void;
 };
 
-export function InstanciaDetallePanel({
-    instancias,
-    masterFunciones,
-    masterAtributos,
-    onCerrar,
-    onUpdate,
-    onDelete,
-}: Props) {
+export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtributos, onCerrar, onUpdate, onDelete }: Props) {
     const instanciaRef = instancias[0];
     const esGrupo = instancias.length > 1;
 
     const [instancia, setInstancia] = useState<InstanciaDispositivo | null>(null);
     const [catalogoItem, setCatalogoItem] = useState<CatalogoDispositivo | null>(null);
-
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
-
     const [modoEdicion, setModoEdicion] = useState<"todos" | "unico">("todos");
-
     const [modalFuncionesOpen, setModalFuncionesOpen] = useState(false);
 
     useEffect(() => {
         if (!instanciaRef) return;
         setLoading(true);
-
         getInstanciaDetalle(instanciaRef.id)
             .then(async (inst) => {
                 setInstancia(inst);
                 setFuncionesUsadasIds(inst.funciones_usadas || []);
 
                 const mapaValores: Record<number, string> = {};
-                if (inst.atributos_set) {
-                    inst.atributos_set.forEach((attr: any) => {
-                        mapaValores[attr.atributo] = attr.valor;
-                    });
-                }
+                inst.atributos_set?.forEach((attr: any) => {
+                    mapaValores[attr.atributo] = attr.valor;
+                });
                 setValoresVariables(mapaValores);
 
                 try {
@@ -142,7 +128,13 @@ export function InstanciaDetallePanel({
         setFuncionesUsadasIds((prev) => (checked ? [...prev, id] : prev.filter((f) => f !== id)));
     };
 
-    if (loading || !instancia) return <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>;
+    if (loading || !instancia) {
+        return (
+            <div className="p-8 text-center">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -152,7 +144,6 @@ export function InstanciaDetallePanel({
                     <p className="text-sm text-muted-foreground">
                         {instancia.marca_dispositivo} • {catalogoItem?.modelo}
                     </p>
-
                     {esGrupo && (
                         <div className="mt-2 flex items-center gap-2 text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full w-fit">
                             <Users className="h-4 w-4" />
@@ -167,8 +158,8 @@ export function InstanciaDetallePanel({
 
             {error && <p className="text-destructive text-sm bg-destructive/10 p-2 rounded">{error}</p>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-l-4 border-l-primary h-fit">
+            <div className="space-y-6">
+                <Card className="border-l-4 border-l-primary">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2">
                             <Settings2 className="h-4 w-4" /> Configuración
@@ -205,8 +196,9 @@ export function InstanciaDetallePanel({
                             )}
 
                             <div className="grid gap-2">
+                                <Label>Funciones Habilitadas</Label>
                                 <div className="flex items-center justify-between">
-                                    <Label>Funciones Habilitadas</Label>
+                                    <span className="text-xs text-muted-foreground">Activa o desactiva las funciones de esta instancia.</span>
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -218,7 +210,7 @@ export function InstanciaDetallePanel({
                                     </Button>
                                 </div>
 
-                                <div className="rounded-md border p-3 h-40 overflow-y-auto bg-background space-y-2">
+                                <div className="rounded-md border p-3 min-h-[120px] overflow-y-auto bg-background space-y-2">
                                     {funcionesDisponibles.length === 0 ? (
                                         <p className="text-xs text-muted-foreground text-center py-4">No hay funciones soportadas en el catálogo.</p>
                                     ) : (
@@ -260,30 +252,28 @@ export function InstanciaDetallePanel({
                     </CardFooter>
                 </Card>
 
-                <div className="space-y-6">
-                    <Card className="bg-muted/30">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Especificaciones de Fábrica</CardTitle>
-                            <CardDescription>Valores base del catálogo.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
-                                <div className="grid gap-2">
-                                    {catalogoItem.especificaciones_set.map((spec: any) => (
-                                        <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
-                                            <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
-                                            <span className="font-medium">
-                                                {spec.valor} {spec.unidad_atributo}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-xs text-muted-foreground italic">No hay especificaciones.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                <Card className="bg-muted/30">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Especificaciones de Fábrica</CardTitle>
+                        <CardDescription>Valores base del catálogo.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {catalogoItem?.especificaciones_set && catalogoItem.especificaciones_set.length > 0 ? (
+                            <div className="grid gap-2">
+                                {catalogoItem.especificaciones_set.map((spec: any) => (
+                                    <div key={spec.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                                        <span className="text-muted-foreground">{spec.nombre_atributo}:</span>
+                                        <span className="font-medium">
+                                            {spec.valor} {spec.unidad_atributo}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground italic">No hay especificaciones.</p>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <EditarFuncionesModal
