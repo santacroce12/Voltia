@@ -1,16 +1,19 @@
-"""
+﻿"""
 Vistas REST responsables de entregar datos al frontend de React.
 """
 import csv
+import io
 from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.http import HttpResponse
 from rest_framework import generics, permissions, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from core.models import (
     CatalogoDispositivo,
@@ -152,7 +155,7 @@ class RegistroUsuarioAPIView(generics.CreateAPIView):
 
     queryset = User.objects.all()
     serializer_class = RegistroUsuarioSerializer
-    permission_classes = [AllowAny]  # ¡Importante! Permite el acceso sin token
+    permission_classes = [AllowAny]  # ┬íImportante! Permite el acceso sin token
 
 
 class ObraListCreateAPIView(generics.ListCreateAPIView):
@@ -229,7 +232,7 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """
-        Permite filtrar el catálogo por marca, categoría o texto en nombre/modelo.
+        Permite filtrar el cat├ílogo por marca, categor├¡a o texto en nombre/modelo.
         """
         queryset = CatalogoDispositivo.objects.all().order_by("-id")
         marca_id = self.request.query_params.get("marca")
@@ -250,7 +253,7 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
 
 class CatalogoDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Vista para LEER, ACTUALIZAR y BORRAR un dispositivo específico del catálogo.
+    Vista para LEER, ACTUALIZAR y BORRAR un dispositivo espec├¡fico del cat├ílogo.
     """
 
     queryset = CatalogoDispositivo.objects.all()
@@ -409,16 +412,18 @@ class ProyectoCloneAPIView(APIView):
             serializer = ProyectoSerializer(new_project)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response({"error": "No se encontró el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No se encontr├│ el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 class ExportarMaterialesAPIView(APIView):
     """
-    Genera una Lista de Materiales (BOM) en formato CSV para una Obra.
-    Agrupa las instancias de dispositivo por modelo y marca.
+    Genera un Excel (XLSX) multipestaña:
+    - Hoja 1: Consolidado de toda la Obra.
+    - Hojas N: Detalle por cada Proyecto individual.
+    Incluye columna con links a planos.
     """
-
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, obra_id):
         try:
@@ -426,125 +431,107 @@ class ExportarMaterialesAPIView(APIView):
         except Obra.DoesNotExist:
             return Response({"error": "Obra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        instancias = InstanciaDispositivo.objects.filter(proyecto__obra=obra).select_related(
-            "catalogo", "catalogo__marca"
-        )
+        wb = Workbook()
 
-        agregado: dict[int, dict[str, object]] = {}
-        for inst in instancias:
-            modelo_id = inst.catalogo.id
-            if modelo_id not in agregado:
-                agregado[modelo_id] = {
-                    "cantidad": 0,
-                    "modelo": inst.catalogo.modelo,
-                    "nombre_completo": inst.catalogo.nombre_completo_producto,
-                    "marca": inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
-                    "tag_ref": inst.catalogo.modelo or "ITEM",
-                }
-            agregado[modelo_id]["cantidad"] += 1
+        font_bold = Font(bold=True)
+        font_title = Font(size=14, bold=True)
+        fill_header = PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid")
+        alignment_center = Alignment(horizontal="center", vertical="center")
+        border_thin = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="Lista_Materiales_{obra.nombre_obra.replace(" ", "_")}.csv"'
+        def generar_hoja(ws, titulo, instancias_qs, es_consolidado=False):
+            ws.title = titulo[:30]
 
-        # BOM para que Excel detecte UTF-8
-        response.write("\ufeff".encode("utf-8"))
+            agregado = {}
+            for inst in instancias_qs:
+                cat = inst.catalogo
+                specs_list = [f"{s.atributo.nombre}: {s.valor} {s.atributo.unidad or ''}".strip() for s in cat.especificaciones_set.all() if s.valor]
+                specs_str = " - ".join(specs_list)
+                descripcion_full = f"{cat.nombre_completo_producto} ({specs_str})" if specs_str else cat.nombre_completo_producto
 
-        writer = csv.writer(response, delimiter=";")
-        writer.writerow(["VOLTIA LISTA DE MATERIALES", "", "", "", "", f"OBRA: {obra.nombre_obra}"])
-        writer.writerow(
-            [
-                "REFERENCIA (ITEM)",
-                "CANTIDAD",
-                "DESCRIPCIÓN",
-                "FABRICANTE/MARCA",
-                "MODELO/TIPO",
-                "CÓD. FAB.",
-                "OBSERVACIONES",
-            ]
-        )
+                links_planos = ""
+                if not es_consolidado:
+                    planos = inst.proyecto.urls_externas.all()
+                    links = [u.url for u in planos if "plano" in u.tipo_enlace.lower() or "plano" in (u.descripcion or "").lower()]
+                    if not links and planos.exists():
+                        links = [planos.first().url]
+                    links_planos = "\n".join(links)
 
-        for item in agregado.values():
-            writer.writerow(
-                [
-                    item["tag_ref"],
-                    item["cantidad"],
-                    item["nombre_completo"],
-                    item["marca"],
-                    item["modelo"],
-                    "N/A",
-                    "",
+                key = (cat.id, cat.nombre_completo_producto, cat.marca.nombre if cat.marca else 'N/A')
+
+                if key not in agregado:
+                    agregado[key] = {
+                        'cantidad': 0,
+                        'modelo': cat.modelo,
+                        'descripcion': descripcion_full,
+                        'marca': cat.marca.nombre if cat.marca else 'N/A',
+                        'codigo_fab': getattr(cat, 'codigo_fabricante', None) or 'N/A',
+                        'planos': links_planos,
+                    }
+                agregado[key]['cantidad'] += 1
+
+            ws['A1'] = "VOLTIA LISTA DE MATERIALES"
+            ws['A1'].font = font_title
+            ws['F1'] = f"OBRA: {obra.nombre_obra}"
+            ws['F1'].font = font_bold
+
+            ws['E3'] = f"VISTA: {titulo}"
+            ws['G3'] = "REV.: 1"
+            ws['G4'] = f"FECHA: {datetime.now().strftime('%d-%m-%Y')}"
+
+            headers = ["CANTIDAD", "FABRICANTE", "CÓDIGO (SKU)", "MODELO", "DESCRIPCIÓN / ESPECIFICACIONES", "LINK PLANO"]
+            ws.append([])
+            ws.append(headers)
+
+            for cell in ws[ws.max_row]:
+                cell.font = font_bold
+                cell.fill = fill_header
+                cell.alignment = alignment_center
+                cell.border = border_thin
+
+            ws.column_dimensions['A'].width = 12
+            ws.column_dimensions['B'].width = 20
+            ws.column_dimensions['C'].width = 20
+            ws.column_dimensions['D'].width = 20
+            ws.column_dimensions['E'].width = 60
+            ws.column_dimensions['F'].width = 40
+
+            for item in agregado.values():
+                row = [
+                    item['cantidad'],
+                    item['marca'],
+                    item['codigo_fab'],
+                    item['modelo'],
+                    item['descripcion'],
+                    item['planos'],
                 ]
-            )
+                ws.append(row)
+                for cell in ws[ws.max_row]:
+                    cell.border = border_thin
+                    cell.alignment = Alignment(vertical='center', wrap_text=True)
 
-        return response
-
-
-class ExportarMaterialesAPIView(APIView):
-    """
-    Genera una Lista de Materiales (BOM) en formato CSV para una Obra.
-    Compatible con Excel (usa ; como separador y BOM).
-    """
-
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, obra_id):
-        try:
-            obra = Obra.objects.get(pk=obra_id)
-        except Obra.DoesNotExist:
-            return Response({"error": "Obra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
-
-        instancias = InstanciaDispositivo.objects.filter(proyecto__obra=obra).select_related(
-            "catalogo", "catalogo__marca"
+        ws_total = wb.active
+        todas_instancias = (
+            InstanciaDispositivo.objects.filter(proyecto__obra=obra)
+            .select_related('catalogo', 'catalogo__marca', 'proyecto')
+            .prefetch_related('catalogo__especificaciones_set__atributo', 'proyecto__urls_externas')
         )
+        generar_hoja(ws_total, "TOTAL OBRA", todas_instancias, es_consolidado=True)
 
-        agregado: dict[tuple[int, str, str], dict[str, object]] = {}
-        for inst in instancias:
-            key = (
-                inst.catalogo.id,
-                inst.catalogo.nombre_completo_producto,
-                inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
-            )
+        proyectos = obra.proyectos.all().order_by('id')
+        for proy in proyectos:
+            instancias_proy = todas_instancias.filter(proyecto=proy)
+            if instancias_proy.exists():
+                ws_proy = wb.create_sheet(title=f"P.{proy.id} - {proy.nombre_proyecto}")
+                generar_hoja(ws_proy, proy.nombre_proyecto, instancias_proy, es_consolidado=False)
 
-            if key not in agregado:
-                agregado[key] = {
-                    "cantidad": 0,
-                    "modelo": inst.catalogo.modelo,
-                    "nombre_completo": inst.catalogo.nombre_completo_producto,
-                    "marca": inst.catalogo.marca.nombre if inst.catalogo.marca else "N/A",
-                    # Sin TAG en modelo: usamos modelo como referencia amigable
-                    "tag_ref": inst.catalogo.modelo or f"CAT-{inst.catalogo.id}",
-                }
-            agregado[key]["cantidad"] += 1
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
 
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="Lista_Materiales_{obra.nombre_obra.replace(" ", "_")}.csv"'
-
-        writer = csv.writer(response, delimiter=";")
-        response.write("\ufeff".encode("utf-8"))
-
-        writer.writerow(["VOLTIA LISTA DE MATERIALES", "", "", "", "", f"OBRA: {obra.nombre_obra}", "", ""])
-        writer.writerow(["", "", "", "", "GENERADO POR VOLTIA", "", f"FECHA: {datetime.now().strftime('%d-%m-%Y')}", ""])
-        writer.writerow([])
-        writer.writerow(
-            ["TABLERO", "CAMPOS", "REFERENCIA", "CANTIDAD", "DESCRIPCIÓN", "FABRICANTE/MARCA", "MODELO/TIPO", "CÓD. FAB."]
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-
-        for item in agregado.values():
-            writer.writerow(
-                [
-                    "OBRA_REF",
-                    item["tag_ref"],
-                    item["tag_ref"],
-                    item["cantidad"],
-                    item["nombre_completo"],
-                    item["marca"],
-                    item["modelo"],
-                    "N/A",
-                ]
-            )
-
+        response['Content-Disposition'] = f'attachment; filename="Materiales_{obra.nombre_obra.replace(" ", "_")}.xlsx"'
         return response

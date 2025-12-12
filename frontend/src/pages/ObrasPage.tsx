@@ -29,6 +29,82 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
+
+const PAISES = ["Argentina", "Chile", "Perú", "Otro"];
+const PROVINCIAS: Record<string, string[]> = {
+  Argentina: [
+    "Buenos Aires",
+    "Catamarca",
+    "Chaco",
+    "Chubut",
+    "CABA",
+    "Córdoba",
+    "Corrientes",
+    "Entre Ríos",
+    "Formosa",
+    "Jujuy",
+    "La Pampa",
+    "La Rioja",
+    "Mendoza",
+    "Misiones",
+    "Neuquén",
+    "Río Negro",
+    "Salta",
+    "San Juan",
+    "San Luis",
+    "Santa Cruz",
+    "Santa Fe",
+    "Santiago del Estero",
+    "Tierra del Fuego",
+    "Tucumán",
+  ],
+  Chile: [
+    "Arica y Parinacota",
+    "Tarapacá",
+    "Antofagasta",
+    "Atacama",
+    "Coquimbo",
+    "Valparaíso",
+    "Metropolitana",
+    "O'Higgins",
+    "Maule",
+    "Ñuble",
+    "Biobío",
+    "Araucanía",
+    "Los Ríos",
+    "Los Lagos",
+    "Aysén",
+    "Magallanes",
+  ],
+  Perú: [
+    "Amazonas",
+    "Áncash",
+    "Apurímac",
+    "Arequipa",
+    "Ayacucho",
+    "Cajamarca",
+    "Callao",
+    "Cusco",
+    "Huancavelica",
+    "Huánuco",
+    "Ica",
+    "Junín",
+    "La Libertad",
+    "Lambayeque",
+    "Lima",
+    "Loreto",
+    "Madre de Dios",
+    "Moquegua",
+    "Pasco",
+    "Piura",
+    "Puno",
+    "San Martín",
+    "Tacna",
+    "Tumbes",
+    "Ucayali",
+  ],
+};
 
 export function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -40,6 +116,8 @@ export function ObrasPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editNombre, setEditNombre] = useState("");
   const [editUbicacion, setEditUbicacion] = useState("");
+  const [editPais, setEditPais] = useState("Argentina");
+  const [editProvincia, setEditProvincia] = useState("");
   const [editEstado, setEditEstado] = useState("pendiente");
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -71,6 +149,8 @@ export function ObrasPage() {
     setObraEditando(obra);
     setEditNombre(obra.nombre_obra);
     setEditUbicacion(obra.ubicacion || "");
+    setEditPais(obra.pais || "Argentina");
+    setEditProvincia(obra.provincia || "");
     setEditEstado(obra.estado_obra || "pendiente");
     setEditError(null);
     setEditOpen(true);
@@ -92,6 +172,8 @@ export function ObrasPage() {
       const actualizada = await actualizarObra(obraEditando.id, {
         nombre_obra: editNombre,
         ubicacion: editUbicacion,
+        pais: editPais,
+        provincia: editProvincia,
         estado_obra: editEstado,
         cliente: obraEditando.cliente,
       });
@@ -172,58 +254,97 @@ export function ObrasPage() {
       </div>
 
       <Dialog open={editOpen} onOpenChange={(open) => (open ? setEditOpen(true) : cerrarEditorObra())}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>
-              {obraEditando ? `Editar obra: ${obraEditando.nombre_obra}` : "Editar obra"}
-            </DialogTitle>
-            <DialogDescription>Actualiza los datos principales de la obra.</DialogDescription>
-          </DialogHeader>
-          {obraEditando && (
-            <form className="space-y-4" onSubmit={handleEditarObra}>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-nombre">Nombre</Label>
-                <Input
-                  id="edit-nombre"
-                  value={editNombre}
-                  onChange={(e) => setEditNombre(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-ubicacion">Ubicacion</Label>
-                <Input
-                  id="edit-ubicacion"
-                  value={editUbicacion}
-                  onChange={(e) => setEditUbicacion(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Estado</Label>
-                <Select value={editEstado} onValueChange={setEditEstado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pendiente">Pendiente</SelectItem>
-                    <SelectItem value="realizada">Realizada</SelectItem>
-                    <SelectItem value="rechazada">Rechazada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {editError && <p className="text-sm text-destructive">{editError}</p>}
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={cerrarEditorObra} disabled={editLoading}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={editLoading}>
-                  {editLoading ? "Guardando..." : "Guardar cambios"}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          <DialogContent className="sm:max-w-[520px]">
+            <DialogHeader>
+              <DialogTitle>
+                {obraEditando ? `Editar obra: ${obraEditando.nombre_obra}` : "Editar obra"}
+              </DialogTitle>
+              <DialogDescription>Actualiza los datos principales de la obra.</DialogDescription>
+            </DialogHeader>
+            {obraEditando && (
+              <form className="space-y-4" onSubmit={handleEditarObra}>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-nombre">Nombre</Label>
+                  <Input
+                    id="edit-nombre"
+                    value={editNombre}
+                    onChange={(e) => setEditNombre(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-pais">País</Label>
+                    <Select value={editPais} onValueChange={(val) => { setEditPais(val); setEditProvincia(""); }}>
+                      <SelectTrigger id="edit-pais">
+                        <SelectValue placeholder="Seleccionar país" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAISES.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Provincia / Estado</Label>
+                    {PAISES.includes(editPais) && PROVINCIAS[editPais] ? (
+                      <Combobox
+                        options={PROVINCIAS[editPais].map((p) => ({ value: p, label: p }))}
+                        value={editProvincia}
+                        onChange={setEditProvincia}
+                        placeholder="Buscar provincia..."
+                        emptyText="No se encontró la provincia."
+                      />
+                    ) : (
+                      <Input
+                        value={editProvincia}
+                        onChange={(e) => setEditProvincia(e.target.value)}
+                        placeholder="Provincia / Estado"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-ubicacion">Dirección / Calle</Label>
+                  <Input
+                    id="edit-ubicacion"
+                    value={editUbicacion}
+                    onChange={(e) => setEditUbicacion(e.target.value)}
+                    placeholder="Ej: Av. Siempre Viva 742"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Estado</Label>
+                  <Select value={editEstado} onValueChange={setEditEstado}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pendiente">Pendiente</SelectItem>
+                      <SelectItem value="realizada">Realizada</SelectItem>
+                      <SelectItem value="rechazada">Rechazada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editError && <p className="text-sm text-destructive">{editError}</p>}
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={cerrarEditorObra} disabled={editLoading}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={editLoading}>
+                    {editLoading ? "Guardando..." : "Guardar cambios"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+      </>
   );
 }

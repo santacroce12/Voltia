@@ -1,18 +1,21 @@
-# Imagen base con Node 22 para servir el front en modo desarrollo
-FROM node:22-alpine
+# ETAPA 1: Construcción (Build)
+FROM node:20-alpine as build
 
 WORKDIR /app
 
-# Copiamos los manifiestos primero para aprovechar la cache de Docker
 COPY package*.json ./
-
-# Instalamos dependencias
 RUN npm install
 
-# Copiamos el resto del codigo del frontend
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+# ETAPA 2: Servidor de producción con Nginx
+FROM nginx:stable-alpine
 
-# Comando en caliente para desarrollo (permite hot-refresh)
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+# Copiar el build generado a la ruta de Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# El archivo default.conf se monta por docker-compose (volumen)
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

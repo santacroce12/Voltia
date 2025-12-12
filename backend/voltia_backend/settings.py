@@ -23,11 +23,11 @@ if env_file.exists():
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "cambia-esta-clave-en-produccion")
 
 # Bandera de depuracion para controlar mensajes detallados de error
-DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
+DEBUG = os.getenv("DEBUG", os.getenv("DJANGO_DEBUG", "false")).lower() == "true"
 
 # Lista de hosts permitidos, util cuando despleguemos en un dominio publico
-raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "*")
-ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(",") if host.strip()]
+raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]")
+ALLOWED_HOSTS = [host.strip() for host in raw_hosts.replace(",", " ").split(" ") if host.strip()]
 
 # Aplicaciones instaladas, mezclando las core de Django, libs externas y nuestras apps
 INSTALLED_APPS = [
@@ -105,8 +105,10 @@ USE_I18N = True
 USE_TZ = True
 
 # Configuracion basica de archivos estaticos
-STATIC_URL = "static/"
+STATIC_URL = "/django_static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Django recomienda usar BigAutoField para llaves primarias en nuevos modelos
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -91,7 +91,7 @@ export function Layout() {
             </div>
 
             {/* --- 2. CONTENIDO PRINCIPAL --- */}
-            <div className="flex flex-col h-screen overflow-hidden">
+            <div className="flex flex-col min-h-screen">
                 {/* Header Superior */}
                 <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 shrink-0">
                     <div className="w-full flex-1">
@@ -101,7 +101,7 @@ export function Layout() {
                 </header>
 
                 {/* Área de Scroll para el contenido */}
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <main className="flex-1 p-4 lg:p-6">
                     <Outlet />
                 </main>
             </div>

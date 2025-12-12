@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:17  # coincide con desarrollo
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=voltia
+      - POSTGRES_USER=voltia
+      - POSTGRES_PASSWORD=C8mPjo#9xL2!zQv4$nBk
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: /entrypoint.prod.sh
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 192.168.21.20
+      - DATABASE=postgres
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=voltia
+      - SQL_USER=voltia
+      - SQL_PASSWORD=C8mPjo#9xL2!zQv4$nBk
+      - SQL_HOST=db
+      - SQL_PORT=5432
+    depends_on:
+      - db
+    restart: always
+
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data_prod:
+  static_volume:
+  media_volume:

@@ -77,7 +77,7 @@ export function Combobox({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "p-0 min-w-[320px] max-w-[640px] w-full shadow-lg border border-border",
+          "p-0 w-full max-h-[320px] overflow-hidden shadow-lg border border-border z-50 bg-popover",
           contentClassName,
         )}
         style={triggerWidth ? { width: triggerWidth } : undefined}
