@@ -15,7 +15,7 @@ const subRoutes = [
     { to: "/catalogo/categorias", label: "Categorias", icon: Shapes },
     { to: "/catalogo/funciones", label: "Funciones", icon: Settings2 },
     { to: "/catalogo/atributos", label: "Atributos", icon: Hash },
-    { to: "/catalogo/dispositivos", label: "Dispositivos", icon: Package },
+    { to: "/catalogo/dispositivos", label: "Dispositivos", icon: Package, end: true },
     { to: "/catalogo/dispositivos/listar", label: "Listar Dispositivos", icon: List },
 ];
 
@@ -38,6 +38,7 @@ export function CatalogoLayout() {
                     <NavLink
                         key={route.to}
                         to={route.to}
+                        end={route.end}
                         className={({ isActive }) =>
                             cn(
                                 "group flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
