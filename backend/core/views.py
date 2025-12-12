@@ -421,7 +421,7 @@ class ExportarMaterialesAPIView(APIView):
     Genera un Excel (XLSX) multipestaña:
     - Hoja 1: Consolidado de toda la Obra.
     - Hojas N: Detalle por cada Proyecto individual.
-    Incluye columna con links a planos.
+    - Agrupación: Por atributos REALES de la instancia (Snapshot).
     """
     permission_classes = [IsAuthenticated]
 
@@ -432,7 +432,8 @@ class ExportarMaterialesAPIView(APIView):
             return Response({"error": "Obra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
         wb = Workbook()
-
+        
+        # --- ESTILOS ---
         font_bold = Font(bold=True)
         font_title = Font(size=14, bold=True)
         fill_header = PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid")
@@ -440,14 +441,26 @@ class ExportarMaterialesAPIView(APIView):
         border_thin = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
         def generar_hoja(ws, titulo, instancias_qs, es_consolidado=False):
-            ws.title = titulo[:30]
-
+            ws.title = titulo[:30] # Limitación de Excel
+            
+            # 1. Agrupar Datos
             agregado = {}
             for inst in instancias_qs:
                 cat = inst.catalogo
-                specs_list = [f"{s.atributo.nombre}: {s.valor} {s.atributo.unidad or ''}".strip() for s in cat.especificaciones_set.all() if s.valor]
+                
+                # --- LÓGICA DE INSTANCIA (SNAPSHOT) ---
+                specs_list = []
+                for attr_inst in inst.atributos_set.all():
+                    if attr_inst.valor:
+                        nombre = attr_inst.atributo.nombre
+                        unidad = attr_inst.atributo.unidad or ''
+                        specs_list.append(f"{nombre}: {attr_inst.valor}{unidad}")
+                specs_list.sort()
                 specs_str = " - ".join(specs_list)
-                descripcion_full = f"{cat.nombre_completo_producto} ({specs_str})" if specs_str else cat.nombre_completo_producto
+                
+                descripcion_full = cat.nombre_completo_producto
+                if specs_str:
+                    descripcion_full += f" ({specs_str})"
 
                 links_planos = ""
                 if not es_consolidado:
@@ -457,16 +470,15 @@ class ExportarMaterialesAPIView(APIView):
                         links = [planos.first().url]
                     links_planos = "\n".join(links)
 
-                key = (cat.id, cat.nombre_completo_producto, cat.marca.nombre if cat.marca else 'N/A')
-
+                key = (cat.id, descripcion_full, cat.marca.nombre if cat.marca else 'N/A')
+                
                 if key not in agregado:
                     agregado[key] = {
                         'cantidad': 0,
                         'modelo': cat.modelo,
-                        'descripcion': descripcion_full,
+                        'descripcion': descripcion_full, 
                         'marca': cat.marca.nombre if cat.marca else 'N/A',
-                        'codigo_fab': getattr(cat, 'codigo_fabricante', None) or 'N/A',
-                        'planos': links_planos,
+                        'planos': links_planos
                     }
                 agregado[key]['cantidad'] += 1
 
@@ -474,16 +486,16 @@ class ExportarMaterialesAPIView(APIView):
             ws['A1'].font = font_title
             ws['F1'] = f"OBRA: {obra.nombre_obra}"
             ws['F1'].font = font_bold
-
+            
             ws['E3'] = f"VISTA: {titulo}"
-            ws['G3'] = "REV.: 1"
             ws['G4'] = f"FECHA: {datetime.now().strftime('%d-%m-%Y')}"
 
-            headers = ["CANTIDAD", "FABRICANTE", "CÓDIGO (SKU)", "MODELO", "DESCRIPCIÓN / ESPECIFICACIONES", "LINK PLANO"]
+            headers = ["CANTIDAD", "FABRICANTE", "MODELO", "DESCRIPCIÓN / ESPECIFICACIONES", "LINK PLANO"]
+            
             ws.append([])
             ws.append(headers)
-
-            for cell in ws[ws.max_row]:
+            
+            for col_num, cell in enumerate(ws[6], 1):
                 cell.font = font_bold
                 cell.fill = fill_header
                 cell.alignment = alignment_center
@@ -491,19 +503,17 @@ class ExportarMaterialesAPIView(APIView):
 
             ws.column_dimensions['A'].width = 12
             ws.column_dimensions['B'].width = 20
-            ws.column_dimensions['C'].width = 20
-            ws.column_dimensions['D'].width = 20
-            ws.column_dimensions['E'].width = 60
-            ws.column_dimensions['F'].width = 40
+            ws.column_dimensions['C'].width = 25
+            ws.column_dimensions['D'].width = 70 
+            ws.column_dimensions['E'].width = 40
 
             for item in agregado.values():
                 row = [
                     item['cantidad'],
                     item['marca'],
-                    item['codigo_fab'],
                     item['modelo'],
                     item['descripcion'],
-                    item['planos'],
+                    item['planos']
                 ]
                 ws.append(row)
                 for cell in ws[ws.max_row]:
@@ -511,15 +521,20 @@ class ExportarMaterialesAPIView(APIView):
                     cell.alignment = Alignment(vertical='center', wrap_text=True)
 
         ws_total = wb.active
-        todas_instancias = (
-            InstanciaDispositivo.objects.filter(proyecto__obra=obra)
-            .select_related('catalogo', 'catalogo__marca', 'proyecto')
-            .prefetch_related('catalogo__especificaciones_set__atributo', 'proyecto__urls_externas')
-        )
+        
+        todas_instancias = InstanciaDispositivo.objects.filter(proyecto__obra=obra)\
+            .select_related('catalogo', 'catalogo__marca', 'proyecto')\
+            .prefetch_related(
+                'atributos_set',
+                'atributos_set__atributo',
+                'proyecto__urls_externas'
+            )
+        
         generar_hoja(ws_total, "TOTAL OBRA", todas_instancias, es_consolidado=True)
 
-        proyectos = obra.proyectos.all().order_by('id')
-        for proy in proyectos:
+        mis_proyectos = obra.proyectos.all().order_by('id') 
+        
+        for proy in mis_proyectos:
             instancias_proy = todas_instancias.filter(proyecto=proy)
             if instancias_proy.exists():
                 ws_proy = wb.create_sheet(title=f"P.{proy.id} - {proy.nombre_proyecto}")
@@ -528,10 +543,7 @@ class ExportarMaterialesAPIView(APIView):
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)
-
-        response = HttpResponse(
-            output.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+        
+        response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="Materiales_{obra.nombre_obra.replace(" ", "_")}.xlsx"'
         return response
