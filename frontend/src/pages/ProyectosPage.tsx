@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Modal } from "@/components/Modal";
 
 export function ProyectosPage() {
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -45,9 +46,13 @@ export function ProyectosPage() {
     const [editUbicacion, setEditUbicacion] = useState("");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+
+    // Resumen modal
     const [proyectoDetalle, setProyectoDetalle] = useState<Proyecto | null>(null);
     const [instanciasDetalle, setInstanciasDetalle] = useState<InstanciaDispositivo[]>([]);
     const [loadingInstancias, setLoadingInstancias] = useState(false);
+    const [resumenOpen, setResumenOpen] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -61,9 +66,9 @@ export function ProyectosPage() {
     }, []);
 
     useEffect(() => {
-        // Al cambiar la obra limpiamos cualquier proyecto seleccionado para evitar confusiones
         setProyectoDetalle(null);
         setInstanciasDetalle([]);
+        setResumenOpen(false);
         setLoadingInstancias(false);
     }, [obraSeleccionada]);
 
@@ -80,7 +85,10 @@ export function ProyectosPage() {
         setProyectoDetalle(proyecto);
         setLoadingInstancias(true);
         listarInstancias(proyecto.id)
-            .then(setInstanciasDetalle)
+            .then((data) => {
+                setInstanciasDetalle(data);
+                setResumenOpen(true);
+            })
             .catch(() => setInstanciasDetalle([]))
             .finally(() => setLoadingInstancias(false));
     };
@@ -182,62 +190,6 @@ export function ProyectosPage() {
                 )}
             </div>
 
-            {proyectoDetalle && (
-                <div className="rounded-xl border border-border bg-card shadow-sm p-6 space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Proyecto seleccionado</p>
-                            <h3 className="text-xl font-semibold">{proyectoDetalle.nombre_proyecto}</h3>
-                            <p className="text-sm text-muted-foreground">Tipo: {proyectoDetalle.tipo} · Estado: {proyectoDetalle.estado_proyecto}</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button variant="secondary" onClick={() => iniciarClonacion(proyectoDetalle)}>
-                                Clonar
-                            </Button>
-                            <Button variant="default" onClick={() => navigate(`/proyecto/${proyectoDetalle.id}`)}>
-                                Servicios / Planos
-                            </Button>
-                            <Button variant="outline" onClick={() => setProyectoDetalle(null)}>
-                                Ocultar
-                            </Button>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-2">
-                        <h4 className="text-lg font-semibold">Dispositivos del proyecto</h4>
-                        {loadingInstancias ? (
-                            <p className="text-sm text-muted-foreground">Cargando dispositivos...</p>
-                        ) : instanciasDetalle.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No hay dispositivos cargados.</p>
-                        ) : (
-                            <div className="overflow-x-auto rounded-md border">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-muted/50 text-left">
-                                        <tr>
-                                            <th className="px-3 py-2">ID</th>
-                                            <th className="px-3 py-2">Modelo</th>
-                                            <th className="px-3 py-2">Marca</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {instanciasDetalle.map((inst) => (
-                                            <tr key={inst.id} className="hover:bg-muted/30">
-                                                <td className="px-3 py-2 font-mono text-xs">{`ID-${inst.id}`}</td>
-                                                <td className="px-3 py-2">{inst.nombre_dispositivo || "Sin modelo"}</td>
-                                                <td className="px-3 py-2 text-muted-foreground">{inst.marca_dispositivo || "Sin marca"}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        <p className="text-xs text-muted-foreground">Tip: abre Ingenieria para editar o agregar dispositivos.</p>
-                    </div>
-                </div>
-            )}
-
             <CloningModal
                 isOpen={modalAbierto}
                 onClose={() => setModalAbierto(false)}
@@ -245,6 +197,70 @@ export function ProyectosPage() {
                 allObras={todasLasObras.filter((o) => o.id !== obraSeleccionada.id)}
                 onCloneExitoso={handleClonacionExitosa}
             />
+
+            <Modal
+                isOpen={resumenOpen && Boolean(proyectoDetalle)}
+                onClose={() => {
+                    setResumenOpen(false);
+                    setProyectoDetalle(null);
+                }}
+                title={proyectoDetalle ? `Resumen de proyecto: ${proyectoDetalle.nombre_proyecto}` : "Resumen de proyecto"}
+            >
+                {proyectoDetalle && (
+                    <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Cliente #{proyectoDetalle.obra}</p>
+                                <h4 className="text-lg font-semibold">{proyectoDetalle.nombre_proyecto}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                    Tipo: {proyectoDetalle.tipo} · Estado: {proyectoDetalle.estado_proyecto}
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" size="sm" onClick={() => iniciarClonacion(proyectoDetalle)}>
+                                    Clonar
+                                </Button>
+                                <Button variant="default" size="sm" onClick={() => navigate(`/proyecto/${proyectoDetalle.id}`)}>
+                                    Servicios / Planos
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2">
+                            <h4 className="text-base font-semibold">Dispositivos del proyecto</h4>
+                            {loadingInstancias ? (
+                                <p className="text-sm text-muted-foreground">Cargando dispositivos...</p>
+                            ) : instanciasDetalle.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No hay dispositivos cargados.</p>
+                            ) : (
+                                <div className="overflow-x-auto rounded-md border">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-muted/50 text-left">
+                                            <tr>
+                                                <th className="px-3 py-2">ID</th>
+                                                <th className="px-3 py-2">Modelo</th>
+                                                <th className="px-3 py-2">Marca</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {instanciasDetalle.map((inst) => (
+                                                <tr key={inst.id} className="hover:bg-muted/30">
+                                                    <td className="px-3 py-2 font-mono text-xs">{`ID-${inst.id}`}</td>
+                                                    <td className="px-3 py-2">{inst.nombre_dispositivo || "Sin modelo"}</td>
+                                                    <td className="px-3 py-2 text-muted-foreground">{inst.marca_dispositivo || "Sin marca"}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground">Tip: abre Ingeniería para editar o agregar dispositivos.</p>
+                        </div>
+                    </div>
+                )}
+            </Modal>
 
             <Dialog open={editOpen} onOpenChange={(open) => (open ? setEditOpen(true) : setEditOpen(false))}>
                 <DialogContent className="sm:max-w-[520px]">
