@@ -142,13 +142,12 @@ else:
 
 # --- Configuracion de Simple JWT (JSON Web Tokens) ---
 SIMPLE_JWT = {
-    # Tiempo de vida del token de acceso principal
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    # Tiempo de vida del token de refresco (para obtener uno nuevo)
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    # Tiempo de vida corto para seguridad (30 minutos)
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    # Tiempo máximo de sesión antes de pedir login de nuevo (12 horas)
+    "REFRESH_TOKEN_LIFETIME": timedelta(hours=12),
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    # Algoritmo de firma
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,  # Usa la misma clave secreta de Django
+    "SIGNING_KEY": SECRET_KEY,
 }

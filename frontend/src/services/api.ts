@@ -231,7 +231,16 @@ async function fetchProtegido(url: string, options: RequestInit = {}): Promise<R
 
     headers.append("Content-Type", "application/json");
 
-    return fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+        console.warn("Sesión expirada. Redirigiendo al login...");
+        limpiarToken();
+        window.location.href = "/login";
+        throw new Error("Sesion expirada");
+    }
+
+    return response;
 }
 
 /**
