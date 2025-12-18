@@ -739,6 +739,17 @@ export async function listarInstancias(proyectoId: number): Promise<InstanciaDis
 }
 
 /**
+ * [PROTEGIDO] Lista todas las Instancias de Dispositivo (sin filtrar por proyecto).
+ */
+export async function listarInstanciasTodas(): Promise<InstanciaDispositivo[]> {
+    const respuesta = await fetchProtegido(`${API_BASE_URL}/instancias/`);
+    if (!respuesta.ok) {
+        throw new Error("No se pudieron cargar las instancias");
+    }
+    return respuesta.json();
+}
+
+/**
  * [PROTEGIDO] Crea una nueva Instancia de Dispositivo.
  */
 export async function crearInstancia(

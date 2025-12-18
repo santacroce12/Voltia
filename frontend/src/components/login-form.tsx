@@ -46,12 +46,12 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
               </p>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Usuario / Email</Label>
+              <Label htmlFor="email">Usuario</Label>
               <Input
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="usuario@voltia.com"
+                placeholder="Tu usuario"
                 required
               />
             </div>
@@ -77,7 +77,7 @@ export function LoginForm({ className, onLoginExitoso, ...props }: LoginFormProp
             <span className="rounded-full bg-white/10 p-4">
               <Bolt className="h-10 w-10" />
             </span>
-            <p className="text-lg font-semibold">Energia asegurada</p>
+            <p className="text-lg font-semibold">VOLTIA</p>
             <p className="text-sm text-white/80 text-center">
               Voltia protege tus operaciones electricas con monitoreo y trazabilidad profesional.
             </p>

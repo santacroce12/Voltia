@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { 
-    listarProyectos, listarObras, listarClientes, 
-    type Proyecto, type Obra, type Cliente 
+    listarProyectos, listarObras, listarClientes, listarInstanciasTodas,
+    type Proyecto, type Obra, type Cliente, type InstanciaDispositivo 
 } from "../services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -16,14 +16,16 @@ export function DashboardPage() {
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
     const [obras, setObras] = useState<Obra[]>([]);
     const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [instancias, setInstancias] = useState<InstanciaDispositivo[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([listarProyectos(), listarObras(), listarClientes()])
-            .then(([dataProyectos, dataObras, dataClientes]) => {
+        Promise.all([listarProyectos(), listarObras(), listarClientes(), listarInstanciasTodas()])
+            .then(([dataProyectos, dataObras, dataClientes, dataInstancias]) => {
                 setProyectos(dataProyectos);
                 setObras(dataObras);
                 setClientes(dataClientes);
+                setInstancias(dataInstancias);
             })
             .catch(console.error)
             .finally(() => setLoading(false));
@@ -54,6 +56,23 @@ export function DashboardPage() {
             cantidad: stats[key]
         }));
     }, [proyectos]);
+
+    const dispositivosMasUsados = useMemo(() => {
+        const stats: Record<string, { nombre: string; marca?: string; count: number }> = {};
+        instancias.forEach((inst) => {
+            const key = `${inst.catalogo}-${inst.nombre_dispositivo || "Dispositivo"}`;
+            if (!stats[key]) {
+                stats[key] = {
+                    nombre: inst.nombre_dispositivo || "Dispositivo",
+                    marca: inst.marca_dispositivo,
+                    count: 0,
+                };
+            }
+            stats[key].count += 1;
+        });
+        const lista = Object.values(stats).sort((a, b) => b.count - a.count);
+        return lista.slice(0, 5);
+    }, [instancias]);
 
     if (loading) {
         return <div className="p-8 text-center text-muted-foreground">Cargando tablero de control...</div>;
@@ -120,6 +139,29 @@ export function DashboardPage() {
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
+                    </CardContent>
+                </Card>
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Dispositivos más usados</CardTitle>
+                        <CardDescription>Top 5 por cantidad de instancias.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {dispositivosMasUsados.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Aún no hay instancias cargadas.</p>
+                        ) : (
+                            <ul className="space-y-2">
+                                {dispositivosMasUsados.map((d, idx) => (
+                                    <li key={idx} className="flex items-center justify-between rounded-md border px-3 py-2">
+                                        <div>
+                                            <p className="font-medium leading-tight">{d.nombre}</p>
+                                            {d.marca && <p className="text-xs text-muted-foreground">{d.marca}</p>}
+                                        </div>
+                                        <span className="text-sm font-semibold text-primary">{d.count}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </CardContent>
                 </Card>
             </div>
