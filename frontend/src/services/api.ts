@@ -240,6 +240,11 @@ async function fetchProtegido(url: string, options: RequestInit = {}): Promise<R
         throw new Error("Sesion expirada");
     }
 
+    if (response.status === 429) {
+        console.warn("Demasiadas peticiones. Intenta de nuevo en unos instantes.");
+        throw new Error("Demasiadas peticiones (429)");
+    }
+
     return response;
 }
 

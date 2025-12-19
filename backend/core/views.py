@@ -12,6 +12,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import ScopedRateThrottle
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
@@ -408,6 +409,8 @@ class ProyectoCloneAPIView(APIView):
     """
 
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "clonar_proyecto"
 
     def post(self, request, *args, **kwargs):
         source_project_id = request.data.get("source_project_id")
@@ -438,6 +441,8 @@ class ExportarMaterialesAPIView(APIView):
     - Agrupación: Por atributos REALES de la instancia (Snapshot).
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "exportar_materiales"
 
     def get(self, request, obra_id):
         try:

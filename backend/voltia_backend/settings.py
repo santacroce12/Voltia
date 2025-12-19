@@ -131,6 +131,17 @@ REST_FRAMEWORK = {
         # Solo usuarios autenticados podran acceder a la API.
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/min",
+        "user": "120/min",
+        "exportar_materiales": "5/min",
+        "clonar_proyecto": "3/min",
+    },
 }
 
 # Origenes permitidos para CORS; ideal para comunicar el front en React con esta API
