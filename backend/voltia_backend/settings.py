@@ -100,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Idioma y zona horaria por defecto para mostrar la app en espanol
 LANGUAGE_CODE = "es-es"
-TIME_ZONE = "America/Bogota"
+TIME_ZONE = "America/Argentina/Mendoza"
 USE_I18N = True
 USE_TZ = True
 
