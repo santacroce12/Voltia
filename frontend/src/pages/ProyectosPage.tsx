@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ClienteList } from "../components/ClienteList";
 import { ObraList } from "../components/ObraList";
 import { ProyectoForm } from "../components/ProyectoForm";
 import { ProjectList } from "../components/ProjectList";
 import { CloningModal } from "@/components/CloningModal";
 import {
+    listarClientes,
     listarProyectos,
     listarObras,
     actualizarProyecto,
     listarInstancias,
+    type Cliente,
     type Proyecto,
     type Obra,
     type InstanciaDispositivo,
@@ -32,6 +35,8 @@ import { Modal } from "@/components/Modal";
 export function ProyectosPage() {
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
     const [obras, setObras] = useState<Obra[]>([]);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
     const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -56,8 +61,9 @@ export function ProyectosPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        Promise.all([listarObras(), listarProyectos()])
-            .then(([listaObras, listaProyectos]) => {
+        Promise.all([listarClientes(), listarObras(), listarProyectos()])
+            .then(([listaClientes, listaObras, listaProyectos]) => {
+                setClientes(listaClientes);
                 setObras(listaObras);
                 setProyectos(listaProyectos);
                 setTodasLasObras(listaObras);
@@ -71,6 +77,27 @@ export function ProyectosPage() {
         setResumenOpen(false);
         setLoadingInstancias(false);
     }, [obraSeleccionada]);
+
+    const clienteNombreMap = useMemo(() => {
+        const map: Record<number, string> = {};
+        clientes.forEach((cliente) => {
+            map[cliente.id] = cliente.nombre;
+        });
+        return map;
+    }, [clientes]);
+
+    const clientePorObra = useMemo(() => {
+        const map: Record<number, string> = {};
+        obras.forEach((obra) => {
+            map[obra.id] = clienteNombreMap[obra.cliente] || `Cliente #${obra.cliente}`;
+        });
+        return map;
+    }, [obras, clienteNombreMap]);
+
+    const obrasFiltradas = useMemo(
+        () => (clienteSeleccionado ? obras.filter((o) => o.cliente === clienteSeleccionado.id) : []),
+        [obras, clienteSeleccionado],
+    );
 
     const handleProyectoCreado = (nuevoProyecto: Proyecto) => {
         setProyectos((prev) => [nuevoProyecto, ...prev]);
@@ -135,14 +162,58 @@ export function ProyectosPage() {
         [proyectos, obraSeleccionada],
     );
 
-    if (!obraSeleccionada) {
+    if (!clienteSeleccionado) {
         return (
             <div className="max-w-6xl space-y-6">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Proyectos</h2>
-                    <p className="text-muted-foreground">Seleccione una obra para gestionar sus proyectos.</p>
+                    <p className="text-muted-foreground">Selecciona un cliente para ver sus obras.</p>
                 </div>
-                {error ? <p className="text-destructive">{error}</p> : <ObraList obras={obras} onObraSeleccionada={setObraSeleccionada} />}
+                {error ? (
+                    <p className="text-destructive">{error}</p>
+                ) : (
+                    <ClienteList
+                        clientes={clientes}
+                        onClienteSeleccionado={(cliente) => {
+                            setClienteSeleccionado(cliente);
+                            setObraSeleccionada(null);
+                        }}
+                        mostrarSoloNombre
+                    />
+                )}
+            </div>
+        );
+    }
+
+    if (!obraSeleccionada) {
+        return (
+            <div className="max-w-6xl space-y-6">
+                <div className="flex items-center gap-4">
+                    <Button variant="outline" size="icon" onClick={() => setClienteSeleccionado(null)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <p className="text-sm text-muted-foreground">Cliente seleccionado</p>
+                        <h2 className="text-2xl font-semibold tracking-tight">{clienteSeleccionado.nombre}</h2>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold">Obras del cliente</h3>
+                    <p className="text-sm text-muted-foreground">Selecciona una obra para crear o gestionar proyectos.</p>
+                </div>
+                {error ? (
+                    <p className="text-destructive">{error}</p>
+                ) : obrasFiltradas.length === 0 ? (
+                    <div className="rounded-lg border bg-muted/10 p-6 text-center text-muted-foreground">
+                        No hay obras para este cliente.
+                    </div>
+                ) : (
+                    <ObraList
+                        obras={obrasFiltradas}
+                        onObraSeleccionada={setObraSeleccionada}
+                        clienteNombres={clienteNombreMap}
+                    />
+                )}
             </div>
         );
     }
@@ -156,6 +227,7 @@ export function ProyectosPage() {
                 <div>
                     <p className="text-sm text-muted-foreground">Obra seleccionada</p>
                     <h2 className="text-2xl font-semibold tracking-tight">{obraSeleccionada.nombre_obra}</h2>
+                    <p className="text-sm text-muted-foreground">Cliente: {clienteSeleccionado.nombre}</p>
                 </div>
             </div>
 
@@ -174,12 +246,13 @@ export function ProyectosPage() {
                     <div>
                         <h3 className="text-lg font-semibold">Listado de Proyectos</h3>
                         <p className="text-sm text-muted-foreground">
-                            Administra, clona o navega a la ingeniería de cada proyecto.
+                            Administra, clona o navega a la ingenieria de cada proyecto.
                         </p>
                     </div>
                 </div>
                 <ProjectList
                     proyectos={proyectosFiltrados}
+                    clientePorObra={clientePorObra}
                     onClonarProyecto={iniciarClonacion}
                     onEditarProyecto={abrirEditorProyecto}
                     onSelectProyecto={cargarInstanciasProyecto}
@@ -210,10 +283,12 @@ export function ProyectosPage() {
                     <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <p className="text-sm text-muted-foreground">Cliente #{proyectoDetalle.obra}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Cliente: {clientePorObra[proyectoDetalle.obra] || "Sin cliente"}
+                                </p>
                                 <h4 className="text-lg font-semibold">{proyectoDetalle.nombre_proyecto}</h4>
                                 <p className="text-sm text-muted-foreground">
-                                    Tipo: {proyectoDetalle.tipo} · Estado: {proyectoDetalle.estado_proyecto}
+                                    Tipo: {proyectoDetalle.tipo} - Estado: {proyectoDetalle.estado_proyecto}
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -256,7 +331,7 @@ export function ProyectosPage() {
                                     </table>
                                 </div>
                             )}
-                            <p className="text-xs text-muted-foreground">Tip: abre Ingeniería para editar o agregar dispositivos.</p>
+                            <p className="text-xs text-muted-foreground">Tip: abre Ingenieria para editar o agregar dispositivos.</p>
                         </div>
                     </div>
                 )}
@@ -268,7 +343,7 @@ export function ProyectosPage() {
                         <DialogTitle>
                             {proyectoEditando ? `Editar proyecto: ${proyectoEditando.nombre_proyecto}` : "Editar proyecto"}
                         </DialogTitle>
-                        <DialogDescription>Actualiza la información básica del proyecto.</DialogDescription>
+                        <DialogDescription>Actualiza la informacion basica del proyecto.</DialogDescription>
                     </DialogHeader>
                     {proyectoEditando && (
                         <form className="space-y-4" onSubmit={handleEditarProyecto}>
@@ -288,10 +363,10 @@ export function ProyectosPage() {
                                         <SelectValue placeholder="Seleccionar tipo" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="proteccion">Protección</SelectItem>
+                                        <SelectItem value="proteccion">Proteccion</SelectItem>
                                         <SelectItem value="control">Control</SelectItem>
-                                        <SelectItem value="medicion">Medición</SelectItem>
-                                        <SelectItem value="comunicacion">Comunicación</SelectItem>
+                                        <SelectItem value="medicion">Medicion</SelectItem>
+                                        <SelectItem value="comunicacion">Comunicacion</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -308,7 +383,7 @@ export function ProyectosPage() {
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="edit-ubicacion">Ubicación física</Label>
+                                <Label htmlFor="edit-ubicacion">Ubicacion fisica</Label>
                                 <Input
                                     id="edit-ubicacion"
                                     value={editUbicacion}

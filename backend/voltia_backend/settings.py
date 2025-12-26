@@ -100,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Idioma y zona horaria por defecto para mostrar la app en espanol
 LANGUAGE_CODE = "es-es"
-TIME_ZONE = "America/Argentina/Mendoza"
+TIME_ZONE = "America/Argentina/Buenos_Aires"
 USE_I18N = True
 USE_TZ = True
 
@@ -150,6 +150,12 @@ if cors_origins:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 else:
     CORS_ALLOW_ALL_ORIGINS = True
+
+# Permite localhost con cualquier puerto (vite cambia de puerto si esta ocupado).
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+]
 
 # --- Configuracion de Simple JWT (JSON Web Tokens) ---
 SIMPLE_JWT = {

@@ -52,14 +52,21 @@ export function BatchInstanciaForm({
     useEffect(() => {
         if (catalogoId) {
             const disp = catalogo.find((d) => d.id === Number(catalogoId));
+            const defaults: Record<number, string> = {};
+            if ((disp as any)?.especificaciones_set) {
+                (disp as any).especificaciones_set.forEach((spec: any) => {
+                    defaults[spec.atributo] = spec.valor;
+                });
+            }
+            setValoresEAV(defaults);
             const idsSoportados = disp?.funciones_soportadas || [];
             setFuncionesDisponibles(masterFunciones.filter((f) => idsSoportados.includes(f.id)));
         } else {
             setFuncionesDisponibles([]);
+            setValoresEAV({});
         }
         setFuncionesUsadasIds([]);
         setBusquedaFuncion("");
-        setValoresEAV({});
     }, [catalogoId, catalogo, masterFunciones]);
 
     const funcionesFiltradas = useMemo(() => {

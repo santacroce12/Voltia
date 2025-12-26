@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCreado: (d: CatalogoDispositivo) => void }) {
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
+    const [urlFicha, setUrlFicha] = useState("");
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
@@ -48,7 +49,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!marcaId || !categoriaId || !modelo.trim() || !nombre.trim()) {
-            setError("Completa marca, categoría, modelo y nombre.");
+            setError("Completa marca, categoria, modelo y nombre.");
             return;
         }
         setCargando(true);
@@ -66,7 +67,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             categoria: Number(categoriaId),
             especificaciones_set: especificacionesSet,
             funciones_soportadas: funcionesSeleccionadas,
-            url_ficha_tecnica: undefined,
+            url_ficha_tecnica: urlFicha || undefined,
         };
 
         try {
@@ -74,6 +75,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             onDispositivoCreado(nuevo);
             setModelo("");
             setNombre("");
+            setUrlFicha("");
             setMarcaId("");
             setCategoriaId("");
             setEspecificaciones({});
@@ -90,19 +92,36 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     return (
         <form className="grid gap-6 py-4" onSubmit={handleSubmit}>
             {/* Datos basicos */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label>Marca</Label>
-                        <Select value={marcaId} onValueChange={setMarcaId}>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                        <SelectContent>{marcas.map((m) => <SelectItem key={m.id} value={String(m.id)}>{m.nombre}</SelectItem>)}</SelectContent>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label>Marca</Label>
+                    <Select value={marcaId} onValueChange={setMarcaId}>
+                        <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                        <SelectContent>
+                            {marcas.map((m) => (
+                                <SelectItem key={m.id} value={String(m.id)}>
+                                    {m.nombre}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
                     </Select>
                 </div>
                 <div className="grid gap-2">
                     <Label>Categoria</Label>
                     <Select value={categoriaId} onValueChange={setCategoriaId}>
                         <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                        <SelectContent>{categorias.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.categoria_principal}</SelectItem>)}</SelectContent>
+                        <SelectContent>
+                            {categorias.map((c) => {
+                                const label = c.subcategoria
+                                    ? `${c.categoria_principal} > ${c.subcategoria}`
+                                    : c.categoria_principal;
+                                return (
+                                    <SelectItem key={c.id} value={String(c.id)}>
+                                        {label}
+                                    </SelectItem>
+                                );
+                            })}
+                        </SelectContent>
                     </Select>
                 </div>
                 <div className="grid gap-2">
@@ -112,11 +131,19 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                 <div className="grid gap-2">
                     <Label>Nombre Completo</Label>
                     <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-                    </div>
                 </div>
+                <div className="grid gap-2 col-span-2">
+                    <Label>Ficha Tecnica (PDF/Link)</Label>
+                    <Input
+                        value={urlFicha}
+                        onChange={(e) => setUrlFicha(e.target.value)}
+                        placeholder="https://..."
+                    />
+                </div>
+            </div>
 
-                <div className="border rounded-md p-4 bg-muted/10">
-                    <p className="text-sm text-muted-foreground mb-2">
+            <div className="border rounded-md p-4 bg-muted/10">
+                <p className="text-sm text-muted-foreground mb-2">
                     Agrega los atributos que aplican a este modelo. Si dejas el valor vacio se pedira en obra; si cargas un valor sera el defecto heredado.
                 </p>
                 <DynamicAttributeForm
@@ -151,13 +178,13 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                         ))
                     )}
                 </div>
-                </div>
+            </div>
 
-                {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
-                <Button type="submit" disabled={cargando} className="w-full mt-4">
-                    Guardar Definicion de Dispositivo
-                </Button>
-            </form>
-        );
+            <Button type="submit" disabled={cargando} className="w-full mt-4">
+                Guardar Definicion de Dispositivo
+            </Button>
+        </form>
+    );
 }
