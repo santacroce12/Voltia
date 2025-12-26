@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Trash2, Loader2, Save, Settings2, Edit2, Users, User } from "lucide-react";
 import {
     getInstanciaDetalle,
@@ -39,7 +40,8 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
     const [error, setError] = useState<string | null>(null);
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
-    const [modoEdicion, setModoEdicion] = useState<"todos" | "unico">("todos");
+    const [modoEdicion, setModoEdicion] = useState<"todos" | "unico" | "parcial">("todos");
+    const [cantidadParcial, setCantidadParcial] = useState<number>(2);
     const [modalFuncionesOpen, setModalFuncionesOpen] = useState(false);
 
     useEffect(() => {
@@ -89,11 +91,22 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
                 funciones_usadas: funcionesUsadasIds,
             };
 
+            const todosIds = instancias.map((inst) => inst.id);
+            let idsAActualizar = [instanciaRef.id];
             if (esGrupo && modoEdicion === "todos") {
-                await Promise.all(instancias.map((inst) => updateInstancia(inst.id, payload)));
-                onUpdate(instancias[0]);
+                idsAActualizar = [...todosIds];
+            } else if (esGrupo && modoEdicion === "parcial") {
+                const ordenados = [...todosIds].sort((a, b) => a - b);
+                const cantidadSeguro = Number.isFinite(cantidadParcial) ? cantidadParcial : 1;
+                const limite = Math.min(Math.max(cantidadSeguro, 1), ordenados.length);
+                idsAActualizar = ordenados.slice(0, limite);
+            }
+
+            if (idsAActualizar.length > 1) {
+                const actualizados = await Promise.all(idsAActualizar.map((id) => updateInstancia(id, payload)));
+                onUpdate(actualizados[0]);
             } else {
-                const updated = await updateInstancia(instanciaRef.id, payload);
+                const updated = await updateInstancia(idsAActualizar[0], payload);
                 onUpdate(updated);
             }
             onCerrar();
@@ -106,16 +119,29 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
     };
 
     const handleDelete = async () => {
-        if (!confirm(`¿Eliminar ${esGrupo && modoEdicion === "todos" ? "TODAS las instancias seleccionadas" : "esta instancia"}?`))
-            return;
+        const todosIds = instancias.map((inst) => inst.id);
+        let idsAEliminar = [instanciaRef.id];
+        if (esGrupo && modoEdicion === "todos") {
+            idsAEliminar = [...todosIds];
+        } else if (esGrupo && modoEdicion === "parcial") {
+            const ordenados = [...todosIds].sort((a, b) => a - b);
+            const cantidadSeguro = Number.isFinite(cantidadParcial) ? cantidadParcial : 1;
+            const limite = Math.min(Math.max(cantidadSeguro, 1), ordenados.length);
+            idsAEliminar = ordenados.slice(0, limite);
+        }
+
+        const mensaje =
+            idsAEliminar.length > 1 ? `Eliminar ${idsAEliminar.length} instancias seleccionadas?` : "Eliminar esta instancia?";
+        if (!confirm(mensaje)) return;
+
         setSaving(true);
         try {
-            if (esGrupo && modoEdicion === "todos") {
-                await Promise.all(instancias.map((i) => borrarInstancia(i.id)));
-                onDelete(instancias[0].id);
+            if (idsAEliminar.length > 1) {
+                await Promise.all(idsAEliminar.map((id) => borrarInstancia(id)));
+                onDelete(idsAEliminar[0]);
             } else {
-                await borrarInstancia(instanciaRef.id);
-                onDelete(instanciaRef.id);
+                await borrarInstancia(idsAEliminar[0]);
+                onDelete(idsAEliminar[0]);
             }
             onCerrar();
         } catch (e) {
@@ -172,26 +198,48 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
                                     <div>
                                         <Label className="text-xs uppercase text-muted-foreground font-bold">Alcance de los cambios</Label>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         <Button
                                             type="button"
                                             variant={modoEdicion === "todos" ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setModoEdicion("todos")}
-                                            className="flex items-center gap-2"
+                                            className="flex items-center gap-2 whitespace-nowrap"
                                         >
                                             <Users className="h-4 w-4" /> Grupo ({instancias.length})
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={modoEdicion === "parcial" ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => setModoEdicion("parcial")}
+                                            className="flex items-center gap-2 whitespace-nowrap"
+                                        >
+                                            <Users className="h-4 w-4" /> Primeros
                                         </Button>
                                         <Button
                                             type="button"
                                             variant={modoEdicion === "unico" ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setModoEdicion("unico")}
-                                            className="flex items-center gap-2"
+                                            className="flex items-center gap-2 whitespace-nowrap"
                                         >
                                             <User className="h-4 w-4" /> Solo esta
                                         </Button>
                                     </div>
+                                    {modoEdicion === "parcial" && (
+                                        <div className="flex items-center gap-2 w-full">
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                max={instancias.length}
+                                                value={cantidadParcial}
+                                                onChange={(e) => setCantidadParcial(Number(e.target.value))}
+                                                className="h-8 w-20"
+                                            />
+                                            <span className="text-xs text-muted-foreground">dispositivos</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
