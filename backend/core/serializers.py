@@ -94,6 +94,7 @@ class InstanciaDispositivoSerializer(serializers.ModelSerializer):
     usuario_creador = serializers.ReadOnlyField(source="usuario_creador.username")
     nombre_dispositivo = serializers.ReadOnlyField(source="catalogo.nombre_completo_producto")
     marca_dispositivo = serializers.ReadOnlyField(source="catalogo.marca.nombre")
+    catalogo_precio_historico = serializers.ReadOnlyField(source="catalogo.precio_historico")
 
     class Meta:
         model = InstanciaDispositivo

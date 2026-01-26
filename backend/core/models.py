@@ -96,6 +96,12 @@ class CatalogoDispositivo(models.Model):
         null=True,
         verbose_name="Ficha Tecnica (URL)",
     )
+    precio_historico = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Precio Historico (USD/Referencia)",
+    )
     funciones_soportadas = models.ManyToManyField(
         "FuncionDispositivo",
         blank=True,
@@ -213,6 +219,12 @@ class InstanciaDispositivo(models.Model):
         "FuncionDispositivo",
         blank=True,
         verbose_name="Funciones Usadas (en este proyecto)",
+    )
+    precio_real = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Precio Real (Compra/Cotizado)",
     )
 
     class Meta:

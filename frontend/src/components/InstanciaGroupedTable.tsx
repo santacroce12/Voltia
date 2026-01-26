@@ -83,6 +83,17 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
         onRefresh();
     };
 
+    const normalizePrice = (value: unknown): number | null => {
+        if (value === null || value === undefined) return null;
+        const num = Number(value);
+        return Number.isFinite(num) ? num : null;
+    };
+
+    const formatPrice = (value: number | null): string => {
+        if (value === null) return "N/A";
+        return `$${value.toFixed(2)}`;
+    };
+
     const renderAtributos = (grupo: GroupedInstance) => {
         const lista = new Map<string, { label: string }>();
         grupo.instancias.forEach((inst) => {
@@ -126,6 +137,38 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
         );
     };
 
+    const renderPrecio = (grupo: GroupedInstance) => {
+        const precios = grupo.instancias
+            .map((inst) => normalizePrice(inst.precio_real))
+            .filter((value): value is number => value !== null);
+        const unique = Array.from(new Set(precios.map((value) => value.toFixed(2))));
+
+        let precioReal: number | null = null;
+        let precioLabel = "N/A";
+        if (unique.length === 1 && precios.length > 0) {
+            precioReal = precios[0];
+            precioLabel = formatPrice(precioReal);
+        } else if (unique.length > 1) {
+            precioLabel = "Varios";
+        }
+
+        const precioRef = normalizePrice(grupo.instancias[0]?.catalogo_precio_historico);
+        const mostrarRef = precioRef !== null;
+        const diff =
+            precioReal !== null && precioRef !== null ? Math.abs(precioReal - precioRef) > 0.0001 : false;
+
+        return (
+            <div className="flex flex-col">
+                <span className="font-semibold">{precioLabel}</span>
+                {mostrarRef && (
+                    <span className={cn("text-xs text-muted-foreground", diff && "line-through")}>
+                        Ref: {formatPrice(precioRef)}
+                    </span>
+                )}
+            </div>
+        );
+    };
+
     return (
         <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -150,6 +193,7 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
                             <TableHead>Marca / Modelo</TableHead>
                             <TableHead className="text-center">Configuracion de Funciones</TableHead>
                             <TableHead>Atributos</TableHead>
+                            <TableHead className="text-right">Precio (USD)</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
                             <TableHead className="w-12 text-center">Accion</TableHead>
                         </TableRow>
@@ -157,7 +201,7 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
                     <TableBody>
                         {grupos.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                                <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
                                     No hay dispositivos cargados.
                                 </TableCell>
                             </TableRow>
@@ -180,6 +224,7 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">{renderAtributos(grupo)}</div>
                                     </TableCell>
+                                    <TableCell className="text-right">{renderPrecio(grupo)}</TableCell>
                                     <TableCell className="text-right text-xl font-bold text-primary">{grupo.count}</TableCell>
                                     <TableCell className="text-center">
                                         <Button

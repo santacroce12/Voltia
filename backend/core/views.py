@@ -226,7 +226,10 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """Asigna automaticamente al usuario logueado como creador de la Instancia."""
-        serializer.save(usuario_creador=self.request.user)
+        instancia = serializer.save(usuario_creador=self.request.user)
+        if not instancia.precio_real or instancia.precio_real == 0:
+            instancia.precio_real = instancia.catalogo.precio_historico
+            instancia.save(update_fields=["precio_real"])
 
 
 class InstanciaDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):

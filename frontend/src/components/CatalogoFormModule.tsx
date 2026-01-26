@@ -24,6 +24,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [urlFicha, setUrlFicha] = useState("");
+    const [precioHistorico, setPrecioHistorico] = useState<number>(0);
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
@@ -68,6 +69,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             especificaciones_set: especificacionesSet,
             funciones_soportadas: funcionesSeleccionadas,
             url_ficha_tecnica: urlFicha || undefined,
+            precio_historico: precioHistorico || 0,
         };
 
         try {
@@ -76,6 +78,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setModelo("");
             setNombre("");
             setUrlFicha("");
+            setPrecioHistorico(0);
             setMarcaId("");
             setCategoriaId("");
             setEspecificaciones({});
@@ -138,6 +141,16 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                         value={urlFicha}
                         onChange={(e) => setUrlFicha(e.target.value)}
                         placeholder="https://..."
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <Label>Precio Historico (Referencia USD)</Label>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        value={precioHistorico || ""}
+                        onChange={(e) => setPrecioHistorico(Number(e.target.value))}
+                        placeholder="Ej: 30.00"
                     />
                 </div>
             </div>

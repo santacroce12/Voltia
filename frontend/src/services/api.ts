@@ -123,6 +123,7 @@ export type CatalogoDispositivo = {
     nombre_completo_producto: string;
     descripcion_funcional?: string;
     url_ficha_tecnica?: string;
+    precio_historico?: number;
     especificaciones: Record<string, any>;
     funciones_soportadas: number[];
     especificaciones_set: { id?: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
@@ -137,6 +138,7 @@ export type CatalogoDispositivoPayload = {
     marca: number;
     categoria: number;
     url_ficha_tecnica?: string;
+    precio_historico?: number;
     especificaciones_set: { atributo: number; valor: string }[];
     funciones_soportadas: number[];
 };
@@ -157,6 +159,8 @@ export type InstanciaDispositivo = {
     categoria_dispositivo?: string;
     subcategoria_dispositivo?: string;
     nombre_proyecto?: string;
+    precio_real?: number;
+    catalogo_precio_historico?: number;
     atributos_set?: { id: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
 };
 
@@ -165,6 +169,7 @@ export type InstanciaPayload = {
     catalogo: number;
     atributos_set?: { atributo: number; valor: string }[];
     funciones_usadas: number[];
+    precio_real?: number;
 };
 
 export type ServicioProyecto = {
