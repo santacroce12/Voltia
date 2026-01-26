@@ -267,7 +267,8 @@ export function ProyectosPage() {
                 isOpen={modalAbierto}
                 onClose={() => setModalAbierto(false)}
                 sourceProject={proyectoAClonar}
-                allObras={todasLasObras.filter((o) => o.id !== obraSeleccionada.id)}
+                clientes={clientes}
+                allObras={todasLasObras}
                 onCloneExitoso={handleClonacionExitosa}
             />
 

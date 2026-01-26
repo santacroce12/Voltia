@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -6,27 +6,47 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ArrowDown, Copy } from "lucide-react";
-import { clonarProyecto, type Proyecto, type Obra } from "../services/api";
+import { clonarProyecto, type Proyecto, type Obra, type Cliente } from "../services/api";
 
 type CloningModalProps = {
     isOpen: boolean;
     onClose: () => void;
     sourceProject: Proyecto | null;
+    clientes: Cliente[];
     allObras: Obra[];
     onCloneExitoso: (newProject: Proyecto) => void;
 };
 
-export function CloningModal({ isOpen, onClose, sourceProject, allObras, onCloneExitoso }: CloningModalProps) {
+export function CloningModal({ isOpen, onClose, sourceProject, clientes, allObras, onCloneExitoso }: CloningModalProps) {
+    const [clienteId, setClienteId] = useState("");
     const [targetObraId, setTargetObraId] = useState("");
     const [nuevoNombre, setNuevoNombre] = useState("");
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (!isOpen || !sourceProject) return;
+        const obraOrigen = allObras.find((obra) => obra.id === sourceProject.obra);
+        if (obraOrigen) {
+            setClienteId(String(obraOrigen.cliente));
+            setTargetObraId(String(obraOrigen.id));
+        } else {
+            setClienteId("");
+            setTargetObraId("");
+        }
+        setNuevoNombre("");
+        setError(null);
+    }, [isOpen, sourceProject, allObras]);
+
+    const obrasFiltradas = clienteId
+        ? allObras.filter((obra) => String(obra.cliente) === clienteId)
+        : [];
+
     if (!sourceProject) return null;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!targetObraId) return;
+        if (!clienteId || !targetObraId) return;
         setCargando(true);
         setError(null);
         const payload = {
@@ -65,13 +85,35 @@ export function CloningModal({ isOpen, onClose, sourceProject, allObras, onClone
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="target-obra">Obra Destino</Label>
-                    <Select value={targetObraId} onValueChange={setTargetObraId}>
-                        <SelectTrigger id="target-obra">
-                            <SelectValue placeholder="Seleccione la nueva Obra" />
+                    <Label htmlFor="target-cliente">Cliente destino</Label>
+                    <Select
+                        value={clienteId}
+                        onValueChange={(value) => {
+                            setClienteId(value);
+                            setTargetObraId("");
+                        }}
+                    >
+                        <SelectTrigger id="target-cliente">
+                            <SelectValue placeholder="Seleccione un cliente" />
                         </SelectTrigger>
                         <SelectContent>
-                            {allObras.map((obra) => (
+                            {clientes.map((cliente) => (
+                                <SelectItem key={cliente.id} value={String(cliente.id)}>
+                                    {cliente.nombre}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="target-obra">Obra destino</Label>
+                    <Select value={targetObraId} onValueChange={setTargetObraId} disabled={!clienteId}>
+                        <SelectTrigger id="target-obra">
+                            <SelectValue placeholder="Seleccione una obra" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {obrasFiltradas.map((obra) => (
                                 <SelectItem key={obra.id} value={String(obra.id)}>
                                     {obra.nombre_obra}
                                 </SelectItem>
@@ -93,7 +135,7 @@ export function CloningModal({ isOpen, onClose, sourceProject, allObras, onClone
 
                 {error && <p className="text-destructive text-sm">{error}</p>}
 
-                <Button type="submit" disabled={cargando || !targetObraId}>
+                <Button type="submit" disabled={cargando || !clienteId || !targetObraId}>
                     {cargando ? "Clonando..." : "Confirmar Clonacion"}
                 </Button>
             </form>
