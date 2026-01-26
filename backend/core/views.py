@@ -1,4 +1,4 @@
-﻿"""
+"""
 Vistas REST responsables de entregar datos al frontend de React.
 """
 import csv
@@ -170,7 +170,7 @@ class RegistroUsuarioAPIView(generics.CreateAPIView):
 
     queryset = User.objects.all()
     serializer_class = RegistroUsuarioSerializer
-    permission_classes = [AllowAny]  # ┬íImportante! Permite el acceso sin token
+    permission_classes = [AllowAny]  # -íImportante! Permite el acceso sin token
 
 
 class ObraListCreateAPIView(generics.ListCreateAPIView):
@@ -250,7 +250,7 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """
-        Permite filtrar el cat├ílogo por marca, categor├¡a o texto en nombre/modelo.
+        Permite filtrar el cat+ílogo por marca, categor+¡a o texto en nombre/modelo.
         """
         queryset = CatalogoDispositivo.objects.all().order_by("-id")
         marca_id = self.request.query_params.get("marca")
@@ -271,7 +271,7 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
 
 class CatalogoDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
-    Vista para LEER, ACTUALIZAR y BORRAR un dispositivo espec├¡fico del cat├ílogo.
+    Vista para LEER, ACTUALIZAR y BORRAR un dispositivo espec+¡fico del cat+ílogo.
     """
 
     queryset = CatalogoDispositivo.objects.all()
@@ -432,7 +432,7 @@ class ProyectoCloneAPIView(APIView):
             serializer = ProyectoSerializer(new_project)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response({"error": "No se encontr├│ el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No se encontr+¦ el proyecto u obra destino."}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -500,9 +500,12 @@ class ExportarMaterialesAPIView(APIView):
                         'modelo': cat.modelo,
                         'descripcion': descripcion_full, 
                         'marca': cat.marca.nombre if cat.marca else 'N/A',
-                        'planos': links_planos
+                        'planos': links_planos,
+                        'precio_historico': cat.precio_historico,
+                        'precio_real_set': set(),
                     }
                 agregado[key]['cantidad'] += 1
+                agregado[key]['precio_real_set'].add(inst.precio_real)
 
             ws['A1'] = "VOLTIA LISTA DE MATERIALES"
             ws['A1'].font = font_title
@@ -511,8 +514,15 @@ class ExportarMaterialesAPIView(APIView):
             
             ws['E3'] = f"VISTA: {titulo}"
             ws['G4'] = f"FECHA: {datetime.now().strftime('%d-%m-%Y')}"
-
-            headers = ["CANTIDAD", "FABRICANTE", "MODELO", "DESCRIPCIÓN / ESPECIFICACIONES", "LINK PLANO"]
+            headers = [
+                "CANTIDAD",
+                "FABRICANTE",
+                "MODELO",
+                "DESCRIPCION / ESPECIFICACIONES",
+                "LINK PLANO",
+                "PRECIO HISTORICO (REF)",
+                "PRECIO REAL (COMPRA)",
+            ]
             
             ws.append([])
             ws.append(headers)
@@ -528,14 +538,19 @@ class ExportarMaterialesAPIView(APIView):
             ws.column_dimensions['C'].width = 25
             ws.column_dimensions['D'].width = 70 
             ws.column_dimensions['E'].width = 40
-
+            ws.column_dimensions['F'].width = 18
+            ws.column_dimensions['G'].width = 18
             for item in agregado.values():
+                precios = list(item['precio_real_set'])
+                precio_real_valor = precios[0] if len(precios) == 1 else "VARIOS"
                 row = [
                     item['cantidad'],
                     item['marca'],
                     item['modelo'],
                     item['descripcion'],
-                    item['planos']
+                    item['planos'],
+                    float(item['precio_historico']) if item['precio_historico'] is not None else 0,
+                    float(precio_real_valor) if precio_real_valor != "VARIOS" else precio_real_valor,
                 ]
                 ws.append(row)
                 for cell in ws[ws.max_row]:
@@ -569,3 +584,4 @@ class ExportarMaterialesAPIView(APIView):
         response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="Materiales_{obra.nombre_obra.replace(" ", "_")}.xlsx"'
         return response
+

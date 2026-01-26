@@ -54,6 +54,7 @@ export function DispositivosListadoPage() {
     const [editNombre, setEditNombre] = useState("");
     const [editUrl, setEditUrl] = useState("");
     const [editDescripcion, setEditDescripcion] = useState("");
+    const [editPrecioHistorico, setEditPrecioHistorico] = useState<number>(0);
     const [editFunciones, setEditFunciones] = useState<number[]>([]);
     const [editEspecificaciones, setEditEspecificaciones] = useState<Record<number, string>>({});
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
@@ -94,6 +95,7 @@ export function DispositivosListadoPage() {
         setEditNombre(dispositivo.nombre_completo_producto);
         setEditUrl(dispositivo.url_ficha_tecnica || "");
         setEditDescripcion(dispositivo.descripcion_funcional || "");
+        setEditPrecioHistorico(dispositivo.precio_historico ?? 0);
         setEditFunciones(dispositivo.funciones_soportadas || []);
         const especMap: Record<number, string> = {};
         (dispositivo.especificaciones_set || []).forEach((e) => {
@@ -133,6 +135,7 @@ export function DispositivosListadoPage() {
                 nombre_completo_producto: editNombre,
                 url_ficha_tecnica: editUrl || undefined,
                 descripcion_funcional: editDescripcion || undefined,
+                precio_historico: editPrecioHistorico,
                 funciones_soportadas: editFunciones,
                 especificaciones_set: especArray,
             });
@@ -172,6 +175,7 @@ export function DispositivosListadoPage() {
                                 <TableHead className="w-[150px]">Modelo</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Categoria</TableHead>
+                                <TableHead className="text-right">Precio Ref.</TableHead>
                                 <TableHead className="text-right">Funciones</TableHead>
                                 <TableHead className="text-right">Atributos fijos</TableHead>
                                 <TableHead className="text-right">Editar</TableHead>
@@ -184,6 +188,11 @@ export function DispositivosListadoPage() {
                                     <TableCell>{d.modelo}</TableCell>
                                     <TableCell>{d.nombre_completo_producto}</TableCell>
                                     <TableCell>{(d as any).categoria_nombre ?? d.categoria}</TableCell>
+                                    <TableCell className="text-right font-medium text-green-600">
+                                        {d.precio_historico !== undefined
+                                            ? `$${Number(d.precio_historico).toFixed(2)}`
+                                            : "-"}
+                                    </TableCell>
                                     <TableCell className="text-right">{d.funciones_soportadas.length}</TableCell>
                                     <TableCell className="text-right">{(d as any).especificaciones_set?.length ?? 0}</TableCell>
                                     <TableCell className="text-right space-x-1">
@@ -289,6 +298,17 @@ export function DispositivosListadoPage() {
                                         value={editUrl}
                                         onChange={(e) => setEditUrl(e.target.value)}
                                         placeholder="https://..."
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-precio">Precio historico (USD)</Label>
+                                    <Input
+                                        id="edit-precio"
+                                        type="number"
+                                        step="0.01"
+                                        value={Number.isFinite(editPrecioHistorico) ? editPrecioHistorico : ""}
+                                        onChange={(e) => setEditPrecioHistorico(Number(e.target.value))}
+                                        placeholder="Ej: 45.00"
                                     />
                                 </div>
                                 <div className="grid gap-2 lg:col-span-2">

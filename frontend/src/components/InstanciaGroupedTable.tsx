@@ -154,14 +154,20 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
 
         const precioRef = normalizePrice(grupo.instancias[0]?.catalogo_precio_historico);
         const mostrarRef = precioRef !== null;
-        const diff =
-            precioReal !== null && precioRef !== null ? Math.abs(precioReal - precioRef) > 0.0001 : false;
 
         return (
             <div className="flex flex-col">
-                <span className="font-semibold">{precioLabel}</span>
+                <span
+                    className={cn(
+                        "font-semibold",
+                        precioLabel !== "N/A" && precioLabel !== "Varios" && "text-green-600",
+                        precioLabel === "N/A" && "text-muted-foreground",
+                    )}
+                >
+                    {precioLabel}
+                </span>
                 {mostrarRef && (
-                    <span className={cn("text-xs text-muted-foreground", diff && "line-through")}>
+                    <span className="text-xs text-muted-foreground line-through">
                         Ref: {formatPrice(precioRef)}
                     </span>
                 )}
@@ -193,7 +199,7 @@ export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, 
                             <TableHead>Marca / Modelo</TableHead>
                             <TableHead className="text-center">Configuracion de Funciones</TableHead>
                             <TableHead>Atributos</TableHead>
-                            <TableHead className="text-right">Precio (USD)</TableHead>
+                            <TableHead className="text-right">Costos (USD)</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
                             <TableHead className="w-12 text-center">Accion</TableHead>
                         </TableRow>
