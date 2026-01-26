@@ -39,6 +39,7 @@ export function BatchInstanciaForm({
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [precioReal, setPrecioReal] = useState("");
 
     const [funcionesDisponibles, setFuncionesDisponibles] = useState<FuncionDispositivo[]>([]);
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
@@ -61,9 +62,12 @@ export function BatchInstanciaForm({
             setValoresEAV(defaults);
             const idsSoportados = disp?.funciones_soportadas || [];
             setFuncionesDisponibles(masterFunciones.filter((f) => idsSoportados.includes(f.id)));
+            const precioBase = disp?.precio_actual ?? disp?.precio_historico ?? "";
+            setPrecioReal(precioBase !== "" && precioBase !== null && precioBase !== undefined ? String(precioBase) : "");
         } else {
             setFuncionesDisponibles([]);
             setValoresEAV({});
+            setPrecioReal("");
         }
         setFuncionesUsadasIds([]);
         setBusquedaFuncion("");
@@ -111,6 +115,12 @@ export function BatchInstanciaForm({
                 catalogo: Number(catalogoId),
                 atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
+                precio_real:
+                    precioReal.trim() !== ""
+                        ? Number(precioReal)
+                        : Number.isFinite(precioFallback)
+                          ? Number(precioFallback)
+                          : 0,
             };
             promesas.push(crearInstancia(payload));
         }
@@ -135,6 +145,8 @@ export function BatchInstanciaForm({
         ? masterFunciones.filter((f) => selectedCatalogo.funciones_soportadas?.includes(f.id))
         : [];
     const especificacionesSet = (selectedCatalogo as any)?.especificaciones_set || [];
+    const precioReferencia = selectedCatalogo?.precio_historico ?? null;
+    const precioFallback = selectedCatalogo?.precio_actual ?? selectedCatalogo?.precio_historico ?? 0;
 
     return (
         <Card className="shadow-none">
@@ -247,6 +259,28 @@ export function BatchInstanciaForm({
                             value={cantidad}
                             onChange={(e) => setCantidad(Number(e.target.value))}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-md border bg-muted/20 p-3">
+                        <div className="grid gap-2">
+                            <Label>Precio Historico (Ref)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={precioReferencia ?? ""}
+                                disabled
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Precio Real de Compra</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={precioReal}
+                                onChange={(e) => setPrecioReal(e.target.value)}
+                                placeholder="Ej: 45.00"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid gap-2">

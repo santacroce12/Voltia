@@ -25,6 +25,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [nombre, setNombre] = useState("");
     const [urlFicha, setUrlFicha] = useState("");
     const [precioHistorico, setPrecioHistorico] = useState<number>(0);
+    const [precioActual, setPrecioActual] = useState<number | null>(null);
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
@@ -70,6 +71,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             funciones_soportadas: funcionesSeleccionadas,
             url_ficha_tecnica: urlFicha || undefined,
             precio_historico: precioHistorico || 0,
+            precio_actual: precioActual ?? null,
         };
 
         try {
@@ -79,6 +81,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setNombre("");
             setUrlFicha("");
             setPrecioHistorico(0);
+            setPrecioActual(null);
             setMarcaId("");
             setCategoriaId("");
             setEspecificaciones({});
@@ -144,13 +147,24 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                     />
                 </div>
                 <div className="grid gap-2">
-                    <Label>Precio Historico (Referencia USD)</Label>
+                    <Label>Precio Historico (Referencia USD) *</Label>
                     <Input
                         type="number"
                         step="0.01"
                         value={precioHistorico || ""}
                         onChange={(e) => setPrecioHistorico(Number(e.target.value))}
                         placeholder="Ej: 30.00"
+                        required
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <Label>Precio Actual (USD)</Label>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        value={precioActual ?? ""}
+                        onChange={(e) => setPrecioActual(e.target.value === "" ? null : Number(e.target.value))}
+                        placeholder="Ej: 35.00"
                     />
                 </div>
             </div>

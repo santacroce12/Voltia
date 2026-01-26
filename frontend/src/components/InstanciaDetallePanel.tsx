@@ -40,6 +40,7 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
     const [error, setError] = useState<string | null>(null);
     const [valoresVariables, setValoresVariables] = useState<Record<number, string>>({});
     const [funcionesUsadasIds, setFuncionesUsadasIds] = useState<number[]>([]);
+    const [precioReal, setPrecioReal] = useState("");
     const [modoEdicion, setModoEdicion] = useState<"todos" | "unico" | "parcial">("todos");
     const [cantidadParcial, setCantidadParcial] = useState<number>(2);
     const [modalFuncionesOpen, setModalFuncionesOpen] = useState(false);
@@ -51,6 +52,7 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
             .then(async (inst) => {
                 setInstancia(inst);
                 setFuncionesUsadasIds(inst.funciones_usadas || []);
+                setPrecioReal(inst.precio_real !== undefined && inst.precio_real !== null ? String(inst.precio_real) : "");
 
                 const mapaValores: Record<number, string> = {};
                 inst.atributos_set?.forEach((attr: any) => {
@@ -89,6 +91,7 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
             const payload: Partial<InstanciaPayload> = {
                 atributos_set: atributosArray,
                 funciones_usadas: funcionesUsadasIds,
+                precio_real: precioReal.trim() !== "" ? Number(precioReal) : undefined,
             };
 
             const todosIds = instancias.map((inst) => inst.id);
@@ -289,6 +292,30 @@ export function InstanciaDetallePanel({ instancias, masterFunciones, masterAtrib
                                     valores={valoresVariables}
                                     onChange={setValoresVariables}
                                 />
+                            </div>
+
+                            <Separator />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-md border bg-muted/20 p-3">
+                                <div className="grid gap-2">
+                                    <Label>Precio Historico (Ref)</Label>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={catalogoItem?.precio_historico ?? ""}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Precio Real</Label>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={precioReal}
+                                        onChange={(e) => setPrecioReal(e.target.value)}
+                                        placeholder="Ej: 45.00"
+                                    />
+                                </div>
                             </div>
                         </form>
                     </CardContent>

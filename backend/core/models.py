@@ -99,8 +99,14 @@ class CatalogoDispositivo(models.Model):
     precio_historico = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0.00,
-        verbose_name="Precio Historico (USD/Referencia)",
+        verbose_name="Precio Historico (USD/Ref)",
+    )
+    precio_actual = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name="Precio Actual de Mercado (USD)",
     )
     funciones_soportadas = models.ManyToManyField(
         "FuncionDispositivo",

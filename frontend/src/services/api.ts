@@ -124,6 +124,7 @@ export type CatalogoDispositivo = {
     descripcion_funcional?: string;
     url_ficha_tecnica?: string;
     precio_historico?: number;
+    precio_actual?: number | null;
     especificaciones: Record<string, any>;
     funciones_soportadas: number[];
     especificaciones_set: { id?: number; atributo: number; valor: string; nombre_atributo?: string; unidad_atributo?: string }[];
@@ -139,6 +140,7 @@ export type CatalogoDispositivoPayload = {
     categoria: number;
     url_ficha_tecnica?: string;
     precio_historico?: number;
+    precio_actual?: number | null;
     especificaciones_set: { atributo: number; valor: string }[];
     funciones_soportadas: number[];
 };

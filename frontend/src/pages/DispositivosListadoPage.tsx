@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Eye } from "lucide-react";
+import { Pencil, Eye, DollarSign } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
@@ -55,6 +55,7 @@ export function DispositivosListadoPage() {
     const [editUrl, setEditUrl] = useState("");
     const [editDescripcion, setEditDescripcion] = useState("");
     const [editPrecioHistorico, setEditPrecioHistorico] = useState<number>(0);
+    const [editPrecioActual, setEditPrecioActual] = useState<number | null>(null);
     const [editFunciones, setEditFunciones] = useState<number[]>([]);
     const [editEspecificaciones, setEditEspecificaciones] = useState<Record<number, string>>({});
     const [busquedaFuncion, setBusquedaFuncion] = useState("");
@@ -65,6 +66,13 @@ export function DispositivosListadoPage() {
     const [viewDispositivo, setViewDispositivo] = useState<CatalogoDispositivo | null>(null);
     const [viewLoading, setViewLoading] = useState(false);
     const [viewError, setViewError] = useState<string | null>(null);
+
+    const [priceOpen, setPriceOpen] = useState(false);
+    const [priceDispositivo, setPriceDispositivo] = useState<CatalogoDispositivo | null>(null);
+    const [priceHistorico, setPriceHistorico] = useState<number>(0);
+    const [priceActual, setPriceActual] = useState<number | null>(null);
+    const [priceLoading, setPriceLoading] = useState(false);
+    const [priceError, setPriceError] = useState<string | null>(null);
 
     useEffect(() => {
         listarCatalogoDispositivos().then(setDispositivos).catch(console.error);
@@ -96,6 +104,7 @@ export function DispositivosListadoPage() {
         setEditUrl(dispositivo.url_ficha_tecnica || "");
         setEditDescripcion(dispositivo.descripcion_funcional || "");
         setEditPrecioHistorico(dispositivo.precio_historico ?? 0);
+        setEditPrecioActual(dispositivo.precio_actual ?? null);
         setEditFunciones(dispositivo.funciones_soportadas || []);
         const especMap: Record<number, string> = {};
         (dispositivo.especificaciones_set || []).forEach((e) => {
@@ -111,6 +120,14 @@ export function DispositivosListadoPage() {
         setEditOpen(false);
         setEditDispositivo(null);
         setEditError(null);
+    };
+
+    const abrirEditorPrecios = (dispositivo: CatalogoDispositivo) => {
+        setPriceDispositivo(dispositivo);
+        setPriceHistorico(dispositivo.precio_historico ?? 0);
+        setPriceActual(dispositivo.precio_actual ?? null);
+        setPriceError(null);
+        setPriceOpen(true);
     };
 
     const handleActualizarDispositivo = async (event: FormEvent<HTMLFormElement>) => {
@@ -136,6 +153,7 @@ export function DispositivosListadoPage() {
                 url_ficha_tecnica: editUrl || undefined,
                 descripcion_funcional: editDescripcion || undefined,
                 precio_historico: editPrecioHistorico,
+                precio_actual: editPrecioActual ?? null,
                 funciones_soportadas: editFunciones,
                 especificaciones_set: especArray,
             });
@@ -175,7 +193,8 @@ export function DispositivosListadoPage() {
                                 <TableHead className="w-[150px]">Modelo</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Categoria</TableHead>
-                                <TableHead className="text-right">Precio Ref.</TableHead>
+                                <TableHead className="text-right">Precio Historico</TableHead>
+                                <TableHead className="text-right">Precio Actual</TableHead>
                                 <TableHead className="text-right">Funciones</TableHead>
                                 <TableHead className="text-right">Atributos fijos</TableHead>
                                 <TableHead className="text-right">Editar</TableHead>
@@ -191,6 +210,11 @@ export function DispositivosListadoPage() {
                                     <TableCell className="text-right font-medium text-green-600">
                                         {d.precio_historico !== undefined
                                             ? `$${Number(d.precio_historico).toFixed(2)}`
+                                            : "-"}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {d.precio_actual !== undefined && d.precio_actual !== null
+                                            ? `$${Number(d.precio_actual).toFixed(2)}`
                                             : "-"}
                                     </TableCell>
                                     <TableCell className="text-right">{d.funciones_soportadas.length}</TableCell>
@@ -216,6 +240,15 @@ export function DispositivosListadoPage() {
                                         </Button>
                                         <Button variant="ghost" size="icon" type="button" onClick={() => abrirEditorDispositivo(d)}>
                                             <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            type="button"
+                                            onClick={() => abrirEditorPrecios(d)}
+                                            title="Editar precios"
+                                        >
+                                            <DollarSign className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -311,6 +344,17 @@ export function DispositivosListadoPage() {
                                         placeholder="Ej: 45.00"
                                     />
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edit-precio-actual">Precio actual (USD)</Label>
+                                    <Input
+                                        id="edit-precio-actual"
+                                        type="number"
+                                        step="0.01"
+                                        value={editPrecioActual ?? ""}
+                                        onChange={(e) => setEditPrecioActual(e.target.value === "" ? null : Number(e.target.value))}
+                                        placeholder="Ej: 50.00"
+                                    />
+                                </div>
                                 <div className="grid gap-2 lg:col-span-2">
                                     <Label htmlFor="edit-desc">Descripcion funcional</Label>
                                     <Textarea
@@ -393,6 +437,68 @@ export function DispositivosListadoPage() {
                             </div>
                         </form>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={priceOpen} onOpenChange={(open) => (open ? setPriceOpen(true) : setPriceOpen(false))}>
+                <DialogContent className="sm:max-w-[420px]">
+                    <DialogHeader>
+                        <DialogTitle>Editar precios</DialogTitle>
+                        <DialogDescription>
+                            {priceDispositivo ? `Actualizar precios para ${priceDispositivo.nombre_completo_producto}.` : ""}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label>Precio historico (USD)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={Number.isFinite(priceHistorico) ? priceHistorico : ""}
+                                onChange={(e) => setPriceHistorico(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Precio actual (USD)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={priceActual ?? ""}
+                                onChange={(e) => setPriceActual(e.target.value === "" ? null : Number(e.target.value))}
+                            />
+                        </div>
+                        {priceError && <p className="text-sm text-destructive">{priceError}</p>}
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setPriceOpen(false)} disabled={priceLoading}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                if (!priceDispositivo) return;
+                                setPriceLoading(true);
+                                setPriceError(null);
+                                try {
+                                    const actualizado = await actualizarCatalogoDispositivo(priceDispositivo.id, {
+                                        precio_historico: priceHistorico,
+                                        precio_actual: priceActual ?? null,
+                                    });
+                                    setDispositivos((prev) =>
+                                        prev.map((d) => (d.id === actualizado.id ? { ...d, ...actualizado } : d)),
+                                    );
+                                    setPriceOpen(false);
+                                } catch (err) {
+                                    console.error(err);
+                                    setPriceError("No se pudo actualizar los precios.");
+                                } finally {
+                                    setPriceLoading(false);
+                                }
+                            }}
+                            disabled={priceLoading}
+                        >
+                            {priceLoading ? "Guardando..." : "Guardar"}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
