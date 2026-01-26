@@ -219,37 +219,39 @@ export function DispositivosListadoPage() {
                                     </TableCell>
                                     <TableCell className="text-right">{d.funciones_soportadas.length}</TableCell>
                                     <TableCell className="text-right">{(d as any).especificaciones_set?.length ?? 0}</TableCell>
-                                    <TableCell className="text-right space-x-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            type="button"
-                                            onClick={() => {
-                                                setViewDispositivo(null);
-                                                setViewError(null);
-                                                setViewLoading(true);
-                                                setViewOpen(true);
-                                                getCatalogoDetalle(d.id)
-                                                    .then((detalle) => setViewDispositivo(detalle))
-                                                    .catch(() => setViewError("No se pudo cargar el detalle."))
-                                                    .finally(() => setViewLoading(false));
-                                            }}
-                                            title="Ver detalle"
-                                        >
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" type="button" onClick={() => abrirEditorDispositivo(d)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            type="button"
-                                            onClick={() => abrirEditorPrecios(d)}
-                                            title="Editar precios"
-                                        >
-                                            <DollarSign className="h-4 w-4" />
-                                        </Button>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                type="button"
+                                                onClick={() => {
+                                                    setViewDispositivo(null);
+                                                    setViewError(null);
+                                                    setViewLoading(true);
+                                                    setViewOpen(true);
+                                                    getCatalogoDetalle(d.id)
+                                                        .then((detalle) => setViewDispositivo(detalle))
+                                                        .catch(() => setViewError("No se pudo cargar el detalle."))
+                                                        .finally(() => setViewLoading(false));
+                                                }}
+                                                title="Ver detalle"
+                                            >
+                                                <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" type="button" onClick={() => abrirEditorDispositivo(d)}>
+                                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                type="button"
+                                                onClick={() => abrirEditorPrecios(d)}
+                                                title="Editar precios"
+                                            >
+                                                <DollarSign className="h-4 w-4 text-green-600 hover:text-green-700" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -524,6 +526,26 @@ export function DispositivosListadoPage() {
                                     <strong>Categoria:</strong>{" "}
                                     {(viewDispositivo as any).categoria_nombre ?? viewDispositivo.categoria}
                                 </p>
+                            </div>
+                            <div className="mt-4 p-3 bg-muted/20 border rounded-md">
+                                <h4 className="font-semibold text-sm mb-2 text-foreground/80">Informacion Financiera</h4>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <p>
+                                        <strong>Precio Historico (Ref):</strong>{" "}
+                                        <span className="text-green-600 font-medium">
+                                            $
+                                            {Number(viewDispositivo.precio_historico ?? 0).toFixed(2)}
+                                        </span>
+                                    </p>
+                                    <p>
+                                        <strong>Precio Mercado Actual:</strong>{" "}
+                                        <span className="text-green-600 font-medium">
+                                            {viewDispositivo.precio_actual !== undefined && viewDispositivo.precio_actual !== null
+                                                ? `$${Number(viewDispositivo.precio_actual).toFixed(2)}`
+                                                : "No definido"}
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm">Funciones soportadas</h4>

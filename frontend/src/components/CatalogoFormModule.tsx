@@ -25,7 +25,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
     const [nombre, setNombre] = useState("");
     const [urlFicha, setUrlFicha] = useState("");
     const [precioHistorico, setPrecioHistorico] = useState<number>(0);
-    const [precioActual, setPrecioActual] = useState<number | null>(null);
+    const [precioActual, setPrecioActual] = useState<number | undefined>(undefined);
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [atributosMaestros, setAtributosMaestros] = useState<AtributoMaestro[]>([]);
@@ -71,7 +71,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             funciones_soportadas: funcionesSeleccionadas,
             url_ficha_tecnica: urlFicha || undefined,
             precio_historico: precioHistorico || 0,
-            precio_actual: precioActual ?? null,
+            precio_actual: precioActual || undefined,
         };
 
         try {
@@ -81,7 +81,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
             setNombre("");
             setUrlFicha("");
             setPrecioHistorico(0);
-            setPrecioActual(null);
+            setPrecioActual(undefined);
             setMarcaId("");
             setCategoriaId("");
             setEspecificaciones({});
@@ -147,7 +147,7 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                     />
                 </div>
                 <div className="grid gap-2">
-                    <Label>Precio Historico (Referencia USD) *</Label>
+                    <Label className="font-semibold">Precio Historico (USD) *</Label>
                     <Input
                         type="number"
                         step="0.01"
@@ -156,16 +156,18 @@ export function CatalogoFormModule({ onDispositivoCreado }: { onDispositivoCread
                         placeholder="Ej: 30.00"
                         required
                     />
+                    <span className="text-xs text-muted-foreground">Valor de referencia base (Obligatorio).</span>
                 </div>
                 <div className="grid gap-2">
                     <Label>Precio Actual (USD)</Label>
                     <Input
                         type="number"
                         step="0.01"
-                        value={precioActual ?? ""}
-                        onChange={(e) => setPrecioActual(e.target.value === "" ? null : Number(e.target.value))}
-                        placeholder="Ej: 35.00"
+                        value={precioActual || ""}
+                        onChange={(e) => setPrecioActual(e.target.value === "" ? undefined : Number(e.target.value))}
+                        placeholder="Ej: 35.50"
                     />
+                    <span className="text-xs text-muted-foreground">Precio de mercado actual (Opcional).</span>
                 </div>
             </div>
 

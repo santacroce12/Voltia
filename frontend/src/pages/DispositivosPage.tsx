@@ -34,6 +34,8 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
     const [modelo, setModelo] = useState("");
     const [nombre, setNombre] = useState("");
     const [url, setUrl] = useState("");
+    const [precioHistorico, setPrecioHistorico] = useState<number>(0);
+    const [precioActual, setPrecioActual] = useState<number | undefined>(undefined);
     const [marcaId, setMarcaId] = useState("");
     const [categoriaId, setCategoriaId] = useState("");
     const [valoresEAV, setValoresEAV] = useState<Record<number, string>>({});
@@ -69,6 +71,8 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
             url_ficha_tecnica: url,
             marca: Number(marcaId),
             categoria: Number(categoriaId),
+            precio_historico: precioHistorico || 0,
+            precio_actual: precioActual || undefined,
             especificaciones_set: Object.entries(valoresEAV).map(([attrId, valor]) => ({
                 atributo: Number(attrId),
                 valor,
@@ -82,6 +86,8 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
             setModelo("");
             setNombre("");
             setUrl("");
+            setPrecioHistorico(0);
+            setPrecioActual(undefined);
             setMarcaId("");
             setCategoriaId("");
             setFuncionesIds([]);
@@ -137,6 +143,27 @@ function DispositivoForm({ marcas, categorias, funciones, atributos, onDispositi
                     <div className="grid gap-2 md:col-span-2">
                         <Label>Ficha Tecnica (URL)</Label>
                         <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label className="font-semibold">Precio Historico (USD) *</Label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            value={precioHistorico || ""}
+                            onChange={(e) => setPrecioHistorico(Number(e.target.value))}
+                            placeholder="Ej: 30.00"
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Precio Actual (USD)</Label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            value={precioActual || ""}
+                            onChange={(e) => setPrecioActual(e.target.value === "" ? undefined : Number(e.target.value))}
+                            placeholder="Ej: 35.50"
+                        />
                     </div>
                     <div className="grid gap-2 md:col-span-2">
                         <Label>Funciones Soportadas</Label>

@@ -55,16 +55,17 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                     onChange={(e) => setBusqueda(e.target.value)}
                     className="max-w-md"
                 />
-                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 max-h-64 overflow-y-auto pr-1">
+                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 max-h-64 overflow-y-auto pr-1 items-stretch">
                     {disponiblesFiltrados.map((attr) => (
                         <Button
                             key={attr.id}
                             type="button"
                             variant="outline"
-                            className="w-full min-w-0 justify-start text-sm text-left whitespace-normal break-words leading-tight min-h-11 flex-wrap"
+                            className="w-full min-w-0 justify-start text-sm text-left whitespace-normal leading-tight min-h-11"
                             onClick={() => handleAgregarCampo(String(attr.id))}
+                            title={`${attr.nombre} ${attr.unidad ? `(${attr.unidad})` : ""}`.trim()}
                         >
-                            <span className="inline-block text-left break-words leading-tight">
+                            <span className="inline-block text-left break-all leading-tight line-clamp-2">
                                 {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
                             </span>
                         </Button>
@@ -88,7 +89,10 @@ export function DynamicAttributeForm({ todosLosAtributos, valores, onChange }: P
                     {atributosVisibles.map((attr) => (
                         <div key={attr.id} className="flex items-end gap-2 rounded-md border bg-background p-3 shadow-sm">
                             <div className="grid gap-1.5 flex-1 min-w-0">
-                                <Label className="text-xs font-medium text-muted-foreground break-words leading-tight">
+                                <Label
+                                    className="text-xs font-medium text-muted-foreground break-all leading-tight line-clamp-2"
+                                    title={`${attr.nombre} ${attr.unidad ? `(${attr.unidad})` : ""}`.trim()}
+                                >
                                     {attr.nombre} {attr.unidad ? `(${attr.unidad})` : ""}
                                 </Label>
                                 <Input
