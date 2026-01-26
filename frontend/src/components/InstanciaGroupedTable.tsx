@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Trash2, Pencil } from "lucide-react";
-import { type InstanciaDispositivo, borrarInstancia } from "../services/api";
+import { type InstanciaDispositivo, type AtributoMaestro, borrarInstancia } from "../services/api";
 import { cn } from "@/lib/utils";
 
 type GroupedInstance = {
@@ -20,12 +20,19 @@ type GroupedInstance = {
 
 type Props = {
     instancias: InstanciaDispositivo[];
+    masterAtributos: AtributoMaestro[];
     onRefresh: () => void;
     onEdit: (instancias: InstanciaDispositivo[]) => void;
 };
 
-export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) {
+export function InstanciaGroupedTable({ instancias, masterAtributos, onRefresh, onEdit }: Props) {
     const [seleccionados, setSeleccionados] = useState<number[]>([]);
+
+    const atributosMap = useMemo(() => {
+        const map = new Map<number, AtributoMaestro>();
+        masterAtributos.forEach((attr) => map.set(attr.id, attr));
+        return map;
+    }, [masterAtributos]);
 
     const grupos = useMemo(() => {
         const groups = new Map<string, GroupedInstance>();
@@ -64,7 +71,7 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) 
     };
 
     const handleBorradoLote = async () => {
-        if (!seleccionados.length || !confirm(`?Seguro que quieres borrar ${seleccionados.length} dispositivos?`)) return;
+        if (!seleccionados.length || !confirm(`Seguro que quieres borrar ${seleccionados.length} dispositivos?`)) return;
         for (const id of seleccionados) {
             try {
                 await borrarInstancia(id);
@@ -74,6 +81,49 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) 
         }
         setSeleccionados([]);
         onRefresh();
+    };
+
+    const renderAtributos = (grupo: GroupedInstance) => {
+        const lista = new Map<string, { label: string }>();
+        grupo.instancias.forEach((inst) => {
+            inst.atributos_set?.forEach((attr) => {
+                const maestro = atributosMap.get(attr.atributo);
+                const nombre = maestro?.nombre || attr.nombre_atributo || `Atributo #${attr.atributo}`;
+                const unidad = maestro?.unidad || attr.unidad_atributo || "";
+                const label = `${nombre}: ${attr.valor}${unidad ? ` ${unidad}` : ""}`;
+                lista.set(`${attr.atributo}-${attr.valor}`, { label });
+            });
+        });
+
+        const valores = Array.from(lista.values());
+        if (valores.length === 0) {
+            return <span className="text-xs text-muted-foreground italic">- Sin atributos -</span>;
+        }
+
+        const visibles = valores.slice(0, 3);
+        const restantes = valores.length - visibles.length;
+        const tooltip = restantes > 0 ? valores.slice(3).map((v) => v.label).join(", ") : "";
+
+        return (
+            <>
+                {visibles.map((v) => (
+                    <span
+                        key={v.label}
+                        className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                    >
+                        {v.label}
+                    </span>
+                ))}
+                {restantes > 0 && (
+                    <span
+                        className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs text-muted-foreground"
+                        title={tooltip}
+                    >
+                        +{restantes} mas
+                    </span>
+                )}
+            </>
+        );
     };
 
     return (
@@ -98,24 +148,22 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) 
                                 />
                             </TableHead>
                             <TableHead>Marca / Modelo</TableHead>
-                            <TableHead className="text-center">Configuración de Funciones</TableHead>
+                            <TableHead className="text-center">Configuracion de Funciones</TableHead>
+                            <TableHead>Atributos</TableHead>
                             <TableHead className="text-right w-24">TOTAL</TableHead>
-                            <TableHead className="w-12 text-center">Acción</TableHead>
+                            <TableHead className="w-12 text-center">Accion</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {grupos.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                                <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                                     No hay dispositivos cargados.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             grupos.map((grupo) => (
-                                <TableRow
-                                    key={grupo.catalogoId + grupo.funcionesKey}
-                                    className={cn("hover:bg-primary/5")}
-                                >
+                                <TableRow key={grupo.catalogoId + grupo.funcionesKey} className={cn("hover:bg-primary/5")}>
                                     <TableCell>
                                         <Checkbox
                                             checked={grupo.instanciaIds.every((id) => seleccionados.includes(id))}
@@ -127,7 +175,10 @@ export function InstanciaGroupedTable({ instancias, onRefresh, onEdit }: Props) 
                                         <div className="text-xs text-muted-foreground">{grupo.marca}</div>
                                     </TableCell>
                                     <TableCell className="text-center text-sm">
-                                        {grupo.funcionesCount === 0 ? "Sin configuración" : `${grupo.funcionesCount} funciones`}
+                                        {grupo.funcionesCount === 0 ? "Sin configuracion" : `${grupo.funcionesCount} funciones`}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">{renderAtributos(grupo)}</div>
                                     </TableCell>
                                     <TableCell className="text-right text-xl font-bold text-primary">{grupo.count}</TableCell>
                                     <TableCell className="text-center">

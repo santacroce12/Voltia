@@ -150,6 +150,7 @@ export function IngenieriaDetallePage() {
                     <h3 className="text-xl font-semibold">Inventario Cargado</h3>
                     <InstanciaGroupedTable
                         instancias={instancias}
+                        masterAtributos={masterAtributos}
                         onRefresh={handleRefresh}
                         onEdit={(grupo) => setInstanciasSeleccionadas(grupo)}
                     />
