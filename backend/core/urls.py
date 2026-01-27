@@ -23,6 +23,7 @@ urlpatterns = [
     path("instancias/<int:pk>/", views.InstanciaDispositivoDetailAPIView.as_view(), name="instancia-detail"),
     path("catalogo/", views.CatalogoDispositivoListCreateAPIView.as_view(), name="catalogo"),
     path("catalogo/<int:pk>/", views.CatalogoDispositivoDetailAPIView.as_view(), name="catalogo-detail"),
+    path("catalogo/importar-ia/", views.ImportarCatalogoIAView.as_view(), name="importar-catalogo-ia"),
     path("marcas/", views.MarcaListCreateAPIView.as_view(), name="marcas"),
     path("marcas/<int:pk>/", views.MarcaDetailAPIView.as_view(), name="marca-detail"),
     path("categorias/", views.CategoriaListCreateAPIView.as_view(), name="categorias"),

@@ -12,6 +12,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
 from rest_framework.throttling import ScopedRateThrottle
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -44,6 +45,7 @@ from core.serializers import (
     ServiciosProyectoSerializer,
     UrlsExternasProyectoSerializer,
 )
+from core.services.ai_importer import extract_text_from_pdf, parse_catalog_with_gemini
 
 
 def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_nombre: str | None = None):
@@ -143,6 +145,31 @@ class EstadoSaludAPIView(APIView):
         """Entrega un mensaje corto para monitoreo."""
         data = {"mensaje": "API VOLTIA en linea", "total_proyectos": Proyecto.objects.count()}
         return Response(data)
+
+
+class ImportarCatalogoIAView(APIView):
+    parser_classes = [MultiPartParser]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, format=None):
+        if "file" not in request.FILES:
+            return Response({"error": "No se envio ningun archivo PDF"}, status=400)
+
+        pdf_file = request.FILES["file"]
+
+        try:
+            texto_crudo = extract_text_from_pdf(pdf_file)
+            items = parse_catalog_with_gemini(texto_crudo)
+            return Response(
+                {
+                    "message": "Exito",
+                    "cantidad": len(items),
+                    "resultados": items,
+                }
+            )
+        except Exception as e:
+            print(f"Error IA: {e}")
+            return Response({"error": str(e)}, status=500)
 
 
 class ProyectoListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
