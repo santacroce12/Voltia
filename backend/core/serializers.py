@@ -25,6 +25,7 @@ class ProyectoSerializer(serializers.ModelSerializer):
     """Serializa el modelo Proyecto con todos sus campos basicos."""
 
     usuario_creador = serializers.ReadOnlyField(source="usuario_creador.username")
+    usuario_modificador = serializers.ReadOnlyField(source="usuario_modificador.username")
 
     class Meta:
         model = Proyecto
@@ -32,9 +33,11 @@ class ProyectoSerializer(serializers.ModelSerializer):
             "id",
             "obra",
             "usuario_creador",
+            "usuario_modificador",
             "nombre_proyecto",
             "tipo",
             "fecha_creacion",
+            "fecha_modificacion",
             "estado_proyecto",
             "ubicacion_fisica",
         ]

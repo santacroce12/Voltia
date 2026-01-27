@@ -62,6 +62,7 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_
         source_project.id = None
         source_project.obra = target_obra
         source_project.usuario_creador = user
+        source_project.usuario_modificador = user
         if nuevo_nombre:
             source_project.nombre_proyecto = nuevo_nombre
         else:
@@ -93,6 +94,7 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_
             source_instance.id = None
             source_instance.proyecto = new_project
             source_instance.usuario_creador = user
+            source_instance.usuario_modificador = user
             source_instance.save()
             source_instance.funciones_usadas.set(original_funciones_usadas)
 
@@ -119,6 +121,19 @@ def deep_clone_project(source_project_id: int, target_obra_id: int, user, nuevo_
         return new_project
 
 
+class AuditoriaMixin:
+    """Mixin para asignar usuario creador y modificador automaticamente."""
+
+    def perform_create(self, serializer):
+        return serializer.save(
+            usuario_creador=self.request.user,
+            usuario_modificador=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        return serializer.save(usuario_modificador=self.request.user)
+
+
 class EstadoSaludAPIView(APIView):
     """Endpoint simple para revisar que la API responde correctamente."""
 
@@ -130,7 +145,7 @@ class EstadoSaludAPIView(APIView):
         return Response(data)
 
 
-class ProyectoListCreateAPIView(generics.ListCreateAPIView):
+class ProyectoListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Expone un listado de proyectos y permite crear nuevos registros.
     Ideal para validar la escritura en PostgreSQL desde el front.
@@ -149,12 +164,7 @@ class ProyectoListCreateAPIView(generics.ListCreateAPIView):
             queryset = queryset.filter(obra_id=obra_id)
         return queryset
 
-    def perform_create(self, serializer):
-        """Asigna automaticamente al usuario autenticado como creador del proyecto."""
-        serializer.save(usuario_creador=self.request.user)
-
-
-class ProyectoDetailAPIView(generics.RetrieveUpdateAPIView):
+class ProyectoDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite consultar o actualizar un proyecto especifico."""
 
     queryset = Proyecto.objects.all()
@@ -173,7 +183,7 @@ class RegistroUsuarioAPIView(generics.CreateAPIView):
     permission_classes = [AllowAny]  # -íImportante! Permite el acceso sin token
 
 
-class ObraListCreateAPIView(generics.ListCreateAPIView):
+class ObraListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Obras.
     Solo usuarios autenticados pueden acceder.
@@ -192,12 +202,7 @@ class ObraListCreateAPIView(generics.ListCreateAPIView):
             queryset = queryset.filter(cliente_id=cliente_id)
         return queryset
 
-    def perform_create(self, serializer):
-        """Asigna automaticamente al usuario logueado como creador de la Obra."""
-        serializer.save(usuario_creador=self.request.user)
-
-
-class ObraDetailAPIView(generics.RetrieveUpdateAPIView):
+class ObraDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite leer o actualizar una obra puntual."""
 
     queryset = Obra.objects.all()
@@ -205,7 +210,7 @@ class ObraDetailAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
+class InstanciaDispositivoListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Instancias de Dispositivos.
     Solo usuarios autenticados pueden acceder.
@@ -225,15 +230,16 @@ class InstanciaDispositivoListCreateAPIView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
-        """Asigna automaticamente al usuario logueado como creador de la Instancia."""
-        instancia = serializer.save(usuario_creador=self.request.user)
+        """Asigna usuario creador/modificador y ajusta precio real si falta."""
+        instancia = super().perform_create(serializer)
         if not instancia.precio_real or instancia.precio_real == 0:
             precio_catalogo = instancia.catalogo.precio_actual
             instancia.precio_real = precio_catalogo if precio_catalogo is not None else instancia.catalogo.precio_historico
             instancia.save(update_fields=["precio_real"])
+        return instancia
 
 
-class InstanciaDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+class InstanciaDispositivoDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateDestroyAPIView):
     """Permite consultar, actualizar o eliminar una instancia de dispositivo puntual."""
 
     queryset = InstanciaDispositivo.objects.all()
@@ -241,7 +247,7 @@ class InstanciaDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
+class CatalogoDispositivoListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Dispositivos del Catalogo.
     """
@@ -270,7 +276,7 @@ class CatalogoDispositivoListCreateAPIView(generics.ListCreateAPIView):
         return queryset
 
 
-class CatalogoDispositivoDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+class CatalogoDispositivoDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     Vista para LEER, ACTUALIZAR y BORRAR un dispositivo espec+¡fico del cat+ílogo.
     """
@@ -299,7 +305,7 @@ class AtributoMaestroDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class ClienteListCreateAPIView(generics.ListCreateAPIView):
+class ClienteListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Clientes.
     Solo usuarios autenticados pueden acceder.
@@ -310,7 +316,7 @@ class ClienteListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class ClienteDetailAPIView(generics.RetrieveUpdateAPIView):
+class ClienteDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite consultar o actualizar un cliente en particular."""
 
     queryset = Cliente.objects.all()
@@ -318,7 +324,7 @@ class ClienteDetailAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class MarcaListCreateAPIView(generics.ListCreateAPIView):
+class MarcaListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Marcas.
     """
@@ -328,7 +334,7 @@ class MarcaListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class MarcaDetailAPIView(generics.RetrieveUpdateAPIView):
+class MarcaDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite consultar o actualizar una marca."""
 
     queryset = Marca.objects.all()
@@ -336,7 +342,7 @@ class MarcaDetailAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class CategoriaListCreateAPIView(generics.ListCreateAPIView):
+class CategoriaListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Categorias.
     """
@@ -346,7 +352,7 @@ class CategoriaListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class CategoriaDetailAPIView(generics.RetrieveUpdateAPIView):
+class CategoriaDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite consultar o actualizar una categoria."""
 
     queryset = Categoria.objects.all()
@@ -354,7 +360,7 @@ class CategoriaDetailAPIView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class FuncionDispositivoListCreateAPIView(generics.ListCreateAPIView):
+class FuncionDispositivoListCreateAPIView(AuditoriaMixin, generics.ListCreateAPIView):
     """
     Vista para LISTAR (GET) y CREAR (POST) Funciones de Dispositivos.
     """
@@ -364,7 +370,7 @@ class FuncionDispositivoListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class FuncionDispositivoDetailAPIView(generics.RetrieveUpdateAPIView):
+class FuncionDispositivoDetailAPIView(AuditoriaMixin, generics.RetrieveUpdateAPIView):
     """Permite consultar o actualizar una funcion de dispositivo."""
 
     queryset = FuncionDispositivo.objects.all()

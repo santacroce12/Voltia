@@ -6,7 +6,34 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
-class Cliente(models.Model):
+class ModeloAuditable(models.Model):
+    """
+    Clase abstracta que agrega campos de auditoria a los modelos.
+    """
+    usuario_creador = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="%(class)s_creados",
+        verbose_name="Creado por",
+    )
+    usuario_modificador = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="%(class)s_modificados",
+        verbose_name="Modificado por",
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creacion")
+    fecha_modificacion = models.DateTimeField(auto_now=True, verbose_name="Ultima Modificacion")
+
+    class Meta:
+        abstract = True
+
+
+class Cliente(ModeloAuditable):
     """
     Representa una organizacion o persona para la cual VOLTIA ejecuta proyectos.
     """
@@ -30,7 +57,7 @@ class Cliente(models.Model):
         return self.nombre
 
 
-class Marca(models.Model):
+class Marca(ModeloAuditable):
     """
     Catalogo de marcas asociadas a los dispositivos.
     """
@@ -46,7 +73,7 @@ class Marca(models.Model):
         return self.nombre
 
 
-class Categoria(models.Model):
+class Categoria(ModeloAuditable):
     """
     Catalogo jerarquico (categoria y subcategoria) para organizar dispositivos.
     """
@@ -64,7 +91,7 @@ class Categoria(models.Model):
         return f"{self.categoria_principal} > {self.subcategoria}"
 
 
-class CatalogoDispositivo(models.Model):
+class CatalogoDispositivo(ModeloAuditable):
     """
     Biblioteca de dispositivos estandarizados que podremos asociar a proyectos.
     """
@@ -172,7 +199,7 @@ class AtributoInstancia(models.Model):
         unique_together = ("instancia", "atributo")
 
 
-class FuncionDispositivo(models.Model):
+class FuncionDispositivo(ModeloAuditable):
     """
     Biblioteca maestra de todas las funciones posibles que un dispositivo puede tener.
     """
@@ -198,7 +225,7 @@ class FuncionDispositivo(models.Model):
         return self.nombre
 
 
-class InstanciaDispositivo(models.Model):
+class InstanciaDispositivo(ModeloAuditable):
     """
     Representa un dispositivo concreto usado dentro de un proyecto.
     """
@@ -213,13 +240,6 @@ class InstanciaDispositivo(models.Model):
         on_delete=models.PROTECT,  # ¡MUY IMPORTANTE! Impide borrar un dispositivo del catalogo si esta en uso
         verbose_name="Dispositivo del Catalogo",
         related_name="instancias",
-    )
-    usuario_creador = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,  # Para trazabilidad: quien agrego el dispositivo
-        null=True,
-        blank=True,
-        verbose_name="Agregado por",
     )
     funciones_usadas = models.ManyToManyField(
         "FuncionDispositivo",
@@ -250,7 +270,7 @@ class EstadoObra(models.TextChoices):
     RECHAZADA = "rechazada", "Rechazada"
 
 
-class Obra(models.Model):
+class Obra(ModeloAuditable):
     """
     Describe una obra especifica ligada a un cliente determinado.
     """
@@ -260,15 +280,7 @@ class Obra(models.Model):
         on_delete=models.CASCADE,  # Si se borra el cliente, se borran sus obras
         verbose_name="Cliente",
     )
-    usuario_creador = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,  # Si se borra el usuario, la obra NO se borra, solo queda "sin creador"
-        null=True,
-        blank=True,
-        verbose_name="Usuario Creador",
-    )
     nombre_obra = models.CharField(max_length=255, verbose_name="Nombre de Obra")
-    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creacion")
     pais = models.CharField(max_length=50, blank=True, null=True, verbose_name="País")
     provincia = models.CharField(max_length=100, blank=True, null=True, verbose_name="Provincia/Estado")
     ubicacion = models.CharField(max_length=300, blank=True, null=True, verbose_name="Dirección / Calle")
@@ -304,7 +316,7 @@ class EstadoProyecto(models.TextChoices):
     REALIZADO = "realizado", "Realizado"
 
 
-class Proyecto(models.Model):
+class Proyecto(ModeloAuditable):
     """
     Representa un proyecto asociado a una obra especifica.
     """
@@ -315,20 +327,12 @@ class Proyecto(models.Model):
         verbose_name="Obra",
         related_name="proyectos",
     )
-    usuario_creador = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,  # La trazabilidad no se borra, pero es opcional
-        null=True,
-        blank=True,
-        verbose_name="Usuario Creador",
-    )
     nombre_proyecto = models.CharField(max_length=255, verbose_name="Nombre del Proyecto")
     tipo = models.CharField(
         max_length=20,
         choices=TipoProyecto.choices,  # Usa las opciones que definimos arriba
         default=TipoProyecto.PROTECCION,  # Valor por defecto
     )
-    fecha_creacion = models.DateField(auto_now_add=True, verbose_name="Fecha de Creacion")  # Se pone automaticamente la fecha de hoy al crearlo
     estado_proyecto = models.CharField(
         max_length=20,
         choices=EstadoProyecto.choices,
